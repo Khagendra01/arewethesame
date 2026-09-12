@@ -21,12 +21,21 @@ thresholds:
 provenance:
   renderer: gpt-5.6-sol
   auditor: gpt-5.6-sol
-  render_contract: assistant_render_contract_v1
-  audit_contract: assistant_blind_audit_v1
+  render_contract: assistant_render_contract_v2
+  audit_contract: assistant_blind_audit_v2
+
+isolation:
+  render_tasks: outputs/assistant_v03/render_tasks.jsonl
+  hidden_truth: outputs/assistant_v03/truth.jsonl
+  audit_tasks: outputs/assistant_v03/audit_tasks.jsonl
+  expose_hidden_truth_to_renderer: false
+  expose_hidden_truth_to_auditor: false
 
 notes:
   - The simulator is the only source of experimental truth.
-  - Rendering and audit are separate passes.
-  - Audit tasks must use an ownership-neutral fact catalog.
+  - The recommended answer is stored separately and attached only during final ingest.
+  - Rendering and auditing are separate passes.
+  - Audit references come from simulator source text and use ownership-neutral placeholders.
   - Self/other perspective binding is deterministic in repository code.
+  - Numeric quantities are checked before an audit task can be produced.
   - Split by life, never by row.
