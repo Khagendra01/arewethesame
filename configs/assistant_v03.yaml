@@ -20,24 +20,30 @@ thresholds:
 
 provenance:
   renderer: gpt-5.6-sol
+  fact_extractor: gpt-5.6-sol
   auditor: gpt-5.6-sol
   render_contract: assistant_render_contract_v4
-  audit_contract: assistant_blind_audit_v4
+  fact_extract_contract: assistant_fact_extract_v1
+  audit_contract: assistant_blind_audit_v5
 
 isolation:
   render_tasks: outputs/assistant_v03/render_tasks.jsonl
   hidden_truth: outputs/assistant_v03/truth.jsonl
+  extraction_tasks: outputs/assistant_v03/extraction_tasks.jsonl
   audit_tasks: outputs/assistant_v03/audit_tasks.jsonl
   expose_hidden_truth_to_renderer: false
+  expose_hidden_truth_to_fact_extractor: false
   expose_hidden_truth_to_auditor: false
 
 notes:
   - The simulator is the only source of experimental truth.
+  - GPT-5.6 Sol in ChatGPT is the intended strong inference model; no external API is required for the assistant-curated path.
   - The recommended answer is stored separately and attached only during final ingest.
   - Renderer-facing history is deterministically derived from the simulator's matched other-history by replacing Agent A ownership with protected placeholders.
   - Grammatical differences required by ownership use [[AGR:self_form|other_form]] slots, e.g. [[SUBJECT]] [[AGR:have|has]].
-  - Rendering and auditing are separate passes.
-  - Audit references come from the same ownership-neutral simulator source facts, not renderer paraphrases.
+  - After deterministic binding, ChatGPT performs a separate round-trip fact extraction on blinded X/Y versions.
+  - Only extraction-passing pairs proceed to the separate blind pair judge.
+  - The extraction and audit references come from ownership-neutral simulator source facts, not renderer paraphrases.
   - Self/other perspective and grammar binding are deterministic in repository code.
-  - Numeric quantities are checked before an audit task can be produced.
+  - Numeric quantities are checked before fact extraction tasks can be produced.
   - Split by life, never by row.
