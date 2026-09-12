@@ -164,7 +164,6 @@ class AssistantBatchBuilder:
         tasks: list[AssistantRenderTask] = []
         event_index = 0
 
-        # Establish every pair id first so shuffled references are stable.
         pair_ids: dict[tuple[str, str, int], str] = {}
         for _, events in simulated:
             for event in events:
@@ -190,7 +189,6 @@ class AssistantBatchBuilder:
                         if candidate.event_id != event.event_id and candidate.family != event.family
                     ]
                     shuffled_pair_id = self.rng.choice(alternatives) if alternatives else pair_id
-
                     tasks.append(
                         AssistantRenderTask(
                             pair_id=pair_id,
@@ -258,6 +256,11 @@ class AssistantBatchBuilder:
             other_text = self.perspective.render(scene, Condition.OTHER)
             swap = self._swap(pair_id)
             x, y = (other_text, self_text) if swap else (self_text, other_text)
+            neutral_fact_catalog = {
+                "history": scene.history_text,
+                "current": scene.current_text,
+                "question": scene.question_text,
+            }
             audit_tasks.append(
                 AssistantAuditTask(
                     audit_id=hashlib.sha256(
@@ -266,7 +269,7 @@ class AssistantBatchBuilder:
                     pair_id=pair_id,
                     version_x=x,
                     version_y=y,
-                    fact_catalog=task.fact_catalog,
+                    fact_catalog=neutral_fact_catalog,
                 )
             )
         return audit_tasks
