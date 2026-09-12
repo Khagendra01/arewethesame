@@ -25,7 +25,7 @@ def _prepare(argv: list[str]) -> None:
         "--truth-out",
         type=Path,
         default=Path("outputs/assistant_v03/truth.jsonl"),
-        help="Simulator targets for ingest only; do not provide this file to the renderer or blind auditor.",
+        help="Simulator targets for ingest only; do not provide this file to renderer, extractor, or blind auditor.",
     )
     args = parser.parse_args(argv)
 
@@ -39,20 +39,48 @@ def _prepare(argv: list[str]) -> None:
     builder.write_jsonl(truths, args.truth_out)
     print(f"wrote {len(tasks)} assistant render tasks to {args.out}")
     print(f"wrote {len(truths)} simulator truth records to {args.truth_out}")
-    print("do not expose the truth file during rendering or blind auditing")
+    print("do not expose the truth file during rendering, extraction, or blind auditing")
     print(
-        "next: have ChatGPT fill one AssistantRender JSON object per pair_id, "
-        "then run `arewethesame-assistant prepare-audit`"
+        "next: have ChatGPT write one AssistantRender per pair_id, then run "
+        "`arewethesame-assistant prepare-extraction`"
+    )
+
+
+def _prepare_extraction(argv: list[str]) -> None:
+    parser = argparse.ArgumentParser(
+        description="Create blind X/Y round-trip fact extraction tasks after deterministic perspective binding."
+    )
+    parser.add_argument("tasks", type=Path)
+    parser.add_argument("renders", type=Path)
+    parser.add_argument("--seed", type=int, default=31)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=Path("outputs/assistant_v03/extraction_tasks.jsonl"),
+    )
+    args = parser.parse_args(argv)
+
+    builder = AssistantBatchBuilder(seed=args.seed)
+    tasks = builder.read_tasks(args.tasks)
+    renders = builder.read_renders(args.renders)
+    extraction_tasks = builder.prepare_fact_extractions(tasks, renders)
+    builder.write_jsonl(extraction_tasks, args.out)
+    print(f"wrote {len(extraction_tasks)} fact extraction tasks to {args.out}")
+    print(
+        "next: have ChatGPT extract the facts from Version X and Version Y into "
+        "one AssistantFactExtraction object per pair_id"
     )
 
 
 def _prepare_audit(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
-        description="Create blinded X/Y audit tasks from assistant-curated canonical renders."
+        description="Create blinded X/Y judge tasks only for pairs that pass round-trip fact extraction."
     )
     parser.add_argument("tasks", type=Path)
     parser.add_argument("renders", type=Path)
+    parser.add_argument("extractions", type=Path)
     parser.add_argument("--seed", type=int, default=31)
+    parser.add_argument("--min-fact-score", type=float, default=0.95)
     parser.add_argument(
         "--out",
         type=Path,
@@ -63,22 +91,32 @@ def _prepare_audit(argv: list[str]) -> None:
     builder = AssistantBatchBuilder(seed=args.seed)
     tasks = builder.read_tasks(args.tasks)
     renders = builder.read_renders(args.renders)
-    audit_tasks = builder.prepare_audits(tasks, renders)
+    extractions = builder.read_extractions(args.extractions)
+    audit_tasks = builder.prepare_audits(
+        tasks,
+        renders,
+        extractions,
+        min_fact_score=args.min_fact_score,
+    )
     builder.write_jsonl(audit_tasks, args.out)
-    print(f"wrote {len(audit_tasks)} blinded audit tasks to {args.out}")
+    print(f"wrote {len(audit_tasks)} blinded judge tasks to {args.out}")
     print(
-        "next: have ChatGPT review only version_x/version_y + fact_catalog and "
-        "write one AssistantAudit JSON object per pair_id"
+        "next: have ChatGPT judge only version_x/version_y + source fact_catalog and "
+        "write one AssistantAudit object for each emitted pair_id"
     )
 
 
 def _ingest(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
-        description="Ingest simulator truth + assistant renders + blind audits into five matched conditions."
+        description=(
+            "Ingest simulator truth + assistant renders + round-trip extractions + "
+            "blind audits into five matched conditions."
+        )
     )
     parser.add_argument("tasks", type=Path)
     parser.add_argument("truth", type=Path)
     parser.add_argument("renders", type=Path)
+    parser.add_argument("extractions", type=Path)
     parser.add_argument("audits", type=Path)
     parser.add_argument("--seed", type=int, default=31)
     parser.add_argument("--min-fact-score", type=float, default=0.95)
@@ -99,11 +137,13 @@ def _ingest(argv: list[str]) -> None:
     tasks = builder.read_tasks(args.tasks)
     truths = builder.read_truths(args.truth)
     renders = builder.read_renders(args.renders)
+    extractions = builder.read_extractions(args.extractions)
     audits = builder.read_audits(args.audits)
     rows = builder.ingest(
         tasks,
         truths,
         renders,
+        extractions,
         audits,
         min_fact_score=args.min_fact_score,
         min_semantic=args.min_semantic,
@@ -138,18 +178,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="arewethesame-assistant",
         description=(
-            "ChatGPT-in-the-loop v0.3 workflow. The simulator owns truth; "
-            "assistant output is treated as auditable, untrusted language data."
+            "No-API ChatGPT-in-the-loop v0.3 workflow: simulator -> ChatGPT render -> "
+            "deterministic binding -> ChatGPT fact extraction -> ChatGPT blind judge -> ingest."
         ),
     )
     parser.add_argument(
         "command",
-        choices=("prepare", "prepare-audit", "ingest"),
+        choices=("prepare", "prepare-extraction", "prepare-audit", "ingest"),
     )
     args, rest = parser.parse_known_args()
 
     if args.command == "prepare":
         _prepare(rest)
+    elif args.command == "prepare-extraction":
+        _prepare_extraction(rest)
     elif args.command == "prepare-audit":
         _prepare_audit(rest)
     else:

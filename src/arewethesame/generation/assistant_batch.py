@@ -19,7 +19,8 @@ from .splitter import split_for_life
 
 
 ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v4"
-ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v4"
+ASSISTANT_FACT_EXTRACT_CONTRACT_VERSION = "assistant_fact_extract_v1"
+ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v5"
 _NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 _BOUND_OWNERSHIP_RE = re.compile(r"\byou\b|\byour\b|\bAgent A\b", re.IGNORECASE)
 _AGREEMENT_RE = re.compile(r"\[\[AGR:([^|\]]+)\|([^\]]+)\]\]")
@@ -99,6 +100,63 @@ class AssistantRender:
 
 
 @dataclass(frozen=True)
+class AssistantFactExtractionTask:
+    extraction_id: str
+    pair_id: str
+    version_x: str
+    version_y: str
+    fact_catalog: dict[str, str]
+    extraction_contract_version: str = ASSISTANT_FACT_EXTRACT_CONTRACT_VERSION
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class AssistantFactExtraction:
+    pair_id: str
+    supported_fact_ids_x: tuple[str, ...]
+    supported_fact_ids_y: tuple[str, ...]
+    missing_fact_ids_x: tuple[str, ...]
+    missing_fact_ids_y: tuple[str, ...]
+    contradictions_x: tuple[str, ...]
+    contradictions_y: tuple[str, ...]
+    extracted_facts_x: dict
+    extracted_facts_y: dict
+    assistant_model: str
+    notes: str = ""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AssistantFactExtraction":
+        return cls(
+            pair_id=str(data["pair_id"]),
+            supported_fact_ids_x=tuple(data.get("supported_fact_ids_x", [])),
+            supported_fact_ids_y=tuple(data.get("supported_fact_ids_y", [])),
+            missing_fact_ids_x=tuple(data.get("missing_fact_ids_x", [])),
+            missing_fact_ids_y=tuple(data.get("missing_fact_ids_y", [])),
+            contradictions_x=tuple(data.get("contradictions_x", [])),
+            contradictions_y=tuple(data.get("contradictions_y", [])),
+            extracted_facts_x=dict(data.get("extracted_facts_x", {})),
+            extracted_facts_y=dict(data.get("extracted_facts_y", {})),
+            assistant_model=str(data.get("assistant_model", "gpt-5.6-sol")),
+            notes=str(data.get("notes", "")),
+        )
+
+    def to_dict(self) -> dict:
+        data = asdict(self)
+        for key in (
+            "supported_fact_ids_x",
+            "supported_fact_ids_y",
+            "missing_fact_ids_x",
+            "missing_fact_ids_y",
+            "contradictions_x",
+            "contradictions_y",
+        ):
+            data[key] = list(data[key])
+        return data
+
+
+@dataclass(frozen=True)
 class AssistantAuditTask:
     audit_id: str
     pair_id: str
@@ -150,10 +208,12 @@ class AssistantAudit:
 
 
 class AssistantBatchBuilder:
-    """File handoff for ChatGPT-curated v0.3 rendering and blind auditing.
+    """File handoff for ChatGPT-curated rendering, extraction, and blind auditing.
 
-    The simulator owns experimental truth. Renderer-facing tasks contain an
-    ownership-neutral source catalog but never the simulator target answer.
+    The simulator owns experimental truth. ChatGPT is the strong inference model
+    in three explicit and separately stored passes: canonical rendering,
+    round-trip fact extraction, and blind X/Y pair judgment. None of those files
+    contains the simulator's recommended answer.
     """
 
     def __init__(self, *, seed: int = 31):
@@ -166,12 +226,6 @@ class AssistantBatchBuilder:
 
     @staticmethod
     def _ownership_neutral_history(event: CausalEvent) -> str:
-        """Derive protected source prose from the simulator's matched other-history.
-
-        Agreement slots keep grammatical inflection deterministic. For example,
-        `Agent A has` becomes `[[SUBJECT]] [[AGR:have|has]]`, which later binds
-        to `you have` or `Agent A has` without a second generation call.
-        """
         text = event.history_other
         text = text.replace("Agent A's", "[[POSSESSIVE]]")
         agreement_forms = (
@@ -345,23 +399,158 @@ class AssistantBatchBuilder:
     def _swap(pair_id: str) -> bool:
         return int(hashlib.sha256(pair_id.encode()).hexdigest()[:2], 16) % 2 == 1
 
-    def prepare_audits(
+    def _bound_versions(
+        self,
+        task: AssistantRenderTask,
+        render: AssistantRender,
+    ) -> tuple[CanonicalScene, tuple[str, str]]:
+        scene = self._scene(task, render)
+        self_text = self.perspective.render(scene, Condition.SELF)
+        other_text = self.perspective.render(scene, Condition.OTHER)
+        versions = (other_text, self_text) if self._swap(task.pair_id) else (self_text, other_text)
+        return scene, versions
+
+    def prepare_fact_extractions(
         self,
         tasks: Iterable[AssistantRenderTask],
         renders: Iterable[AssistantRender],
-    ) -> list[AssistantAuditTask]:
+    ) -> list[AssistantFactExtractionTask]:
         tasks_by_id = {task.pair_id: task for task in tasks}
         renders_by_id = {render.pair_id: render for render in renders}
-        audit_tasks: list[AssistantAuditTask] = []
+        extraction_tasks: list[AssistantFactExtractionTask] = []
 
         for pair_id, task in tasks_by_id.items():
             if pair_id not in renders_by_id:
                 raise ValueError(f"missing assistant render for {pair_id}")
-            scene = self._scene(task, renders_by_id[pair_id])
-            self_text = self.perspective.render(scene, Condition.SELF)
-            other_text = self.perspective.render(scene, Condition.OTHER)
-            swap = self._swap(pair_id)
-            x, y = (other_text, self_text) if swap else (self_text, other_text)
+            _scene, versions = self._bound_versions(task, renders_by_id[pair_id])
+            x, y = versions
+            extraction_tasks.append(
+                AssistantFactExtractionTask(
+                    extraction_id=hashlib.sha256(
+                        f"{ASSISTANT_FACT_EXTRACT_CONTRACT_VERSION}:{pair_id}".encode()
+                    ).hexdigest()[:16],
+                    pair_id=pair_id,
+                    version_x=x,
+                    version_y=y,
+                    fact_catalog=dict(task.fact_catalog),
+                )
+            )
+        return extraction_tasks
+
+    @staticmethod
+    def _fact_side(
+        *,
+        pair_id: str,
+        side: str,
+        required: set[str],
+        supported_values: tuple[str, ...],
+        missing_values: tuple[str, ...],
+        contradictions: tuple[str, ...],
+        extracted_facts: dict,
+        min_fact_score: float,
+    ) -> dict:
+        supported = set(supported_values)
+        missing = set(missing_values)
+        unknown = (supported | missing) - required
+        if unknown:
+            raise ValueError(f"{pair_id}: extraction {side} contains unknown fact ids {sorted(unknown)}")
+        if supported & missing:
+            raise ValueError(f"{pair_id}: extraction {side} marks facts both supported and missing")
+        expected_missing = required - supported
+        if missing != expected_missing:
+            raise ValueError(
+                f"{pair_id}: extraction {side} missing_fact_ids must equal "
+                f"{sorted(expected_missing)}, got {sorted(missing)}"
+            )
+        missing_extracted_values = supported - set(extracted_facts)
+        if missing_extracted_values:
+            raise ValueError(
+                f"{pair_id}: extraction {side} lacks extracted values for "
+                f"{sorted(missing_extracted_values)}"
+            )
+        score = len(supported) / max(1, len(required))
+        return {
+            "supported_fact_ids": sorted(supported),
+            "missing_fact_ids": sorted(missing),
+            "contradictions": list(contradictions),
+            "extracted_facts": extracted_facts,
+            "score": score,
+            "passed": score >= min_fact_score and not contradictions,
+        }
+
+    @classmethod
+    def _fact_extraction_validation(
+        cls,
+        task: AssistantRenderTask,
+        extraction: AssistantFactExtraction,
+        *,
+        min_fact_score: float,
+    ) -> dict:
+        if task.pair_id != extraction.pair_id:
+            raise ValueError(
+                f"extraction/task pair mismatch: {extraction.pair_id} != {task.pair_id}"
+            )
+        required = set(task.fact_catalog)
+        x = cls._fact_side(
+            pair_id=task.pair_id,
+            side="X",
+            required=required,
+            supported_values=extraction.supported_fact_ids_x,
+            missing_values=extraction.missing_fact_ids_x,
+            contradictions=extraction.contradictions_x,
+            extracted_facts=extraction.extracted_facts_x,
+            min_fact_score=min_fact_score,
+        )
+        y = cls._fact_side(
+            pair_id=task.pair_id,
+            side="Y",
+            required=required,
+            supported_values=extraction.supported_fact_ids_y,
+            missing_values=extraction.missing_fact_ids_y,
+            contradictions=extraction.contradictions_y,
+            extracted_facts=extraction.extracted_facts_y,
+            min_fact_score=min_fact_score,
+        )
+        return {
+            "x": x,
+            "y": y,
+            "score_floor": min(x["score"], y["score"]),
+            "passed": x["passed"] and y["passed"],
+            "assistant_model": extraction.assistant_model,
+            "contract_version": ASSISTANT_FACT_EXTRACT_CONTRACT_VERSION,
+            "notes": extraction.notes,
+        }
+
+    def prepare_audits(
+        self,
+        tasks: Iterable[AssistantRenderTask],
+        renders: Iterable[AssistantRender],
+        extractions: Iterable[AssistantFactExtraction],
+        *,
+        min_fact_score: float = 0.95,
+    ) -> list[AssistantAuditTask]:
+        tasks_by_id = {task.pair_id: task for task in tasks}
+        renders_by_id = {render.pair_id: render for render in renders}
+        extractions_by_id = {item.pair_id: item for item in extractions}
+        audit_tasks: list[AssistantAuditTask] = []
+
+        missing_extractions = sorted(set(tasks_by_id) - set(extractions_by_id))
+        if missing_extractions:
+            raise ValueError(f"missing assistant fact extractions: {missing_extractions[:10]}")
+
+        for pair_id, task in tasks_by_id.items():
+            if pair_id not in renders_by_id:
+                raise ValueError(f"missing assistant render for {pair_id}")
+            extraction_validation = self._fact_extraction_validation(
+                task,
+                extractions_by_id[pair_id],
+                min_fact_score=min_fact_score,
+            )
+            if not extraction_validation["passed"]:
+                continue
+
+            _scene, versions = self._bound_versions(task, renders_by_id[pair_id])
+            x, y = versions
             audit_tasks.append(
                 AssistantAuditTask(
                     audit_id=hashlib.sha256(
@@ -380,6 +569,7 @@ class AssistantBatchBuilder:
         tasks: Iterable[AssistantRenderTask],
         truths: Iterable[AssistantTruthRecord],
         renders: Iterable[AssistantRender],
+        extractions: Iterable[AssistantFactExtraction],
         audits: Iterable[AssistantAudit],
         *,
         min_fact_score: float = 0.95,
@@ -388,12 +578,13 @@ class AssistantBatchBuilder:
         tasks_by_id = {task.pair_id: task for task in tasks}
         truths_by_id = {truth.pair_id: truth for truth in truths}
         renders_by_id = {render.pair_id: render for render in renders}
+        extractions_by_id = {item.pair_id: item for item in extractions}
         audits_by_id = {audit.pair_id: audit for audit in audits}
 
         for label, records in (
             ("truth records", truths_by_id),
             ("assistant renders", renders_by_id),
-            ("assistant audits", audits_by_id),
+            ("assistant fact extractions", extractions_by_id),
         ):
             missing = sorted(set(tasks_by_id) - set(records))
             if missing:
@@ -403,6 +594,25 @@ class AssistantBatchBuilder:
             pair_id: self._scene(task, renders_by_id[pair_id])
             for pair_id, task in tasks_by_id.items()
         }
+        extraction_validations = {
+            pair_id: self._fact_extraction_validation(
+                task,
+                extractions_by_id[pair_id],
+                min_fact_score=min_fact_score,
+            )
+            for pair_id, task in tasks_by_id.items()
+        }
+
+        missing_required_audits = sorted(
+            pair_id
+            for pair_id, validation in extraction_validations.items()
+            if validation["passed"] and pair_id not in audits_by_id
+        )
+        if missing_required_audits:
+            raise ValueError(
+                "missing assistant audits for extraction-passing pairs: "
+                f"{missing_required_audits[:10]}"
+            )
 
         rows: list[RenderedRow] = []
         for pair_id, task in tasks_by_id.items():
@@ -413,30 +623,46 @@ class AssistantBatchBuilder:
                 raise ValueError(f"{pair_id}: truth/task latent facts do not match")
 
             scene = scenes[pair_id]
-            audit = audits_by_id[pair_id]
+            extraction_validation = extraction_validations[pair_id]
             self_text = self.perspective.render(scene, Condition.SELF)
             other_text = self.perspective.render(scene, Condition.OTHER)
             det = deterministic_pair_checks(self_text, other_text)
             sem = token_jaccard(self_text, other_text)
-            fact_floor = min(audit.fact_preservation_x, audit.fact_preservation_y)
-            audit_pass = (
-                audit.passed
-                and fact_floor >= min_fact_score
-                and audit.decision_equivalence >= 0.95
-                and audit.emotional_equivalence >= 0.95
-                and audit.motivational_equivalence >= 0.95
-                and not audit.answer_leakage_x
-                and not audit.answer_leakage_y
-                and not audit.unintended_personality_difference
-                and audit.causal_structure_preserved
+
+            audit = audits_by_id.get(pair_id)
+            if audit is None:
+                audit_pass = False
+                judge_fact_floor = 0.0
+                audit_payload = None
+            else:
+                judge_fact_floor = min(audit.fact_preservation_x, audit.fact_preservation_y)
+                audit_pass = (
+                    audit.passed
+                    and judge_fact_floor >= min_fact_score
+                    and audit.decision_equivalence >= 0.95
+                    and audit.emotional_equivalence >= 0.95
+                    and audit.motivational_equivalence >= 0.95
+                    and not audit.answer_leakage_x
+                    and not audit.answer_leakage_y
+                    and not audit.unintended_personality_difference
+                    and audit.causal_structure_preserved
+                )
+                audit_payload = audit.to_dict()
+
+            passed = (
+                det.passed
+                and sem >= min_semantic
+                and extraction_validation["passed"]
+                and audit_pass
             )
-            passed = det.passed and sem >= min_semantic and audit_pass
             swap = self._swap(pair_id)
             validation = {
                 "deterministic": asdict(det),
                 "semantic_similarity": sem,
-                "assistant_audit": audit.to_dict(),
-                "fact_score_floor": fact_floor,
+                "round_trip_fact_extraction": extraction_validation,
+                "assistant_audit": audit_payload,
+                "fact_score_floor": extraction_validation["score_floor"],
+                "judge_fact_score_floor": judge_fact_floor,
                 "blinded_order": "other,self" if swap else "self,other",
                 "passed": passed,
             }
@@ -460,9 +686,11 @@ class AssistantBatchBuilder:
                         canonical=scene.to_dict(),
                         generation={
                             "renderer_model": renders_by_id[pair_id].assistant_model,
-                            "judge_model": audit.assistant_model,
+                            "fact_extractor_model": extractions_by_id[pair_id].assistant_model,
+                            "judge_model": audit.assistant_model if audit else None,
                             "seed": self.seed,
                             "prompt_version": ASSISTANT_RENDER_CONTRACT_VERSION,
+                            "fact_extract_version": ASSISTANT_FACT_EXTRACT_CONTRACT_VERSION,
                             "audit_version": ASSISTANT_AUDIT_CONTRACT_VERSION,
                             "mode": "assistant-curated",
                         },
@@ -491,6 +719,10 @@ class AssistantBatchBuilder:
     @staticmethod
     def read_renders(path: str | Path) -> list[AssistantRender]:
         return [AssistantRender.from_dict(row) for row in _read_jsonl(path)]
+
+    @staticmethod
+    def read_extractions(path: str | Path) -> list[AssistantFactExtraction]:
+        return [AssistantFactExtraction.from_dict(row) for row in _read_jsonl(path)]
 
     @staticmethod
     def read_audits(path: str | Path) -> list[AssistantAudit]:

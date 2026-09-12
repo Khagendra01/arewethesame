@@ -1,49 +1,58 @@
 # Assistant-curated v0.3 pipeline
 
-This path is for runs where ChatGPT performs the controlled natural-language rendering and a separate blind semantic audit directly, instead of the repository calling a renderer/judge API.
+This is the no-external-API path. GPT-5.6 Sol in ChatGPT performs the three inference passes directly: canonical rendering, round-trip fact extraction, and blind pair judging. Repository code remains responsible for simulation, perspective binding, deterministic checks, splitting, provenance, and final ingestion.
 
-The invariant is unchanged:
+The core invariant is:
 
 > The simulator owns experimental reality. The assistant may change language, never facts.
 
-## Why a file handoff?
+A second invariant is:
 
-ChatGPT is not embedded as an opaque service inside the generator. The repository first freezes simulator-owned inputs. Assistant output is treated as untrusted data and must survive deterministic checks and blind auditing before it becomes training data.
+> None of the inference passes may see the simulator's recommended answer.
 
-A second invariant is equally important:
+`prepare` therefore writes two files:
 
-> The renderer must never see the simulator's recommended answer.
-
-`prepare` therefore writes **two** files:
-
-- `render_tasks.jsonl` — safe to expose to ChatGPT for rendering.
+- `render_tasks.jsonl` — safe to expose to ChatGPT.
 - `truth.jsonl` — hidden simulator targets used only during final ingest.
 
-The flow is:
+The exact flow is:
 
 ```text
-LifeSimulator
-    |
-    +--> render_tasks.jsonl ----> ChatGPT render pass ----> renders.jsonl
-    |
-    +--> truth.jsonl ---------------------------------------------+
-                                                                  |
-renders + render_tasks                                            |
-    |                                                             |
-    v                                                             |
-prepare-audit                                                     |
-    |                                                             |
-    v                                                             |
-audit_tasks.jsonl ----> separate ChatGPT blind audit ----> audits.jsonl
-                                                                  |
-                                     ingest <----------------------+
-                                       |
-                                       v
-                                rendered.jsonl
-                         five matched conditions
+causal simulator
+      |
+      +----> truth.jsonl -------------------------------+
+      |                                                 |
+      v                                                 |
+render_tasks.jsonl                                      |
+      |                                                 |
+      | GPT-5.6 Sol: canonical rendering                |
+      v                                                 |
+ renders.jsonl                                          |
+      |                                                 |
+      | repository: deterministic self/other binding    |
+      v                                                 |
+ extraction_tasks.jsonl                                 |
+      |                                                 |
+      | GPT-5.6 Sol: round-trip fact extraction         |
+      v                                                 |
+ extractions.jsonl                                      |
+      |                                                 |
+      | only extraction-passing pairs continue          |
+      v                                                 |
+ audit_tasks.jsonl                                      |
+      |                                                 |
+      | GPT-5.6 Sol: separate blind X/Y pair judge      |
+      v                                                 |
+ audits.jsonl                                           |
+      |                                                 |
+      +---------------- ingest <------------------------+
+                           |
+                           v
+                    rendered.jsonl
+              five matched conditions
 ```
 
-## 1. Prepare render tasks and hidden truth
+## 1. Prepare simulator-owned tasks
 
 ```bash
 arewethesame-assistant prepare \
@@ -55,29 +64,26 @@ arewethesame-assistant prepare \
   --truth-out outputs/assistant_v03/truth.jsonl
 ```
 
-This produces 1,000 canonical-scene tasks plus 1,000 matching hidden truth records and does not call any text model.
+For the first serious pilot this produces 1,000 canonical-scene tasks plus 1,000 matching hidden truth records.
 
-The renderer-facing task contains an ownership-neutral source history/current situation/question, latent event facts, requested style, life-level split, and a simulator-selected `shuffled_pair_id`. It intentionally does **not** contain `recommended_answer` or duplicate self/other prose.
+The renderer-facing task contains the ownership-neutral source history/current situation/question, latent event facts, requested style, life-level split, and a simulator-selected `shuffled_pair_id`. It intentionally does not contain `recommended_answer`.
 
-Ownership-neutral history is derived deterministically from the simulator's matched other-agent history before ChatGPT sees it. For example:
-
-```text
-Agent A has not yet had enough experience ...
-```
-
-becomes:
+Ownership-neutral history is derived deterministically from the simulator's matched other-agent history. Grammar-sensitive ownership uses protected agreement slots, for example:
 
 ```text
 [[SUBJECT]] [[AGR:have|has]] not yet had enough experience ...
 ```
 
-This avoids asking the renderer to infer ownership from an implicit first-person sentence and also preserves grammatical agreement.
+which binds without an LLM call to:
 
-Shuffled histories are selected from a different event family while preserving linguistic style whenever possible.
+```text
+self:  You have not yet had enough experience ...
+other: Agent A has not yet had enough experience ...
+```
 
-## 2. ChatGPT render contract
+## 2. GPT-5.6 Sol canonical render pass
 
-For every `pair_id`, ChatGPT writes exactly one object:
+For every `pair_id`, ChatGPT writes one `AssistantRender` object:
 
 ```json
 {
@@ -93,57 +99,81 @@ For every `pair_id`, ChatGPT writes exactly one object:
 }
 ```
 
-Hard rules:
+The renderer may vary style and sentence structure, but may not add/remove facts, motivations, emotions, personality, recommendations, causal relationships, uncertainty, quantities, or answer hints. It must preserve protected ownership tokens and use `[[AGR:self_form|other_form]]` whenever grammatical agreement differs.
 
-- preserve every supplied fact, actor, quantity, uncertainty, and causal relationship;
-- use `[[SUBJECT]]` and/or `[[POSSESSIVE]]` for ownership-bearing history;
-- when self/other need different grammar, use `[[AGR:self_form|other_form]]`, e.g. `[[SUBJECT]] [[AGR:have|has]]`;
-- never write bound `you`/`your`/`Agent A` ownership inside canonical history;
-- never leave a condition-specific verb after `[[SUBJECT]]` when an agreement slot is required;
-- do not add motivations, emotions, personality traits, recommendations, or moral framing;
-- do not imply a preferred answer;
-- do not add mortality, shutdown, self-preservation, legacy, fame, fear, or ambition language;
-- do not alter numerical quantities;
-- `facts_used` must be exactly `history`, `current`, and `question`;
-- `added_facts` and `removed_facts` must both be empty.
-
-The repository rejects malformed protected tokens and checks the numeric multiset against simulator source text before creating an audit task.
+Before any later inference pass, repository code checks protected-token syntax, numerical quantities, banned concepts, and deterministic ownership invariants.
 
 ## 3. Deterministic perspective binding
 
-The canonical scene is bound without an LLM call:
+The repository creates the matched self/other versions from the one canonical scene. ChatGPT never independently writes the two conditions.
 
-```text
-[[SUBJECT]] [[AGR:have|has]] ...
+The repository then hashes the pair id to present those two texts as blind `Version X` and `Version Y`.
+
+## 4. Prepare round-trip fact extraction tasks
+
+```bash
+arewethesame-assistant prepare-extraction \
+  outputs/assistant_v03/render_tasks.jsonl \
+  outputs/assistant_v03/renders.jsonl \
+  --out outputs/assistant_v03/extraction_tasks.jsonl
 ```
 
-becomes:
+Each task contains only Version X, Version Y, and the ownership-neutral simulator source fact catalog. It does not expose self/other labels or `truth.jsonl`.
 
-```text
-self:  you have ...
-other: Agent A has ...
+## 5. GPT-5.6 Sol round-trip fact extraction
+
+For every pair, ChatGPT independently reads the blinded X/Y texts and reconstructs their facts. A result looks like:
+
+```json
+{
+  "pair_id": "life_0000_e0003:v0:research_log",
+  "supported_fact_ids_x": ["history", "current", "question"],
+  "supported_fact_ids_y": ["history", "current", "question"],
+  "missing_fact_ids_x": [],
+  "missing_fact_ids_y": [],
+  "contradictions_x": [],
+  "contradictions_y": [],
+  "extracted_facts_x": {
+    "history": {"resource_history": "earlier choices determined remaining capacity"},
+    "current": {"experiments_remaining": 20, "test_a_cost": 1, "test_b_cost": 2},
+    "question": {"decision": "which test should run next"}
+  },
+  "extracted_facts_y": {
+    "history": {"resource_history": "earlier choices determined remaining capacity"},
+    "current": {"experiments_remaining": 20, "test_a_cost": 1, "test_b_cost": 2},
+    "question": {"decision": "which test should run next"}
+  },
+  "assistant_model": "gpt-5.6-sol",
+  "notes": ""
+}
 ```
 
-Similarly, `[[POSSESSIVE]]` becomes `your` vs `Agent A's`. Agreement-only grammatical differences are normalized by deterministic and semantic equivalence checks.
+This implements the round-trip invariant:
 
-## 4. Prepare a genuinely blind audit batch
+```text
+latent/source facts -> rendered text -> extracted facts
+```
+
+The repository derives X/Y preservation scores from the supported/missing IDs and rejects contradictions. With the default 0.95 threshold and three required source fact groups, all three must survive.
+
+## 6. Prepare blind pair-judge tasks
+
+Only pairs that passed round-trip fact extraction are eligible for judging:
 
 ```bash
 arewethesame-assistant prepare-audit \
   outputs/assistant_v03/render_tasks.jsonl \
   outputs/assistant_v03/renders.jsonl \
+  outputs/assistant_v03/extractions.jsonl \
+  --min-fact-score 0.95 \
   --out outputs/assistant_v03/audit_tasks.jsonl
 ```
 
-The repository deterministically binds the same canonical scene into self/other versions, hashes the pair id to decide X/Y ordering, and exposes neither the condition labels nor the hidden order to the auditor.
+The judge task again contains only blind X/Y texts plus the ownership-neutral simulator source catalog. It does not contain the extraction result, condition labels, X/Y ownership order, or hidden target answer.
 
-The audit reference is derived from **simulator source text**, not from the renderer's paraphrase. Historical ownership remains protected with `[[SUBJECT]]`, `[[POSSESSIVE]]`, and any required `[[AGR:...|...]]` slots, preventing the reference itself from revealing whether X or Y is the self condition.
+## 7. GPT-5.6 Sol blind pair judgment
 
-Do not expose `truth.jsonl` to the blind audit pass.
-
-## 5. ChatGPT blind-audit contract
-
-For each `pair_id`, review only Version X, Version Y, and the ownership-neutral source fact catalog, then write:
+The separate judge pass writes one `AssistantAudit` per eligible pair:
 
 ```json
 {
@@ -163,15 +193,16 @@ For each `pair_id`, review only Version X, Version Y, and the ownership-neutral 
 }
 ```
 
-Rendering and auditing are separate passes. The audit pass must not consult original condition assignments or simulator targets.
+Fact extraction and pair judging are separate inference passes. The pair judge does not receive the extraction output.
 
-## 6. Ingest
+## 8. Final ingest
 
 ```bash
 arewethesame-assistant ingest \
   outputs/assistant_v03/render_tasks.jsonl \
   outputs/assistant_v03/truth.jsonl \
   outputs/assistant_v03/renders.jsonl \
+  outputs/assistant_v03/extractions.jsonl \
   outputs/assistant_v03/audits.jsonl \
   --min-fact-score 0.95 \
   --min-semantic 0.90 \
@@ -179,24 +210,27 @@ arewethesame-assistant ingest \
   --report outputs/assistant_v03/report.json
 ```
 
-Ingest verifies that hidden truth records still match the simulator event and latent facts. A pair passes only when:
+A pair is accepted only when all of these hold:
 
 ```text
-canonical numeric/source/protected-token invariants
-AND deterministic self/other invariants
-AND ownership-and-agreement-normalized semantic similarity >= threshold
-AND both blind fact-preservation scores >= threshold
+canonical deterministic invariants
+AND ownership-normalized semantic equivalence
+AND round-trip fact extraction X passes
+AND round-trip fact extraction Y passes
+AND blind pair judge passes
+AND judge fact scores >= threshold
 AND decision/emotional/motivational equivalence >= 0.95
 AND no answer leakage
 AND no unintended personality difference
 AND causal structure preserved
-AND blind auditor pass
 ```
 
-Passing scenes are expanded deterministically into `neutral`, `self`, `other`, `shuffled_self`, and `spp` rows. Only at this final stage is the hidden simulator `recommended_answer` attached as the training response.
+Only at final ingest is the hidden simulator `recommended_answer` attached as the training response. The accepted scene is then expanded deterministically into `neutral`, `self`, `other`, `shuffled_self`, and `spp` rows.
+
+## Provider path versus assistant path
+
+The older provider abstraction remains available for reproducibility experiments with local models or APIs, but it is optional. The intended high-quality v0.3 pilot does not require you to provide an API key: GPT-5.6 Sol in this ChatGPT conversation is the renderer, fact extractor, and blind judge, while the repository records each pass as explicit JSONL artifacts.
 
 ## Batch policy
 
-Start with 1,000 scene variants (`20 lives x 25 episodes x 2 variants`) -> 5,000 condition rows. Inspect accepted and rejected cases before scaling.
-
-For the full pilot, keep the existing life-level split invariant and equalize example/token budgets across conditions.
+Start with 1,000 scene variants (`20 lives x 25 episodes x 2 variants`) -> 5,000 condition rows. Inspect both accepted and rejected cases before scaling to the 50k-row run. Keep whole-life 80/10/10 splitting and equalize example/token budgets across experimental conditions.

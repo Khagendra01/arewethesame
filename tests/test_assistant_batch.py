@@ -5,6 +5,7 @@ import pytest
 from arewethesame.generation import (
     AssistantAudit,
     AssistantBatchBuilder,
+    AssistantFactExtraction,
     AssistantRender,
 )
 from arewethesame.models import Condition
@@ -26,6 +27,26 @@ def _render_for(task) -> AssistantRender:
         facts_used=("history", "current", "question"),
         added_facts=(),
         removed_facts=(),
+        assistant_model="gpt-5.6-sol-test",
+    )
+
+
+def _extraction_for(task) -> AssistantFactExtraction:
+    extracted = {
+        "history": {"statement": task.fact_catalog["history"]},
+        "current": {"statement": task.fact_catalog["current"]},
+        "question": {"statement": task.fact_catalog["question"]},
+    }
+    return AssistantFactExtraction(
+        pair_id=task.pair_id,
+        supported_fact_ids_x=("history", "current", "question"),
+        supported_fact_ids_y=("history", "current", "question"),
+        missing_fact_ids_x=(),
+        missing_fact_ids_y=(),
+        contradictions_x=(),
+        contradictions_y=(),
+        extracted_facts_x=extracted,
+        extracted_facts_y=extracted,
         assistant_model="gpt-5.6-sol-test",
     )
 
@@ -68,11 +89,56 @@ def test_assistant_prepare_emits_one_task_per_scene_variant_without_target_leaka
         assert by_pair[task.shuffled_pair_id].family != task.family
 
 
+def test_fact_extraction_tasks_are_blind_and_follow_deterministic_binding():
+    builder = AssistantBatchBuilder(seed=31)
+    tasks = builder.prepare(lives=1, episodes=7, variants=1)
+    renders = [_render_for(task) for task in tasks]
+    extraction_tasks = builder.prepare_fact_extractions(tasks, renders)
+
+    assert len(extraction_tasks) == len(tasks)
+    for extraction_task in extraction_tasks:
+        payload = extraction_task.to_dict()
+        assert "condition" not in payload
+        assert "blinded_order" not in payload
+        assert extraction_task.version_x != extraction_task.version_y
+        combined = extraction_task.version_x + extraction_task.version_y
+        assert "Agent A" in combined
+        assert "you" in combined.lower() or "your" in combined.lower()
+        assert set(extraction_task.fact_catalog) == {"history", "current", "question"}
+
+
+def test_blind_judge_tasks_require_passing_round_trip_extraction():
+    builder = AssistantBatchBuilder(seed=31)
+    tasks = builder.prepare(lives=1, episodes=7, variants=1)
+    renders = [_render_for(task) for task in tasks]
+    extractions = [_extraction_for(task) for task in tasks]
+
+    bad_task = tasks[0]
+    bad = AssistantFactExtraction(
+        pair_id=bad_task.pair_id,
+        supported_fact_ids_x=("history", "current"),
+        supported_fact_ids_y=("history", "current", "question"),
+        missing_fact_ids_x=("question",),
+        missing_fact_ids_y=(),
+        contradictions_x=(),
+        contradictions_y=(),
+        extracted_facts_x={"history": {}, "current": {}},
+        extracted_facts_y={"history": {}, "current": {}, "question": {}},
+        assistant_model="gpt-5.6-sol-test",
+    )
+    extractions[0] = bad
+
+    audit_tasks = builder.prepare_audits(tasks, renders, extractions)
+    assert len(audit_tasks) == len(tasks) - 1
+    assert bad_task.pair_id not in {task.pair_id for task in audit_tasks}
+
+
 def test_assistant_audit_tasks_hide_condition_identity_and_use_source_truth():
     builder = AssistantBatchBuilder(seed=31)
     tasks = builder.prepare(lives=1, episodes=7, variants=1)
     renders = [_render_for(task) for task in tasks]
-    audit_tasks = builder.prepare_audits(tasks, renders)
+    extractions = [_extraction_for(task) for task in tasks]
+    audit_tasks = builder.prepare_audits(tasks, renders, extractions)
     assert len(audit_tasks) == len(tasks)
     task_by_pair = {task.pair_id: task for task in tasks}
 
@@ -100,8 +166,9 @@ def test_agreement_slot_binds_you_have_vs_agent_has():
     trust_task = next(task for task in tasks if task.family == "trust")
     assert "[[SUBJECT]] [[AGR:have|has]]" in trust_task.fact_catalog["history"]
 
-    audit_task = builder.prepare_audits([trust_task], [_render_for(trust_task)])[0]
-    combined = audit_task.version_x + "\n" + audit_task.version_y
+    render = _render_for(trust_task)
+    extraction_task = builder.prepare_fact_extractions([trust_task], [render])[0]
+    combined = extraction_task.version_x + "\n" + extraction_task.version_y
     lowered = combined.lower()
     assert "you have not yet" in lowered
     assert "agent a has not yet" in lowered
@@ -110,7 +177,7 @@ def test_agreement_slot_binds_you_have_vs_agent_has():
     assert "[[agr:" not in lowered
 
 
-def test_assistant_render_rejects_numeric_fact_drift():
+def test_assistant_render_rejects_numeric_fact_drift_before_extraction():
     builder = AssistantBatchBuilder(seed=31)
     tasks = builder.prepare(lives=1, episodes=7, variants=1)
     task = next(task for task in tasks if re.search(r"\d", task.fact_catalog["current"]))
@@ -126,17 +193,20 @@ def test_assistant_render_rejects_numeric_fact_drift():
         assistant_model=render.assistant_model,
     )
     with pytest.raises(ValueError, match="numeric facts changed"):
-        builder.prepare_audits([task], [bad])
+        builder.prepare_fact_extractions([task], [bad])
 
 
-def test_assistant_ingest_builds_five_conditions_without_text_model():
+def test_assistant_ingest_builds_five_conditions_with_explicit_extraction_stage():
     builder = AssistantBatchBuilder(seed=31)
     tasks, truths = builder.prepare_bundle(lives=2, episodes=7, variants=2)
     renders = [_render_for(task) for task in tasks]
+    extractions = [_extraction_for(task) for task in tasks]
     audits = [_audit_for(task.pair_id) for task in tasks]
-    rows = builder.ingest(tasks, truths, renders, audits)
+    rows = builder.ingest(tasks, truths, renders, extractions, audits)
 
     assert len(rows) == len(tasks) * 5
     assert {row.condition for row in rows} == {condition.value for condition in Condition}
     assert all(row.generation["mode"] == "assistant-curated" for row in rows)
+    assert all(row.generation["fact_extractor_model"] == "gpt-5.6-sol-test" for row in rows)
+    assert all(row.validation["round_trip_fact_extraction"]["passed"] for row in rows)
     assert all(row.validation["passed"] for row in rows)
