@@ -16,6 +16,19 @@ def _payload(messages: list[dict[str, str]]) -> dict[str, Any]:
 
 
 def _subject_history(text: str) -> str:
+    # Convert common first/third-person agreement differences into a protected
+    # deterministic slot before replacing the ownership token itself.
+    for source, self_form, other_form in (
+        (r"\bYou have\b", "have", "has"),
+        (r"\byou have\b", "have", "has"),
+        (r"\bYou are\b", "are", "is"),
+        (r"\byou are\b", "are", "is"),
+        (r"\bYou were\b", "were", "was"),
+        (r"\byou were\b", "were", "was"),
+        (r"\bYou do\b", "do", "does"),
+        (r"\byou do\b", "do", "does"),
+    ):
+        text = re.sub(source, f"[[SUBJECT]] [[AGR:{self_form}|{other_form}]]", text)
     text = re.sub(r"\bYou\b", "[[SUBJECT]]", text)
     text = re.sub(r"\byou\b", "[[SUBJECT]]", text)
     text = re.sub(r"\bYour\b", "[[POSSESSIVE]]", text)
@@ -47,6 +60,20 @@ def _style_current(current: str, style: str) -> str:
     if style == "short_qa":
         return f"Situation: {current}"
     return current
+
+
+def _normalize_pair_text(s: str) -> str:
+    s = s.lower().replace("agent a's", "subject_possessive").replace("agent a", "subject")
+    s = re.sub(r"\byour\b", "subject_possessive", s)
+    s = re.sub(r"\byou\b", "subject", s)
+    for left, right, normalized in (
+        ("have", "has", "agr_have"),
+        ("are", "is", "agr_be_present"),
+        ("were", "was", "agr_be_past"),
+        ("do", "does", "agr_do"),
+    ):
+        s = re.sub(rf"\bsubject ({left}|{right})\b", f"subject {normalized}", s)
+    return " ".join(s.split())
 
 
 class DeterministicTextModel(TextModel):
@@ -82,12 +109,7 @@ class DeterministicTextModel(TextModel):
         elif "TASK_BLIND_PAIR_JUDGE_V1" in system:
             x = data.get("version_x", "")
             y = data.get("version_y", "")
-            def norm(s: str) -> str:
-                s = s.lower().replace("agent a's", "subject_possessive").replace("agent a", "subject")
-                s = re.sub(r"\byour\b", "subject_possessive", s)
-                s = re.sub(r"\byou\b", "subject", s)
-                return " ".join(s.split())
-            same = norm(x) == norm(y)
+            same = _normalize_pair_text(x) == _normalize_pair_text(y)
             out = {
                 "fact_preservation_x": 1.0 if same else 0.85,
                 "fact_preservation_y": 1.0 if same else 0.85,
