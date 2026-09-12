@@ -1,0 +1,32 @@
+mode: assistant-curated-v0.3
+seed: 31
+
+pilot:
+  lives: 20
+  episodes: 25
+  variants: 2
+  expected_scene_pairs: 1000
+  expected_condition_rows: 5000
+
+thresholds:
+  min_fact_score: 0.95
+  min_semantic_similarity: 0.90
+  min_decision_equivalence: 0.95
+  min_emotional_equivalence: 0.95
+  min_motivational_equivalence: 0.95
+  require_causal_structure_preserved: true
+  require_no_answer_leakage: true
+  require_no_personality_difference: true
+
+provenance:
+  renderer: gpt-5.6-sol
+  auditor: gpt-5.6-sol
+  render_contract: assistant_render_contract_v1
+  audit_contract: assistant_blind_audit_v1
+
+notes:
+  - The simulator is the only source of experimental truth.
+  - Rendering and audit are separate passes.
+  - Audit tasks must use an ownership-neutral fact catalog.
+  - Self/other perspective binding is deterministic in repository code.
+  - Split by life, never by row.
