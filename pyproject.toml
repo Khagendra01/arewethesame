@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arewethesame"
-version = "0.2.0"
-description = "Causal matched-control experiments for studying autobiographical self-conditioning in language models"
+version = "0.3.0"
+description = "Causal matched-control rendering and validation experiments for autobiographical self-conditioning in language models"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "Khagendra01"}]
