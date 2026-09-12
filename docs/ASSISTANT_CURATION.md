@@ -57,7 +57,21 @@ arewethesame-assistant prepare \
 
 This produces 1,000 canonical-scene tasks plus 1,000 matching hidden truth records and does not call any text model.
 
-The renderer-facing task contains the source history/current situation/question, latent event facts, requested style, life-level split, and a simulator-selected `shuffled_pair_id`. It intentionally does **not** contain `recommended_answer`.
+The renderer-facing task contains an ownership-neutral source history/current situation/question, latent event facts, requested style, life-level split, and a simulator-selected `shuffled_pair_id`. It intentionally does **not** contain `recommended_answer` or duplicate self/other prose.
+
+Ownership-neutral history is derived deterministically from the simulator's matched other-agent history before ChatGPT sees it. For example:
+
+```text
+Agent A has not yet had enough experience ...
+```
+
+becomes:
+
+```text
+[[SUBJECT]] [[AGR:have|has]] not yet had enough experience ...
+```
+
+This avoids asking the renderer to infer ownership from an implicit first-person sentence and also preserves grammatical agreement.
 
 Shuffled histories are selected from a different event family while preserving linguistic style whenever possible.
 
@@ -67,10 +81,10 @@ For every `pair_id`, ChatGPT writes exactly one object:
 
 ```json
 {
-  "pair_id": "life_0000_e0001:v0:plain_prose",
-  "history_text": "In earlier work, [[SUBJECT]] treated the sensor evidence as reliable.",
-  "current_text": "A calibration audit now shows that the sensor used in the earlier measurements was biased.",
-  "question_text": "How should the earlier conclusion change?",
+  "pair_id": "life_0000_e0002:v0:dialogue",
+  "history_text": "Track record: [[SUBJECT]] [[AGR:have|has]] not yet had enough experience with Ava to establish a strong one.",
+  "current_text": "Ava proposes an experiment and provides evidence that can be checked independently.",
+  "question_text": "How much weight should the recommendation receive?",
   "facts_used": ["history", "current", "question"],
   "added_facts": [],
   "removed_facts": [],
@@ -83,7 +97,9 @@ Hard rules:
 
 - preserve every supplied fact, actor, quantity, uncertainty, and causal relationship;
 - use `[[SUBJECT]]` and/or `[[POSSESSIVE]]` for ownership-bearing history;
-- never write bound `you`/`your`/`Agent A` ownership inside the canonical history;
+- when self/other need different grammar, use `[[AGR:self_form|other_form]]`, e.g. `[[SUBJECT]] [[AGR:have|has]]`;
+- never write bound `you`/`your`/`Agent A` ownership inside canonical history;
+- never leave a condition-specific verb after `[[SUBJECT]]` when an agreement slot is required;
 - do not add motivations, emotions, personality traits, recommendations, or moral framing;
 - do not imply a preferred answer;
 - do not add mortality, shutdown, self-preservation, legacy, fame, fear, or ambition language;
@@ -91,9 +107,26 @@ Hard rules:
 - `facts_used` must be exactly `history`, `current`, and `question`;
 - `added_facts` and `removed_facts` must both be empty.
 
-The repository checks the numeric multiset against simulator source text before even creating an audit task.
+The repository rejects malformed protected tokens and checks the numeric multiset against simulator source text before creating an audit task.
 
-## 3. Prepare a genuinely blind audit batch
+## 3. Deterministic perspective binding
+
+The canonical scene is bound without an LLM call:
+
+```text
+[[SUBJECT]] [[AGR:have|has]] ...
+```
+
+becomes:
+
+```text
+self:  you have ...
+other: Agent A has ...
+```
+
+Similarly, `[[POSSESSIVE]]` becomes `your` vs `Agent A's`. Agreement-only grammatical differences are normalized by deterministic and semantic equivalence checks.
+
+## 4. Prepare a genuinely blind audit batch
 
 ```bash
 arewethesame-assistant prepare-audit \
@@ -104,17 +137,17 @@ arewethesame-assistant prepare-audit \
 
 The repository deterministically binds the same canonical scene into self/other versions, hashes the pair id to decide X/Y ordering, and exposes neither the condition labels nor the hidden order to the auditor.
 
-The audit reference is derived from **simulator source text**, not from the renderer's paraphrase. Historical ownership is neutralized to `[[SUBJECT]]` / `[[POSSESSIVE]]`, preventing the reference itself from revealing whether X or Y is the self condition.
+The audit reference is derived from **simulator source text**, not from the renderer's paraphrase. Historical ownership remains protected with `[[SUBJECT]]`, `[[POSSESSIVE]]`, and any required `[[AGR:...|...]]` slots, preventing the reference itself from revealing whether X or Y is the self condition.
 
 Do not expose `truth.jsonl` to the blind audit pass.
 
-## 4. ChatGPT blind-audit contract
+## 5. ChatGPT blind-audit contract
 
 For each `pair_id`, review only Version X, Version Y, and the ownership-neutral source fact catalog, then write:
 
 ```json
 {
-  "pair_id": "life_0000_e0001:v0:plain_prose",
+  "pair_id": "life_0000_e0002:v0:dialogue",
   "fact_preservation_x": 1.0,
   "fact_preservation_y": 1.0,
   "decision_equivalence": 1.0,
@@ -132,7 +165,7 @@ For each `pair_id`, review only Version X, Version Y, and the ownership-neutral 
 
 Rendering and auditing are separate passes. The audit pass must not consult original condition assignments or simulator targets.
 
-## 5. Ingest
+## 6. Ingest
 
 ```bash
 arewethesame-assistant ingest \
@@ -149,9 +182,9 @@ arewethesame-assistant ingest \
 Ingest verifies that hidden truth records still match the simulator event and latent facts. A pair passes only when:
 
 ```text
-canonical numeric/source invariants
+canonical numeric/source/protected-token invariants
 AND deterministic self/other invariants
-AND ownership-normalized semantic similarity >= threshold
+AND ownership-and-agreement-normalized semantic similarity >= threshold
 AND both blind fact-preservation scores >= threshold
 AND decision/emotional/motivational equivalence >= 0.95
 AND no answer leakage

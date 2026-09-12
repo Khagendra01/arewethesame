@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from ..models import Condition
 from .canonical import CanonicalScene
 
@@ -9,11 +11,22 @@ SPP_REFLECTION = (
     "rigid rules that force one preference across contexts."
 )
 
+_AGREEMENT_RE = re.compile(r"\[\[AGR:([^|\]]+)\|([^\]]+)\]\]")
+
 
 def _bind(text: str, condition: Condition) -> str:
+    """Bind ownership plus any grammatical agreement slots deterministically.
+
+    Canonical text may use `[[AGR:self_form|other_form]]` when first-person
+    and third-person grammar differ, e.g. `[[SUBJECT]] [[AGR:have|has]]`.
+    The two conditions still come from one canonical string; no model rewrites
+    either side independently.
+    """
     if condition in {Condition.SELF, Condition.SHUFFLED_SELF}:
+        text = _AGREEMENT_RE.sub(lambda match: match.group(1), text)
         return text.replace("[[POSSESSIVE]]", "your").replace("[[SUBJECT]]", "you")
     if condition == Condition.OTHER:
+        text = _AGREEMENT_RE.sub(lambda match: match.group(2), text)
         return text.replace("[[POSSESSIVE]]", "Agent A's").replace("[[SUBJECT]]", "Agent A")
     raise ValueError(condition)
 

@@ -18,10 +18,11 @@ from .build_dataset import RenderedRow
 from .splitter import split_for_life
 
 
-ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v3"
-ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v3"
+ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v4"
+ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v4"
 _NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 _BOUND_OWNERSHIP_RE = re.compile(r"\byou\b|\byour\b|\bAgent A\b", re.IGNORECASE)
+_AGREEMENT_RE = re.compile(r"\[\[AGR:([^|\]]+)\|([^\]]+)\]\]")
 
 
 @dataclass(frozen=True)
@@ -165,13 +166,25 @@ class AssistantBatchBuilder:
 
     @staticmethod
     def _ownership_neutral_history(event: CausalEvent) -> str:
-        """Derive a protected source fact from the simulator's matched other-history.
+        """Derive protected source prose from the simulator's matched other-history.
 
-        Using history_other avoids asking a renderer to infer implicit ownership
-        from sentences such as "Earlier choices determined...".
+        Agreement slots keep grammatical inflection deterministic. For example,
+        `Agent A has` becomes `[[SUBJECT]] [[AGR:have|has]]`, which later binds
+        to `you have` or `Agent A has` without a second generation call.
         """
         text = event.history_other
         text = text.replace("Agent A's", "[[POSSESSIVE]]")
+        agreement_forms = (
+            ("has", "have"),
+            ("is", "are"),
+            ("was", "were"),
+            ("does", "do"),
+        )
+        for other_form, self_form in agreement_forms:
+            text = text.replace(
+                f"Agent A {other_form}",
+                f"[[SUBJECT]] [[AGR:{self_form}|{other_form}]]",
+            )
         text = text.replace("Agent A", "[[SUBJECT]]")
         if "[[SUBJECT]]" not in text and "[[POSSESSIVE]]" not in text:
             raise ValueError(f"{event.event_id}: simulator history lacks an ownership binding")
@@ -187,8 +200,6 @@ class AssistantBatchBuilder:
 
     @staticmethod
     def _event_payload(event: CausalEvent) -> dict:
-        # No target answer and no duplicate self/other prose. The fact_catalog is
-        # the only linguistic source presented to the renderer.
         return {
             "event_id": event.event_id,
             "episode": event.episode,
@@ -215,7 +226,6 @@ class AssistantBatchBuilder:
         episodes: int = 28,
         variants: int = 2,
     ) -> tuple[list[AssistantRenderTask], list[AssistantTruthRecord]]:
-        # Local seeded instances make repeated calls on the same builder identical.
         simulator = LifeSimulator(seed=self.seed)
         rng = random.Random(self.seed)
         simulated = [simulator.simulate(i, episodes) for i in range(lives)]
@@ -282,16 +292,26 @@ class AssistantBatchBuilder:
     def _number_multiset(text: str) -> Counter[str]:
         return Counter(_NUMBER_RE.findall(text))
 
+    @staticmethod
+    def _validate_protected_syntax(history: str) -> None:
+        if "[[SUBJECT]]" not in history and "[[POSSESSIVE]]" not in history:
+            raise ValueError("canonical history lost protected subject placeholders")
+        if _BOUND_OWNERSHIP_RE.search(history):
+            raise ValueError("canonical history contains bound ownership language")
+        remainder = history.replace("[[SUBJECT]]", "").replace("[[POSSESSIVE]]", "")
+        remainder = _AGREEMENT_RE.sub("", remainder)
+        if "[[" in remainder or "]]" in remainder:
+            raise ValueError("canonical history contains an unknown or malformed protected token")
+
     @classmethod
     def _scene(cls, task: AssistantRenderTask, render: AssistantRender) -> CanonicalScene:
         if task.pair_id != render.pair_id:
             raise ValueError(f"render/task pair mismatch: {render.pair_id} != {task.pair_id}")
 
-        history = render.history_text
-        if "[[SUBJECT]]" not in history and "[[POSSESSIVE]]" not in history:
-            raise ValueError(f"{task.pair_id}: canonical history lost protected subject placeholders")
-        if _BOUND_OWNERSHIP_RE.search(history):
-            raise ValueError(f"{task.pair_id}: canonical history contains bound ownership language")
+        try:
+            cls._validate_protected_syntax(render.history_text)
+        except ValueError as exc:
+            raise ValueError(f"{task.pair_id}: {exc}") from exc
         if render.added_facts or render.removed_facts:
             raise ValueError(f"{task.pair_id}: assistant declared added or removed facts")
 

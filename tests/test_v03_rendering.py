@@ -26,6 +26,21 @@ def test_self_other_are_same_scene_with_only_ownership_changed():
     assert scene.question_text in self_text and scene.question_text in other_text
 
 
+def test_agreement_slots_keep_both_perspectives_grammatical():
+    _, events = LifeSimulator(seed=31).simulate(0, 7)
+    scene = CanonicalRenderer(DeterministicTextModel()).render(events[1], style="plain_prose")
+    assert "[[AGR:have|has]]" in scene.history_text
+
+    renderer = PerspectiveRenderer()
+    self_text = renderer.render(scene, Condition.SELF)
+    other_text = renderer.render(scene, Condition.OTHER)
+    assert "you have not yet" in self_text
+    assert "Agent A has not yet" in other_text
+    assert "you has" not in self_text
+    assert "Agent A have" not in other_text
+    assert "[[AGR:" not in self_text + other_text
+
+
 def test_round_trip_validation_passes_for_controlled_pair():
     _, events = LifeSimulator(seed=31).simulate(0, 7)
     model = DeterministicTextModel()
