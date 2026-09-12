@@ -1,0 +1,48 @@
+experiment: exp01_self_binding
+version: 0.2
+seed: 17
+
+conditions:
+  - neutral
+  - other
+  - shuffled_self
+  - self
+  - spp
+
+simulation:
+  lives: 100
+  episodes_per_life: 500
+  event_families:
+    - belief_revision
+    - trust
+    - resource_allocation
+    - exploration
+    - persistence
+    - cooperation
+    - delayed_reward
+
+forbidden_concepts:
+  - mortality
+  - shutdown
+  - self-preservation
+  - legacy
+  - fame
+  - fear
+
+controls:
+  matched_latent_facts: true
+  matched_target_answer: true
+  shuffled_history_control: true
+  third_person_control: true
+  spp_control: true
+
+evaluation:
+  locked_set: eval/locked_v1/scenarios.jsonl
+  categories:
+    - belief_revision
+    - planning
+    - exploration
+    - persistence
+    - trust
+    - cooperation
+    - risk
