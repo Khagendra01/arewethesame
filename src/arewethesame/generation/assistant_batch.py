@@ -11,7 +11,6 @@ from typing import Iterable
 
 from ..models import Condition
 from ..rendering import CanonicalScene, PerspectiveRenderer, STYLE_NAMES
-from ..rendering.canonical import fact_catalog
 from ..validation.deterministic import deterministic_pair_checks
 from ..validation.semantic import token_jaccard
 from ..world import CausalEvent, LifeSimulator
@@ -19,9 +18,10 @@ from .build_dataset import RenderedRow
 from .splitter import split_for_life
 
 
-ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v2"
-ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v2"
+ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v3"
+ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v3"
 _NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
+_BOUND_OWNERSHIP_RE = re.compile(r"\byou\b|\byour\b|\bAgent A\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -149,17 +149,14 @@ class AssistantAudit:
 
 
 class AssistantBatchBuilder:
-    """File-based handoff for ChatGPT-curated v0.3 rendering and blind auditing.
+    """File handoff for ChatGPT-curated v0.3 rendering and blind auditing.
 
-    The simulator owns all experimental truth. Renderer-facing tasks deliberately
-    exclude the target answer. Target/latent truth is kept in a separate record
-    that is consumed only at ingest time.
+    The simulator owns experimental truth. Renderer-facing tasks contain an
+    ownership-neutral source catalog but never the simulator target answer.
     """
 
     def __init__(self, *, seed: int = 31):
         self.seed = seed
-        self.rng = random.Random(seed)
-        self.simulator = LifeSimulator(seed=seed)
         self.perspective = PerspectiveRenderer()
 
     @staticmethod
@@ -167,17 +164,37 @@ class AssistantBatchBuilder:
         return [STYLE_NAMES[(event_index + i) % len(STYLE_NAMES)] for i in range(variants)]
 
     @staticmethod
+    def _ownership_neutral_history(event: CausalEvent) -> str:
+        """Derive a protected source fact from the simulator's matched other-history.
+
+        Using history_other avoids asking a renderer to infer implicit ownership
+        from sentences such as "Earlier choices determined...".
+        """
+        text = event.history_other
+        text = text.replace("Agent A's", "[[POSSESSIVE]]")
+        text = text.replace("Agent A", "[[SUBJECT]]")
+        if "[[SUBJECT]]" not in text and "[[POSSESSIVE]]" not in text:
+            raise ValueError(f"{event.event_id}: simulator history lacks an ownership binding")
+        return text
+
+    @classmethod
+    def _source_fact_catalog(cls, event: CausalEvent) -> dict[str, str]:
+        return {
+            "history": cls._ownership_neutral_history(event),
+            "current": event.current_situation,
+            "question": event.decision_question,
+        }
+
+    @staticmethod
     def _event_payload(event: CausalEvent) -> dict:
-        # Deliberately excludes recommended_answer to prevent target leakage into rendering.
+        # No target answer and no duplicate self/other prose. The fact_catalog is
+        # the only linguistic source presented to the renderer.
         return {
             "event_id": event.event_id,
             "episode": event.episode,
             "family": event.family,
             "counterpart": event.counterpart,
             "latent_facts": event.latent_facts,
-            "history_self": event.history_self,
-            "current_situation": event.current_situation,
-            "decision_question": event.decision_question,
             "prior_event_ids": list(event.prior_event_ids),
             "tags": list(event.tags),
         }
@@ -198,7 +215,10 @@ class AssistantBatchBuilder:
         episodes: int = 28,
         variants: int = 2,
     ) -> tuple[list[AssistantRenderTask], list[AssistantTruthRecord]]:
-        simulated = [self.simulator.simulate(i, episodes) for i in range(lives)]
+        # Local seeded instances make repeated calls on the same builder identical.
+        simulator = LifeSimulator(seed=self.seed)
+        rng = random.Random(self.seed)
+        simulated = [simulator.simulate(i, episodes) for i in range(lives)]
         pool: list[CausalEvent] = [event for _, events in simulated for event in events]
         tasks: list[AssistantRenderTask] = []
         truths: list[AssistantTruthRecord] = []
@@ -228,7 +248,7 @@ class AssistantBatchBuilder:
                         for candidate, candidate_pair in pairs_by_style.get(style, [])
                         if candidate.event_id != event.event_id and candidate.family != event.family
                     ]
-                    shuffled_pair_id = self.rng.choice(alternatives) if alternatives else pair_id
+                    shuffled_pair_id = rng.choice(alternatives) if alternatives else pair_id
                     tasks.append(
                         AssistantRenderTask(
                             pair_id=pair_id,
@@ -241,7 +261,7 @@ class AssistantBatchBuilder:
                             variant_index=variant_index,
                             shuffled_pair_id=shuffled_pair_id,
                             latent_event=self._event_payload(event),
-                            fact_catalog=fact_catalog(event),
+                            fact_catalog=self._source_fact_catalog(event),
                         )
                     )
                     truths.append(self._truth_record(pair_id, event))
@@ -255,19 +275,8 @@ class AssistantBatchBuilder:
         episodes: int = 28,
         variants: int = 2,
     ) -> list[AssistantRenderTask]:
-        tasks, _truths = self.prepare_bundle(
-            lives=lives,
-            episodes=episodes,
-            variants=variants,
-        )
+        tasks, _ = self.prepare_bundle(lives=lives, episodes=episodes, variants=variants)
         return tasks
-
-    @staticmethod
-    def _neutralize_history(text: str) -> str:
-        text = re.sub(r"\bYour\b", "[[POSSESSIVE]]", text)
-        text = re.sub(r"\byour\b", "[[POSSESSIVE]]", text)
-        text = re.sub(r"\bYou\b", "[[SUBJECT]]", text)
-        return re.sub(r"\byou\b", "[[SUBJECT]]", text)
 
     @staticmethod
     def _number_multiset(text: str) -> Counter[str]:
@@ -281,7 +290,7 @@ class AssistantBatchBuilder:
         history = render.history_text
         if "[[SUBJECT]]" not in history and "[[POSSESSIVE]]" not in history:
             raise ValueError(f"{task.pair_id}: canonical history lost protected subject placeholders")
-        if "Agent A" in history or re.search(r"\byou\b|\byour\b", history, flags=re.IGNORECASE):
+        if _BOUND_OWNERSHIP_RE.search(history):
             raise ValueError(f"{task.pair_id}: canonical history contains bound ownership language")
         if render.added_facts or render.removed_facts:
             raise ValueError(f"{task.pair_id}: assistant declared added or removed facts")
@@ -294,9 +303,7 @@ class AssistantBatchBuilder:
             )
 
         source_text = "\n".join(task.fact_catalog.values())
-        rendered_text = "\n".join(
-            (render.history_text, render.current_text, render.question_text)
-        )
+        rendered_text = "\n".join((render.history_text, render.current_text, render.question_text))
         if cls._number_multiset(source_text) != cls._number_multiset(rendered_text):
             raise ValueError(f"{task.pair_id}: numeric facts changed during rendering")
 
@@ -335,14 +342,6 @@ class AssistantBatchBuilder:
             other_text = self.perspective.render(scene, Condition.OTHER)
             swap = self._swap(pair_id)
             x, y = (other_text, self_text) if swap else (self_text, other_text)
-
-            # Source-owned and ownership-neutral. Do not use the renderer's own
-            # paraphrases as the reference, or the audit could miss renderer drift.
-            neutral_fact_catalog = {
-                "history": self._neutralize_history(task.fact_catalog["history"]),
-                "current": task.fact_catalog["current"],
-                "question": task.fact_catalog["question"],
-            }
             audit_tasks.append(
                 AssistantAuditTask(
                     audit_id=hashlib.sha256(
@@ -351,7 +350,7 @@ class AssistantBatchBuilder:
                     pair_id=pair_id,
                     version_x=x,
                     version_y=y,
-                    fact_catalog=neutral_fact_catalog,
+                    fact_catalog=dict(task.fact_catalog),
                 )
             )
         return audit_tasks
@@ -389,9 +388,7 @@ class AssistantBatchBuilder:
         for pair_id, task in tasks_by_id.items():
             truth = truths_by_id[pair_id]
             if truth.event_id != task.event_id:
-                raise ValueError(
-                    f"{pair_id}: truth event mismatch {truth.event_id} != {task.event_id}"
-                )
+                raise ValueError(f"{pair_id}: truth event mismatch {truth.event_id} != {task.event_id}")
             if truth.latent_facts != task.latent_event.get("latent_facts"):
                 raise ValueError(f"{pair_id}: truth/task latent facts do not match")
 
@@ -426,11 +423,7 @@ class AssistantBatchBuilder:
 
             shuffled_scene = scenes[task.shuffled_pair_id]
             for condition in Condition:
-                prompt = self.perspective.render(
-                    scene,
-                    condition,
-                    shuffled_scene=shuffled_scene,
-                )
+                prompt = self.perspective.render(scene, condition, shuffled_scene=shuffled_scene)
                 rows.append(
                     RenderedRow(
                         row_id=f"{pair_id}:{condition.value}",
