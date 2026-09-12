@@ -22,6 +22,15 @@ def normalize_ownership(text: str) -> str:
     text = text.replace("agent a's", "subject_possessive").replace("agent a", "subject")
     text = re.sub(r"\byour\b", "subject_possessive", text)
     text = re.sub(r"\byou\b", "subject", text)
+    # Ignore grammatical agreement that is mechanically induced by the ownership bind.
+    for forms, normalized in (
+        (("have", "has"), "agr_have"),
+        (("are", "is"), "agr_be_present"),
+        (("were", "was"), "agr_be_past"),
+        (("do", "does"), "agr_do"),
+    ):
+        left, right = forms
+        text = re.sub(rf"\bsubject ({left}|{right})\b", f"subject {normalized}", text)
     return " ".join(text.split())
 
 
@@ -39,6 +48,6 @@ def deterministic_pair_checks(self_text: str, other_text: str) -> DeterministicC
     numeric_match = _numbers(self_text) == _numbers(other_text)
     lowered = (self_text + " " + other_text).lower()
     hits = tuple(term for term in BANNED_EXPERIMENT_1_TERMS if term in lowered)
-    protected = any(token in lowered for token in ("[[subject]]", "[[possessive]]"))
+    protected = "[[" in lowered or "]]" in lowered
     passed = length_ratio >= 0.80 and similarity >= 0.97 and numeric_match and not hits and not protected
     return DeterministicCheck(length_ratio, similarity, numeric_match, hits, protected, passed)
