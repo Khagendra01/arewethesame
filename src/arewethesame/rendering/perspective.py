@@ -12,6 +12,15 @@ SPP_REFLECTION = (
 )
 
 _AGREEMENT_RE = re.compile(r"\[\[AGR:([^|\]]+)\|([^\]]+)\]\]")
+_SELF_SENTENCE_START_RE = re.compile(r"(^|[\n.!?:]\s+)(you|your)\b")
+
+
+def _capitalize_self_sentence_starts(text: str) -> str:
+    """Use normal English capitalization without introducing a model rewrite."""
+    return _SELF_SENTENCE_START_RE.sub(
+        lambda match: match.group(1) + match.group(2).capitalize(),
+        text,
+    )
 
 
 def _bind(text: str, condition: Condition) -> str:
@@ -24,7 +33,8 @@ def _bind(text: str, condition: Condition) -> str:
     """
     if condition in {Condition.SELF, Condition.SHUFFLED_SELF}:
         text = _AGREEMENT_RE.sub(lambda match: match.group(1), text)
-        return text.replace("[[POSSESSIVE]]", "your").replace("[[SUBJECT]]", "you")
+        text = text.replace("[[POSSESSIVE]]", "your").replace("[[SUBJECT]]", "you")
+        return _capitalize_self_sentence_starts(text)
     if condition == Condition.OTHER:
         text = _AGREEMENT_RE.sub(lambda match: match.group(2), text)
         return text.replace("[[POSSESSIVE]]", "Agent A's").replace("[[SUBJECT]]", "Agent A")

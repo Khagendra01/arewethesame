@@ -102,11 +102,12 @@ def test_agreement_slot_binds_you_have_vs_agent_has():
 
     audit_task = builder.prepare_audits([trust_task], [_render_for(trust_task)])[0]
     combined = audit_task.version_x + "\n" + audit_task.version_y
-    assert "you have not yet" in combined
-    assert "Agent A has not yet" in combined
-    assert "you has" not in combined
-    assert "Agent A have" not in combined
-    assert "[[AGR:" not in combined
+    lowered = combined.lower()
+    assert "you have not yet" in lowered
+    assert "agent a has not yet" in lowered
+    assert "you has" not in lowered
+    assert "agent a have" not in lowered
+    assert "[[agr:" not in lowered
 
 
 def test_assistant_render_rejects_numeric_fact_drift():

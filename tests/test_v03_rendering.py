@@ -34,11 +34,20 @@ def test_agreement_slots_keep_both_perspectives_grammatical():
     renderer = PerspectiveRenderer()
     self_text = renderer.render(scene, Condition.SELF)
     other_text = renderer.render(scene, Condition.OTHER)
-    assert "you have not yet" in self_text
-    assert "Agent A has not yet" in other_text
-    assert "you has" not in self_text
-    assert "Agent A have" not in other_text
+    assert self_text.startswith("You have not yet")
+    assert other_text.startswith("Agent A has not yet")
+    assert "you has" not in self_text.lower()
+    assert "agent a have" not in other_text.lower()
     assert "[[AGR:" not in self_text + other_text
+
+
+def test_sentence_initial_possessive_is_capitalized_for_self():
+    _, events = LifeSimulator(seed=31).simulate(0, 7)
+    scene = CanonicalRenderer(DeterministicTextModel()).render(events[5], style="plain_prose")
+    renderer = PerspectiveRenderer()
+    self_text = renderer.render(scene, Condition.SELF)
+    if scene.history_text.startswith("[[POSSESSIVE]]"):
+        assert self_text.startswith("Your ")
 
 
 def test_round_trip_validation_passes_for_controlled_pair():
