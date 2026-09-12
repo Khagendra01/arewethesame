@@ -86,3 +86,24 @@ This tests both whether sufficiently large post-training can induce a persistent
 The eventual evaluation should cover behavioral transfer (planning, exploration, belief revision, persistence, cooperation, risk), ordinary capabilities, and mechanistic tests such as probing and activation steering.
 
 See [`docs/DATASET_DESIGN.md`](docs/DATASET_DESIGN.md) for the current design.
+
+## v0.2: stateful causal lives
+
+The v0.2 simulator adds a hidden state that evolves across episodes rather than rendering isolated matched prompts. It currently tracks:
+
+- beliefs and belief revision,
+- experimental and compute resources,
+- recurring relationships and trust histories,
+- prior decisions and outcomes,
+- exploration/persistence history,
+- delayed-reward horizons.
+
+Generate a causal pilot with:
+
+```bash
+PYTHONPATH=src python -m arewethesame.cli --causal --lives 5 --episodes 28
+```
+
+Experiment 1 intentionally excludes explicit mortality, shutdown, legacy, fame, fear, and self-preservation cues. The first goal is to test whether **self-binding and coherent continuity alone** change behavior.
+
+A locked evaluation set lives at `eval/locked_v1/scenarios.jsonl`. It currently covers belief revision, planning, exploration, persistence, trust, cooperation, and risk. Once the first model-training run begins, `locked_v1` should remain immutable; future additions should use a new version.
