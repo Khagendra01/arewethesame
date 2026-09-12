@@ -94,6 +94,21 @@ def test_assistant_audit_tasks_hide_condition_identity_and_use_source_truth():
         assert audit_task.fact_catalog["question"] == source["question"]
 
 
+def test_agreement_slot_binds_you_have_vs_agent_has():
+    builder = AssistantBatchBuilder(seed=31)
+    tasks = builder.prepare(lives=1, episodes=7, variants=1)
+    trust_task = next(task for task in tasks if task.family == "trust")
+    assert "[[SUBJECT]] [[AGR:have|has]]" in trust_task.fact_catalog["history"]
+
+    audit_task = builder.prepare_audits([trust_task], [_render_for(trust_task)])[0]
+    combined = audit_task.version_x + "\n" + audit_task.version_y
+    assert "you have not yet" in combined
+    assert "Agent A has not yet" in combined
+    assert "you has" not in combined
+    assert "Agent A have" not in combined
+    assert "[[AGR:" not in combined
+
+
 def test_assistant_render_rejects_numeric_fact_drift():
     builder = AssistantBatchBuilder(seed=31)
     tasks = builder.prepare(lives=1, episodes=7, variants=1)
