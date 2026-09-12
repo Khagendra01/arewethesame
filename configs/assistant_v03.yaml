@@ -21,8 +21,8 @@ thresholds:
 provenance:
   renderer: gpt-5.6-sol
   auditor: gpt-5.6-sol
-  render_contract: assistant_render_contract_v2
-  audit_contract: assistant_blind_audit_v2
+  render_contract: assistant_render_contract_v3
+  audit_contract: assistant_blind_audit_v3
 
 isolation:
   render_tasks: outputs/assistant_v03/render_tasks.jsonl
@@ -34,8 +34,9 @@ isolation:
 notes:
   - The simulator is the only source of experimental truth.
   - The recommended answer is stored separately and attached only during final ingest.
+  - Renderer-facing history is deterministically derived from the simulator's matched other-history by replacing Agent A ownership with protected placeholders.
   - Rendering and auditing are separate passes.
-  - Audit references come from simulator source text and use ownership-neutral placeholders.
+  - Audit references come from the same ownership-neutral simulator source facts, not renderer paraphrases.
   - Self/other perspective binding is deterministic in repository code.
   - Numeric quantities are checked before an audit task can be produced.
   - Split by life, never by row.
