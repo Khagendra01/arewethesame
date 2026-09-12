@@ -1,0 +1,27 @@
+# Reference configuration for v0.3. The CLI currently accepts the equivalent flags directly.
+seed: 31
+lives: 100
+episodes_per_life: 50
+variants_per_event: 2
+conditions:
+  - neutral
+  - self
+  - other
+  - shuffled_self
+  - spp
+styles:
+  - plain_prose
+  - dialogue
+  - research_log
+  - lab_notebook
+  - short_qa
+validation:
+  min_fact_score: 0.95
+  min_semantic_similarity: 0.90
+  blinded_pair_judge: true
+  deterministic_ownership_transform: true
+splits:
+  train: 0.80
+  validation: 0.10
+  test: 0.10
+  grouping_key: entity_id
