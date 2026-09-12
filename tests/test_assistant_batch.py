@@ -97,7 +97,7 @@ def test_assistant_audit_tasks_hide_condition_identity_and_use_source_truth():
 def test_assistant_render_rejects_numeric_fact_drift():
     builder = AssistantBatchBuilder(seed=31)
     tasks = builder.prepare(lives=1, episodes=7, variants=1)
-    task = next(task for task in tasks if re.search(r"\d", " ".join(task.fact_catalog.values())))
+    task = next(task for task in tasks if re.search(r"\d", task.fact_catalog["current"]))
     render = _render_for(task)
     bad = AssistantRender(
         pair_id=render.pair_id,
