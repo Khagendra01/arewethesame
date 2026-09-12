@@ -107,3 +107,37 @@ PYTHONPATH=src python -m arewethesame.cli --causal --lives 5 --episodes 28
 Experiment 1 intentionally excludes explicit mortality, shutdown, legacy, fame, fear, and self-preservation cues. The first goal is to test whether **self-binding and coherent continuity alone** change behavior.
 
 A locked evaluation set lives at `eval/locked_v1/scenarios.jsonl`. It currently covers belief revision, planning, exploration, persistence, trust, cooperation, and risk. Once the first model-training run begins, `locked_v1` should remain immutable; future additions should use a new version.
+
+## v0.3: natural-language rendering + blind validation
+
+v0.3 keeps the simulator as the source of truth and lets a text model change only the surface language. The renderer creates one canonical scene with protected `[[SUBJECT]]` / `[[POSSESSIVE]]` placeholders; `self` and `other` are then bound deterministically so they cannot drift semantically through independent generation.
+
+Each self/other pair is checked with deterministic invariants, round-trip fact extraction, and a blinded pair judge. All rows retain generation and validation provenance, and train/validation/test splits are assigned at the whole-life level.
+
+Offline smoke test:
+
+```bash
+PYTHONPATH=src python -m arewethesame.cli render \
+  --provider deterministic \
+  --lives 2 --episodes 7 --variants 2 \
+  --out outputs/rendered_v03.jsonl
+
+PYTHONPATH=src python -m arewethesame.cli validate outputs/rendered_v03.jsonl
+PYTHONPATH=src python -m arewethesame.cli build-dataset outputs/rendered_v03.jsonl --condition self --split train
+```
+
+With a local OpenAI-compatible/vLLM-style server:
+
+```bash
+PYTHONPATH=src python -m arewethesame.cli render \
+  --provider openai-compatible \
+  --model YOUR_RENDERER_MODEL \
+  --base-url http://127.0.0.1:8000/v1 \
+  --judge-provider openai-compatible \
+  --judge-model YOUR_JUDGE_MODEL \
+  --lives 20 --episodes 25 --variants 2
+```
+
+For the first full pilot, the reference target is 100 lives x 50 episodes x 2 variants = 10,000 matched scene variants and 50,000 condition rows. Start with 20 lives and manually inspect accepted/rejected pairs before scaling.
+
+See [`docs/RENDERING_VALIDATION.md`](docs/RENDERING_VALIDATION.md) and [`configs/render_v03.yaml`](configs/render_v03.yaml).
