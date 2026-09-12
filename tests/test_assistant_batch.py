@@ -75,6 +75,10 @@ def test_assistant_audit_tasks_hide_condition_identity():
         combined = audit_task.version_x + audit_task.version_y
         assert "Agent A" in combined
         assert "you" in combined.lower() or "your" in combined.lower()
+        neutral_history = audit_task.fact_catalog["history"]
+        assert "[[SUBJECT]]" in neutral_history or "[[POSSESSIVE]]" in neutral_history
+        assert "Agent A" not in neutral_history
+        assert not re.search(r"\byou\b|\byour\b", neutral_history, flags=re.IGNORECASE)
 
 
 def test_assistant_ingest_builds_five_conditions_without_text_model():
