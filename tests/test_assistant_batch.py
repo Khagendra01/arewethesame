@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from arewethesame.generation import (
     AssistantAudit,
     AssistantBatchBuilder,
@@ -45,13 +47,18 @@ def _audit_for(pair_id: str) -> AssistantAudit:
     )
 
 
-def test_assistant_prepare_emits_one_task_per_scene_variant():
+def test_assistant_prepare_emits_one_task_per_scene_variant_without_target_leakage():
     builder = AssistantBatchBuilder(seed=31)
-    tasks = builder.prepare(lives=2, episodes=7, variants=2)
+    tasks, truths = builder.prepare_bundle(lives=2, episodes=7, variants=2)
     assert len(tasks) == 2 * 7 * 2
+    assert len(truths) == len(tasks)
     assert len({task.pair_id for task in tasks}) == len(tasks)
     assert all(task.latent_event["event_id"] == task.event_id for task in tasks)
+    assert all("recommended_answer" not in task.latent_event for task in tasks)
     assert all(set(task.fact_catalog) == {"history", "current", "question"} for task in tasks)
+
+    truth_by_pair = {truth.pair_id: truth for truth in truths}
+    assert all(truth_by_pair[task.pair_id].recommended_answer for task in tasks)
 
     by_pair = {task.pair_id: task for task in tasks}
     shuffled = [task for task in tasks if task.shuffled_pair_id != task.pair_id]
@@ -61,12 +68,14 @@ def test_assistant_prepare_emits_one_task_per_scene_variant():
         assert by_pair[task.shuffled_pair_id].family != task.family
 
 
-def test_assistant_audit_tasks_hide_condition_identity():
+def test_assistant_audit_tasks_hide_condition_identity_and_use_source_truth():
     builder = AssistantBatchBuilder(seed=31)
     tasks = builder.prepare(lives=1, episodes=7, variants=1)
     renders = [_render_for(task) for task in tasks]
     audit_tasks = builder.prepare_audits(tasks, renders)
     assert len(audit_tasks) == len(tasks)
+    task_by_pair = {task.pair_id: task for task in tasks}
+
     for audit_task in audit_tasks:
         payload = audit_task.to_dict()
         assert "blinded_order" not in payload
@@ -75,18 +84,41 @@ def test_assistant_audit_tasks_hide_condition_identity():
         combined = audit_task.version_x + audit_task.version_y
         assert "Agent A" in combined
         assert "you" in combined.lower() or "your" in combined.lower()
+
         neutral_history = audit_task.fact_catalog["history"]
         assert "[[SUBJECT]]" in neutral_history or "[[POSSESSIVE]]" in neutral_history
         assert "Agent A" not in neutral_history
         assert not re.search(r"\byou\b|\byour\b", neutral_history, flags=re.IGNORECASE)
+        source = task_by_pair[audit_task.pair_id].fact_catalog
+        assert audit_task.fact_catalog["current"] == source["current"]
+        assert audit_task.fact_catalog["question"] == source["question"]
+
+
+def test_assistant_render_rejects_numeric_fact_drift():
+    builder = AssistantBatchBuilder(seed=31)
+    tasks = builder.prepare(lives=1, episodes=7, variants=1)
+    task = next(task for task in tasks if re.search(r"\d", " ".join(task.fact_catalog.values())))
+    render = _render_for(task)
+    bad = AssistantRender(
+        pair_id=render.pair_id,
+        history_text=render.history_text,
+        current_text=re.sub(r"\d+(?:\.\d+)?", "999", render.current_text, count=1),
+        question_text=render.question_text,
+        facts_used=render.facts_used,
+        added_facts=(),
+        removed_facts=(),
+        assistant_model=render.assistant_model,
+    )
+    with pytest.raises(ValueError, match="numeric facts changed"):
+        builder.prepare_audits([task], [bad])
 
 
 def test_assistant_ingest_builds_five_conditions_without_text_model():
     builder = AssistantBatchBuilder(seed=31)
-    tasks = builder.prepare(lives=2, episodes=7, variants=2)
+    tasks, truths = builder.prepare_bundle(lives=2, episodes=7, variants=2)
     renders = [_render_for(task) for task in tasks]
     audits = [_audit_for(task.pair_id) for task in tasks]
-    rows = builder.ingest(tasks, renders, audits)
+    rows = builder.ingest(tasks, truths, renders, audits)
 
     assert len(rows) == len(tasks) * 5
     assert {row.condition for row in rows} == {condition.value for condition in Condition}
