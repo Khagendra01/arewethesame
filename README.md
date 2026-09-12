@@ -138,6 +138,34 @@ PYTHONPATH=src python -m arewethesame.cli render \
   --lives 20 --episodes 25 --variants 2
 ```
 
-For the first full pilot, the reference target is 100 lives x 50 episodes x 2 variants = 10,000 matched scene variants and 50,000 condition rows. Start with 20 lives and manually inspect accepted/rejected pairs before scaling.
+### ChatGPT-curated v0.3 path
 
-See [`docs/RENDERING_VALIDATION.md`](docs/RENDERING_VALIDATION.md) and [`configs/render_v03.yaml`](configs/render_v03.yaml).
+For experiments where ChatGPT itself performs rendering and blind auditing, use the file-based assistant workflow rather than an API model provider. This keeps simulator truth separate from model-generated language and prevents the renderer from seeing the target answer.
+
+```bash
+arewethesame-assistant prepare \
+  --lives 20 --episodes 25 --variants 2 \
+  --out outputs/assistant_v03/render_tasks.jsonl \
+  --truth-out outputs/assistant_v03/truth.jsonl
+
+# ChatGPT writes renders.jsonl from render_tasks.jsonl only.
+
+arewethesame-assistant prepare-audit \
+  outputs/assistant_v03/render_tasks.jsonl \
+  outputs/assistant_v03/renders.jsonl \
+  --out outputs/assistant_v03/audit_tasks.jsonl
+
+# A separate blind ChatGPT pass writes audits.jsonl from audit_tasks.jsonl only.
+
+arewethesame-assistant ingest \
+  outputs/assistant_v03/render_tasks.jsonl \
+  outputs/assistant_v03/truth.jsonl \
+  outputs/assistant_v03/renders.jsonl \
+  outputs/assistant_v03/audits.jsonl
+```
+
+The assistant path additionally enforces source-number preservation before auditing, hides X/Y ownership order, uses simulator-owned source facts for the audit reference, and attaches `recommended_answer` only during final ingest.
+
+For the first serious pilot, use 20 lives x 25 episodes x 2 variants = 1,000 matched scene variants and 5,000 condition rows. Inspect accepted and rejected cases before scaling. The later full target remains 100 lives x 50 episodes x 2 variants = 10,000 matched scene variants and 50,000 condition rows.
+
+See [`docs/RENDERING_VALIDATION.md`](docs/RENDERING_VALIDATION.md), [`docs/ASSISTANT_CURATION.md`](docs/ASSISTANT_CURATION.md), [`configs/render_v03.yaml`](configs/render_v03.yaml), and [`configs/assistant_v03.yaml`](configs/assistant_v03.yaml).
