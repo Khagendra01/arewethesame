@@ -114,7 +114,7 @@ v0.3 keeps the simulator as the source of truth and lets a text model change onl
 
 Each self/other pair is checked with deterministic invariants, round-trip fact extraction, and a blinded pair judge. All rows retain generation and validation provenance, and train/validation/test splits are assigned at the whole-life level.
 
-Offline smoke test:
+Offline deterministic smoke test:
 
 ```bash
 PYTHONPATH=src python -m arewethesame.cli render \
@@ -126,45 +126,68 @@ PYTHONPATH=src python -m arewethesame.cli validate outputs/rendered_v03.jsonl
 PYTHONPATH=src python -m arewethesame.cli build-dataset outputs/rendered_v03.jsonl --condition self --split train
 ```
 
-With a local OpenAI-compatible/vLLM-style server:
+An OpenAI-compatible/vLLM provider path is still available for comparison experiments, but it is **not required** for the intended high-quality pilot.
 
-```bash
-PYTHONPATH=src python -m arewethesame.cli render \
-  --provider openai-compatible \
-  --model YOUR_RENDERER_MODEL \
-  --base-url http://127.0.0.1:8000/v1 \
-  --judge-provider openai-compatible \
-  --judge-model YOUR_JUDGE_MODEL \
-  --lives 20 --episodes 25 --variants 2
+### ChatGPT-curated v0.3 path — no external API key required
+
+For the serious pilot, GPT-5.6 Sol in ChatGPT is the strong inference model. It performs three separate passes: canonical rendering, round-trip fact extraction, and blind pair judging. Repository code performs simulation, deterministic self/other binding, invariant checks, splitting, and final ingest.
+
+```text
+causal simulator
+      ↓
+GPT-5.6 Sol canonical render
+      ↓
+deterministic self/other binding
+      ↓
+GPT-5.6 Sol round-trip fact extraction
+      ↓
+GPT-5.6 Sol blind X/Y pair judge
+      ↓
+validated dataset
 ```
 
-### ChatGPT-curated v0.3 path
-
-For experiments where ChatGPT itself performs rendering and blind auditing, use the file-based assistant workflow rather than an API model provider. This keeps simulator truth separate from model-generated language and prevents the renderer from seeing the target answer.
+Prepare simulator-owned tasks and hidden truth:
 
 ```bash
 arewethesame-assistant prepare \
   --lives 20 --episodes 25 --variants 2 \
   --out outputs/assistant_v03/render_tasks.jsonl \
   --truth-out outputs/assistant_v03/truth.jsonl
+```
 
-# ChatGPT writes renders.jsonl from render_tasks.jsonl only.
+ChatGPT writes `renders.jsonl` from `render_tasks.jsonl` only. Then create the blind round-trip extraction tasks:
 
+```bash
+arewethesame-assistant prepare-extraction \
+  outputs/assistant_v03/render_tasks.jsonl \
+  outputs/assistant_v03/renders.jsonl \
+  --out outputs/assistant_v03/extraction_tasks.jsonl
+```
+
+A separate ChatGPT pass writes `extractions.jsonl`. Only extraction-passing pairs are turned into blind judge tasks:
+
+```bash
 arewethesame-assistant prepare-audit \
   outputs/assistant_v03/render_tasks.jsonl \
   outputs/assistant_v03/renders.jsonl \
+  outputs/assistant_v03/extractions.jsonl \
   --out outputs/assistant_v03/audit_tasks.jsonl
+```
 
-# A separate blind ChatGPT pass writes audits.jsonl from audit_tasks.jsonl only.
+A separate blind ChatGPT pass writes `audits.jsonl`. Final ingest is:
 
+```bash
 arewethesame-assistant ingest \
   outputs/assistant_v03/render_tasks.jsonl \
   outputs/assistant_v03/truth.jsonl \
   outputs/assistant_v03/renders.jsonl \
+  outputs/assistant_v03/extractions.jsonl \
   outputs/assistant_v03/audits.jsonl
 ```
 
-The assistant path additionally enforces source-number preservation before auditing, hides X/Y ownership order, uses simulator-owned source facts for the audit reference, and attaches `recommended_answer` only during final ingest.
+The hidden `truth.jsonl` is never exposed to the renderer, fact extractor, or blind judge. `recommended_answer` is attached only during final ingest. Full provenance records the renderer, fact extractor, judge, contract versions, seed, split, and validation results.
+
+The provider abstraction remains in the repository only so the same experiment can later be compared against local Qwen/Llama/Gemma/vLLM or API teachers without redesigning the pipeline.
 
 For the first serious pilot, use 20 lives x 25 episodes x 2 variants = 1,000 matched scene variants and 5,000 condition rows. Inspect accepted and rejected cases before scaling. The later full target remains 100 lives x 50 episodes x 2 variants = 10,000 matched scene variants and 50,000 condition rows.
 
