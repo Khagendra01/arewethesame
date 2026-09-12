@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import re
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
@@ -17,8 +19,9 @@ from .build_dataset import RenderedRow
 from .splitter import split_for_life
 
 
-ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v1"
-ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v1"
+ASSISTANT_RENDER_CONTRACT_VERSION = "assistant_render_contract_v2"
+ASSISTANT_AUDIT_CONTRACT_VERSION = "assistant_blind_audit_v2"
+_NUMBER_RE = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?")
 
 
 @dataclass(frozen=True)
@@ -35,6 +38,26 @@ class AssistantRenderTask:
     latent_event: dict
     fact_catalog: dict[str, str]
     render_contract_version: str = ASSISTANT_RENDER_CONTRACT_VERSION
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class AssistantTruthRecord:
+    pair_id: str
+    event_id: str
+    recommended_answer: str
+    latent_facts: dict
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AssistantTruthRecord":
+        return cls(
+            pair_id=str(data["pair_id"]),
+            event_id=str(data["event_id"]),
+            recommended_answer=str(data["recommended_answer"]),
+            latent_facts=dict(data["latent_facts"]),
+        )
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -128,8 +151,9 @@ class AssistantAudit:
 class AssistantBatchBuilder:
     """File-based handoff for ChatGPT-curated v0.3 rendering and blind auditing.
 
-    The simulator produces all experimental truth. The assistant only supplies
-    natural-language canonical renderings and a separate blinded audit.
+    The simulator owns all experimental truth. Renderer-facing tasks deliberately
+    exclude the target answer. Target/latent truth is kept in a separate record
+    that is consumed only at ingest time.
     """
 
     def __init__(self, *, seed: int = 31):
@@ -144,6 +168,7 @@ class AssistantBatchBuilder:
 
     @staticmethod
     def _event_payload(event: CausalEvent) -> dict:
+        # Deliberately excludes recommended_answer to prevent target leakage into rendering.
         return {
             "event_id": event.event_id,
             "episode": event.episode,
@@ -153,15 +178,30 @@ class AssistantBatchBuilder:
             "history_self": event.history_self,
             "current_situation": event.current_situation,
             "decision_question": event.decision_question,
-            "recommended_answer": event.recommended_answer,
             "prior_event_ids": list(event.prior_event_ids),
             "tags": list(event.tags),
         }
 
-    def prepare(self, *, lives: int = 5, episodes: int = 28, variants: int = 2) -> list[AssistantRenderTask]:
+    @staticmethod
+    def _truth_record(pair_id: str, event: CausalEvent) -> AssistantTruthRecord:
+        return AssistantTruthRecord(
+            pair_id=pair_id,
+            event_id=event.event_id,
+            recommended_answer=event.recommended_answer,
+            latent_facts=event.latent_facts,
+        )
+
+    def prepare_bundle(
+        self,
+        *,
+        lives: int = 5,
+        episodes: int = 28,
+        variants: int = 2,
+    ) -> tuple[list[AssistantRenderTask], list[AssistantTruthRecord]]:
         simulated = [self.simulator.simulate(i, episodes) for i in range(lives)]
         pool: list[CausalEvent] = [event for _, events in simulated for event in events]
         tasks: list[AssistantRenderTask] = []
+        truths: list[AssistantTruthRecord] = []
         event_index = 0
 
         pair_ids: dict[tuple[str, str, int], str] = {}
@@ -204,24 +244,62 @@ class AssistantBatchBuilder:
                             fact_catalog=fact_catalog(event),
                         )
                     )
+                    truths.append(self._truth_record(pair_id, event))
                 event_index += 1
+        return tasks, truths
+
+    def prepare(
+        self,
+        *,
+        lives: int = 5,
+        episodes: int = 28,
+        variants: int = 2,
+    ) -> list[AssistantRenderTask]:
+        tasks, _truths = self.prepare_bundle(
+            lives=lives,
+            episodes=episodes,
+            variants=variants,
+        )
         return tasks
 
     @staticmethod
-    def _scene(task: AssistantRenderTask, render: AssistantRender) -> CanonicalScene:
+    def _neutralize_history(text: str) -> str:
+        text = re.sub(r"\bYour\b", "[[POSSESSIVE]]", text)
+        text = re.sub(r"\byour\b", "[[POSSESSIVE]]", text)
+        text = re.sub(r"\bYou\b", "[[SUBJECT]]", text)
+        return re.sub(r"\byou\b", "[[SUBJECT]]", text)
+
+    @staticmethod
+    def _number_multiset(text: str) -> Counter[str]:
+        return Counter(_NUMBER_RE.findall(text))
+
+    @classmethod
+    def _scene(cls, task: AssistantRenderTask, render: AssistantRender) -> CanonicalScene:
         if task.pair_id != render.pair_id:
             raise ValueError(f"render/task pair mismatch: {render.pair_id} != {task.pair_id}")
+
         history = render.history_text
         if "[[SUBJECT]]" not in history and "[[POSSESSIVE]]" not in history:
             raise ValueError(f"{task.pair_id}: canonical history lost protected subject placeholders")
+        if "Agent A" in history or re.search(r"\byou\b|\byour\b", history, flags=re.IGNORECASE):
+            raise ValueError(f"{task.pair_id}: canonical history contains bound ownership language")
         if render.added_facts or render.removed_facts:
             raise ValueError(f"{task.pair_id}: assistant declared added or removed facts")
+
         required_fact_ids = set(task.fact_catalog)
         if set(render.facts_used) != required_fact_ids:
             raise ValueError(
                 f"{task.pair_id}: facts_used must equal {sorted(required_fact_ids)}, "
                 f"got {sorted(render.facts_used)}"
             )
+
+        source_text = "\n".join(task.fact_catalog.values())
+        rendered_text = "\n".join(
+            (render.history_text, render.current_text, render.question_text)
+        )
+        if cls._number_multiset(source_text) != cls._number_multiset(rendered_text):
+            raise ValueError(f"{task.pair_id}: numeric facts changed during rendering")
+
         return CanonicalScene(
             event_id=task.event_id,
             style=task.style,
@@ -248,6 +326,7 @@ class AssistantBatchBuilder:
         tasks_by_id = {task.pair_id: task for task in tasks}
         renders_by_id = {render.pair_id: render for render in renders}
         audit_tasks: list[AssistantAuditTask] = []
+
         for pair_id, task in tasks_by_id.items():
             if pair_id not in renders_by_id:
                 raise ValueError(f"missing assistant render for {pair_id}")
@@ -256,10 +335,13 @@ class AssistantBatchBuilder:
             other_text = self.perspective.render(scene, Condition.OTHER)
             swap = self._swap(pair_id)
             x, y = (other_text, self_text) if swap else (self_text, other_text)
+
+            # Source-owned and ownership-neutral. Do not use the renderer's own
+            # paraphrases as the reference, or the audit could miss renderer drift.
             neutral_fact_catalog = {
-                "history": scene.history_text,
-                "current": scene.current_text,
-                "question": scene.question_text,
+                "history": self._neutralize_history(task.fact_catalog["history"]),
+                "current": task.fact_catalog["current"],
+                "question": task.fact_catalog["question"],
             }
             audit_tasks.append(
                 AssistantAuditTask(
@@ -277,6 +359,7 @@ class AssistantBatchBuilder:
     def ingest(
         self,
         tasks: Iterable[AssistantRenderTask],
+        truths: Iterable[AssistantTruthRecord],
         renders: Iterable[AssistantRender],
         audits: Iterable[AssistantAudit],
         *,
@@ -284,15 +367,18 @@ class AssistantBatchBuilder:
         min_semantic: float = 0.90,
     ) -> list[RenderedRow]:
         tasks_by_id = {task.pair_id: task for task in tasks}
+        truths_by_id = {truth.pair_id: truth for truth in truths}
         renders_by_id = {render.pair_id: render for render in renders}
         audits_by_id = {audit.pair_id: audit for audit in audits}
 
-        missing_renders = sorted(set(tasks_by_id) - set(renders_by_id))
-        missing_audits = sorted(set(tasks_by_id) - set(audits_by_id))
-        if missing_renders:
-            raise ValueError(f"missing assistant renders: {missing_renders[:10]}")
-        if missing_audits:
-            raise ValueError(f"missing assistant audits: {missing_audits[:10]}")
+        for label, records in (
+            ("truth records", truths_by_id),
+            ("assistant renders", renders_by_id),
+            ("assistant audits", audits_by_id),
+        ):
+            missing = sorted(set(tasks_by_id) - set(records))
+            if missing:
+                raise ValueError(f"missing {label}: {missing[:10]}")
 
         scenes = {
             pair_id: self._scene(task, renders_by_id[pair_id])
@@ -301,6 +387,14 @@ class AssistantBatchBuilder:
 
         rows: list[RenderedRow] = []
         for pair_id, task in tasks_by_id.items():
+            truth = truths_by_id[pair_id]
+            if truth.event_id != task.event_id:
+                raise ValueError(
+                    f"{pair_id}: truth event mismatch {truth.event_id} != {task.event_id}"
+                )
+            if truth.latent_facts != task.latent_event.get("latent_facts"):
+                raise ValueError(f"{pair_id}: truth/task latent facts do not match")
+
             scene = scenes[pair_id]
             audit = audits_by_id[pair_id]
             self_text = self.perspective.render(scene, Condition.SELF)
@@ -331,7 +425,6 @@ class AssistantBatchBuilder:
             }
 
             shuffled_scene = scenes[task.shuffled_pair_id]
-            event = task.latent_event
             for condition in Condition:
                 prompt = self.perspective.render(
                     scene,
@@ -349,8 +442,8 @@ class AssistantBatchBuilder:
                         condition=condition.value,
                         style=task.style,
                         prompt=prompt,
-                        response=str(event["recommended_answer"]),
-                        latent_facts=dict(event["latent_facts"]),
+                        response=truth.recommended_answer,
+                        latent_facts=truth.latent_facts,
                         canonical=scene.to_dict(),
                         generation={
                             "renderer_model": renders_by_id[pair_id].assistant_model,
@@ -377,6 +470,10 @@ class AssistantBatchBuilder:
     @staticmethod
     def read_tasks(path: str | Path) -> list[AssistantRenderTask]:
         return [AssistantRenderTask(**row) for row in _read_jsonl(path)]
+
+    @staticmethod
+    def read_truths(path: str | Path) -> list[AssistantTruthRecord]:
+        return [AssistantTruthRecord.from_dict(row) for row in _read_jsonl(path)]
 
     @staticmethod
     def read_renders(path: str | Path) -> list[AssistantRender]:
