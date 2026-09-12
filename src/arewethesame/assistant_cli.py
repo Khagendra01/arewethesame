@@ -21,16 +21,25 @@ def _prepare(argv: list[str]) -> None:
         type=Path,
         default=Path("outputs/assistant_v03/render_tasks.jsonl"),
     )
+    parser.add_argument(
+        "--truth-out",
+        type=Path,
+        default=Path("outputs/assistant_v03/truth.jsonl"),
+        help="Simulator targets for ingest only; do not provide this file to the renderer or blind auditor.",
+    )
     args = parser.parse_args(argv)
 
     builder = AssistantBatchBuilder(seed=args.seed)
-    tasks = builder.prepare(
+    tasks, truths = builder.prepare_bundle(
         lives=args.lives,
         episodes=args.episodes,
         variants=args.variants,
     )
     builder.write_jsonl(tasks, args.out)
+    builder.write_jsonl(truths, args.truth_out)
     print(f"wrote {len(tasks)} assistant render tasks to {args.out}")
+    print(f"wrote {len(truths)} simulator truth records to {args.truth_out}")
+    print("do not expose the truth file during rendering or blind auditing")
     print(
         "next: have ChatGPT fill one AssistantRender JSON object per pair_id, "
         "then run `arewethesame-assistant prepare-audit`"
@@ -65,9 +74,10 @@ def _prepare_audit(argv: list[str]) -> None:
 
 def _ingest(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
-        description="Ingest assistant renders + blind audits into five matched conditions."
+        description="Ingest simulator truth + assistant renders + blind audits into five matched conditions."
     )
     parser.add_argument("tasks", type=Path)
+    parser.add_argument("truth", type=Path)
     parser.add_argument("renders", type=Path)
     parser.add_argument("audits", type=Path)
     parser.add_argument("--seed", type=int, default=31)
@@ -87,10 +97,12 @@ def _ingest(argv: list[str]) -> None:
 
     builder = AssistantBatchBuilder(seed=args.seed)
     tasks = builder.read_tasks(args.tasks)
+    truths = builder.read_truths(args.truth)
     renders = builder.read_renders(args.renders)
     audits = builder.read_audits(args.audits)
     rows = builder.ingest(
         tasks,
+        truths,
         renders,
         audits,
         min_fact_score=args.min_fact_score,
