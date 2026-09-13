@@ -1,0 +1,23 @@
+{
+  "seed": 131,
+  "life_start": 5000,
+  "lives": 60,
+  "episodes": 84,
+  "items": 350,
+  "families": {
+    "belief_revision": 50,
+    "trust": 50,
+    "resource_allocation": 50,
+    "exploration": 50,
+    "persistence": 50,
+    "delayed_reward": 50,
+    "cooperation": 50
+  },
+  "correct_option_positions": {
+    "A": 115,
+    "C": 122,
+    "B": 113
+  },
+  "external_provider_used": false,
+  "construction": "Latent decisions from the deterministic causal simulator. Options and correct-answer policy are a fixed authored rule instantiated deterministically; for four families the correct option depends on latent numeric history, so the item is only answerable by integrating the context. Ownership binding is deterministic (self/other/shuffled)."
+}
