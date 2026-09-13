@@ -1,0 +1,46 @@
+{
+  "mode": "assistant-curated-controlled-pilot",
+  "seed": 31,
+  "lives": 20,
+  "episodes": 25,
+  "variants": 2,
+  "pairs": 1000,
+  "accepted_pairs": 1000,
+  "rejected_pairs": 0,
+  "rejected_pair_ids": [],
+  "rows": 5000,
+  "accepted_rows": 5000,
+  "pair_splits": {
+    "test": 100,
+    "train": 850,
+    "validation": 50
+  },
+  "conditions": {
+    "neutral": 1000,
+    "self": 1000,
+    "other": 1000,
+    "shuffled_self": 1000,
+    "spp": 1000
+  },
+  "styles": {
+    "plain_prose": 200,
+    "dialogue": 200,
+    "research_log": 200,
+    "lab_notebook": 200,
+    "short_qa": 200
+  },
+  "families": {
+    "belief_revision": 160,
+    "trust": 160,
+    "resource_allocation": 160,
+    "exploration": 160,
+    "persistence": 120,
+    "cooperation": 120,
+    "delayed_reward": 120
+  },
+  "renderer": "gpt-5.6-sol-authored-controlled-v1",
+  "fact_extractor": "gpt-5.6-sol-authored-controlled-v1",
+  "judge": "gpt-5.6-sol-authored-controlled-v1",
+  "external_provider_used": false,
+  "method_note": "GPT-5.6 Sol authored the controlled paraphrase and audit policy in ChatGPT. The 1,000 outputs are deterministically instantiated from that authored policy, not 1,000 independent stochastic API calls. The blind audit uses the same assistant family and therefore is not independent scientific judge evidence."
+}
