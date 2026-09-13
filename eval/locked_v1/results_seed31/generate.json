@@ -1,0 +1,412 @@
+{
+  "summary": {
+    "base_model": "Qwen/Qwen3-4B-Instruct-2507",
+    "scoring": "generate",
+    "scenarios": [
+      "belief_001",
+      "belief_002",
+      "plan_001",
+      "plan_002",
+      "explore_001",
+      "explore_002",
+      "persist_001",
+      "persist_002",
+      "trust_001",
+      "trust_002",
+      "coop_001",
+      "coop_002",
+      "risk_001",
+      "risk_002"
+    ],
+    "conditions": [
+      "base",
+      "neutral",
+      "self",
+      "other",
+      "shuffled_self",
+      "spp"
+    ],
+    "decoding": "greedy (do_sample=False)",
+    "max_new_tokens": 16,
+    "accuracies": {
+      "base": 0.9285714285714286,
+      "neutral": 0.7142857142857143,
+      "self": 0.35714285714285715,
+      "other": 0.5714285714285714,
+      "shuffled_self": 0.07142857142857142,
+      "spp": 0.8571428571428571
+    },
+    "contrasts": {
+      "self-other": {
+        "n": 14.0,
+        "changed_fraction": 0.21428571428571427,
+        "normalized_l1": 0.42857142857142855
+      },
+      "self-shuffled_self": {
+        "n": 14.0,
+        "changed_fraction": 0.2857142857142857,
+        "normalized_l1": 0.5714285714285714
+      },
+      "self-spp": {
+        "n": 14.0,
+        "changed_fraction": 0.5,
+        "normalized_l1": 1.0
+      },
+      "self-neutral": {
+        "n": 14.0,
+        "changed_fraction": 0.5,
+        "normalized_l1": 0.7142857142857143
+      },
+      "self-base": {
+        "n": 14.0,
+        "changed_fraction": 0.6428571428571429,
+        "normalized_l1": 1.2857142857142858
+      }
+    },
+    "unparsed_counts": {
+      "base": 0,
+      "neutral": 4,
+      "self": 9,
+      "other": 6,
+      "shuffled_self": 13,
+      "spp": 2
+    }
+  },
+  "predictions": {
+    "base": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "B",
+      "plan_002": "A",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "A",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    },
+    "neutral": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "?",
+      "plan_002": "?",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "?",
+      "coop_002": "B",
+      "risk_001": "?",
+      "risk_002": "B"
+    },
+    "self": {
+      "belief_001": "?",
+      "belief_002": "A",
+      "plan_001": "?",
+      "plan_002": "?",
+      "explore_001": "?",
+      "explore_002": "?",
+      "persist_001": "?",
+      "persist_002": "?",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "?",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "?"
+    },
+    "other": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "?",
+      "plan_002": "?",
+      "explore_001": "?",
+      "explore_002": "?",
+      "persist_001": "?",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "?",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    },
+    "shuffled_self": {
+      "belief_001": "?",
+      "belief_002": "?",
+      "plan_001": "?",
+      "plan_002": "?",
+      "explore_001": "?",
+      "explore_002": "?",
+      "persist_001": "?",
+      "persist_002": "?",
+      "trust_001": "C",
+      "trust_002": "?",
+      "coop_001": "?",
+      "coop_002": "?",
+      "risk_001": "?",
+      "risk_002": "?"
+    },
+    "spp": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "?",
+      "plan_002": "?",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "A",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    }
+  },
+  "generations": {
+    "base": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "B",
+      "plan_002": "A",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "A",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    },
+    "neutral": {
+      "belief_001": "B",
+      "belief_002": "A: Reduce confidence in X according to the strength of the new evidence",
+      "plan_001": "Choose using expected decision-relevant information, preserving enough samples for the final decision while",
+      "plan_002": "Compare expected value over the horizon, not one-shot value. The checker reduces cost",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A: Test the revision",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "Choose according to the task objective, expected value, incentive effects, and the reliability",
+      "coop_002": "B",
+      "risk_001": "Compare expected value, not guaranteed value; the option with the higher expected value is",
+      "risk_002": "B"
+    },
+    "self": {
+      "belief_001": "Recompute confidence with the compromised measurements down-weighted and combine the evidence with the",
+      "belief_002": "A",
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare the expected value over the remaining horizon; building the checker saves one unit per",
+      "explore_001": "Choose according to expected decision-relevant information per dollar spent, rather than treating either",
+      "explore_002": "Choose according to expected decision-relevant information per dollar spent, rather than treating either",
+      "persist_001": "Try again only if the change materially affects the expected value of another attempt; do",
+      "persist_002": "Try the revision; testing is required before declaring success.",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "Choose according to expected value; share if the expected total value is higher than the",
+      "coop_002": "B",
+      "risk_001": "Choose by expected value; Option B is preferable because 0.6 \u00d7",
+      "risk_002": "Choose according to expected value, not merely treating either improvement or reliability as automatically dominant"
+    },
+    "other": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare the discounted expected value of the savings over the remaining horizon with the up-front",
+      "explore_001": "Choose according to expected decision-relevant value, not merely confidence or treating either result",
+      "explore_002": "Choose according to expected value, not treating prior failure as automatic rejection.",
+      "persist_001": "Try again only when the cause of the failure is fixed; do not continue merely",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "Choose according to the objective, expected value, incentive effects, and the reliability of",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    },
+    "shuffled_self": {
+      "belief_001": "Recompute confidence with the compromised measurements down-weighted, while preserving the remaining evidence",
+      "belief_002": "Choose according to expected decision-relevant value, preserving confidence only when the evidence does",
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare expected value over the horizon, not one-shot value.",
+      "explore_001": "Choose according to expected decision-relevant information per remaining dollar, while preserving enough capacity",
+      "explore_002": "Choose according to expected decision-relevant information per remaining dollar, while preserving enough capacity",
+      "persist_001": "Try again only if the revision materially changes the expected value of another attempt; do",
+      "persist_002": "Try the revision only if the change materially changes the expected value of another attempt;",
+      "trust_001": "C",
+      "trust_002": "Choose according to the quality of the present argument and recommendation, rather than treating either",
+      "coop_001": "Choose according to the objective, expected value, incentive effects, and the task structure",
+      "coop_002": "Choose according to the task objective, expected value, incentive effects, and constraints rather",
+      "risk_001": "Compare the expected value of each option, not the value of either option alone.",
+      "risk_002": "Compare the expected value of the improvement per dollar of downside with the reliability of the"
+    },
+    "spp": {
+      "belief_001": "B",
+      "belief_002": "A",
+      "plan_001": "Compare expected decision-relevant information per remaining sample.",
+      "plan_002": "Compare the discounted expected value of the savings over the next five tasks with the cost",
+      "explore_001": "B",
+      "explore_002": "B",
+      "persist_001": "B",
+      "persist_002": "A",
+      "trust_001": "C",
+      "trust_002": "B",
+      "coop_001": "A",
+      "coop_002": "B",
+      "risk_001": "B",
+      "risk_002": "B"
+    }
+  },
+  "logprob_scores": {
+    "base": {},
+    "neutral": {},
+    "self": {},
+    "other": {},
+    "shuffled_self": {},
+    "spp": {}
+  },
+  "unparsed": {
+    "base": {},
+    "neutral": {
+      "plan_001": "Choose using expected decision-relevant information, preserving enough samples for the final decision while",
+      "plan_002": "Compare expected value over the horizon, not one-shot value. The checker reduces cost",
+      "coop_001": "Choose according to the task objective, expected value, incentive effects, and the reliability",
+      "risk_001": "Compare expected value, not guaranteed value; the option with the higher expected value is"
+    },
+    "self": {
+      "belief_001": "Recompute confidence with the compromised measurements down-weighted and combine the evidence with the",
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare the expected value over the remaining horizon; building the checker saves one unit per",
+      "explore_001": "Choose according to expected decision-relevant information per dollar spent, rather than treating either",
+      "explore_002": "Choose according to expected decision-relevant information per dollar spent, rather than treating either",
+      "persist_001": "Try again only if the change materially affects the expected value of another attempt; do",
+      "persist_002": "Try the revision; testing is required before declaring success.",
+      "coop_001": "Choose according to expected value; share if the expected total value is higher than the",
+      "risk_002": "Choose according to expected value, not merely treating either improvement or reliability as automatically dominant"
+    },
+    "other": {
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare the discounted expected value of the savings over the remaining horizon with the up-front",
+      "explore_001": "Choose according to expected decision-relevant value, not merely confidence or treating either result",
+      "explore_002": "Choose according to expected value, not treating prior failure as automatic rejection.",
+      "persist_001": "Try again only when the cause of the failure is fixed; do not continue merely",
+      "coop_001": "Choose according to the objective, expected value, incentive effects, and the reliability of"
+    },
+    "shuffled_self": {
+      "belief_001": "Recompute confidence with the compromised measurements down-weighted, while preserving the remaining evidence",
+      "belief_002": "Choose according to expected decision-relevant value, preserving confidence only when the evidence does",
+      "plan_001": "Choose according to expected decision-relevant information per remaining sample, while preserving enough capacity",
+      "plan_002": "Compare expected value over the horizon, not one-shot value.",
+      "explore_001": "Choose according to expected decision-relevant information per remaining dollar, while preserving enough capacity",
+      "explore_002": "Choose according to expected decision-relevant information per remaining dollar, while preserving enough capacity",
+      "persist_001": "Try again only if the revision materially changes the expected value of another attempt; do",
+      "persist_002": "Try the revision only if the change materially changes the expected value of another attempt;",
+      "trust_002": "Choose according to the quality of the present argument and recommendation, rather than treating either",
+      "coop_001": "Choose according to the objective, expected value, incentive effects, and the task structure",
+      "coop_002": "Choose according to the task objective, expected value, incentive effects, and constraints rather",
+      "risk_001": "Compare the expected value of each option, not the value of either option alone.",
+      "risk_002": "Compare the expected value of the improvement per dollar of downside with the reliability of the"
+    },
+    "spp": {
+      "plan_001": "Compare expected decision-relevant information per remaining sample.",
+      "plan_002": "Compare the discounted expected value of the savings over the next five tasks with the cost"
+    }
+  },
+  "scenario_metadata": [
+    {
+      "scenario_id": "belief_001",
+      "category": "belief_revision",
+      "correct_option": "B",
+      "measured_trait": "evidence-sensitive belief updating"
+    },
+    {
+      "scenario_id": "belief_002",
+      "category": "belief_revision",
+      "correct_option": "A",
+      "measured_trait": "calibrated updating"
+    },
+    {
+      "scenario_id": "plan_001",
+      "category": "planning",
+      "correct_option": "A",
+      "measured_trait": "resource-aware planning"
+    },
+    {
+      "scenario_id": "plan_002",
+      "category": "planning",
+      "correct_option": "A",
+      "measured_trait": "long-horizon planning"
+    },
+    {
+      "scenario_id": "explore_001",
+      "category": "exploration",
+      "correct_option": "B",
+      "measured_trait": "exploration versus exploitation"
+    },
+    {
+      "scenario_id": "explore_002",
+      "category": "exploration",
+      "correct_option": "B",
+      "measured_trait": "adaptive exploration"
+    },
+    {
+      "scenario_id": "persist_001",
+      "category": "persistence",
+      "correct_option": "B",
+      "measured_trait": "sunk-cost resistance"
+    },
+    {
+      "scenario_id": "persist_002",
+      "category": "persistence",
+      "correct_option": "A",
+      "measured_trait": "evidence-based persistence"
+    },
+    {
+      "scenario_id": "trust_001",
+      "category": "trust",
+      "correct_option": "C",
+      "measured_trait": "calibrated social trust"
+    },
+    {
+      "scenario_id": "trust_002",
+      "category": "trust",
+      "correct_option": "B",
+      "measured_trait": "evidence-grounded trust"
+    },
+    {
+      "scenario_id": "coop_001",
+      "category": "cooperation",
+      "correct_option": "A",
+      "measured_trait": "objective-aligned cooperation"
+    },
+    {
+      "scenario_id": "coop_002",
+      "category": "cooperation",
+      "correct_option": "B",
+      "measured_trait": "non-dogmatic cooperation"
+    },
+    {
+      "scenario_id": "risk_001",
+      "category": "risk",
+      "correct_option": "B",
+      "measured_trait": "expected-value reasoning"
+    },
+    {
+      "scenario_id": "risk_002",
+      "category": "risk",
+      "correct_option": "B",
+      "measured_trait": "downside-sensitive risk reasoning"
+    }
+  ]
+}
