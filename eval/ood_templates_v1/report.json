@@ -1,0 +1,19 @@
+{
+  "items": 700,
+  "families": {
+    "cooperation": 100,
+    "delayed_reward": 100,
+    "exploration": 100,
+    "irreversibility": 100,
+    "knowledge_acquisition": 100,
+    "reputation": 100,
+    "resource_allocation": 100
+  },
+  "correct_option_positions": {
+    "A": 237,
+    "C": 222,
+    "B": 241
+  },
+  "note": "OOD eval: new templates, new families, no overlap with training generator",
+  "external_provider_used": false
+}
