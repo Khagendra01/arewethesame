@@ -48,7 +48,7 @@ def build_eval(per_family: int) -> list[dict]:
             "shuffled": f"{base._bind_self(partner['canonical_history'])}\n\n{item['current']}",
         }
         item["shuffled_source_item_id"] = partner["pair_id"]
-        item["item_id"] = pair_id
+        item["item_id"] = item["pair_id"]
         item["category"] = item["family"]
         item["measured_trait"] = item["family"]
     items.sort(key=lambda x: x["pair_id"])
