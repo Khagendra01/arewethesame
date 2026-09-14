@@ -372,7 +372,9 @@ def build(per_family: int, out_dir: Path) -> dict:
 
     anchors = _anchor_rows()
     for condition in CONDITIONS:
-        rows_by_key.setdefault((condition, "train"), []).extend(anchors)
+        rows_by_key.setdefault((condition, "train"), []).extend(
+            dict(anchor, condition=condition) for anchor in anchors
+        )
 
     training_dir = out_dir / "training"
     written: dict[str, list[dict]] = {}
