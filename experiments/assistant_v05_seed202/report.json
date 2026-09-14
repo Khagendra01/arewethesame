@@ -1,0 +1,40 @@
+{
+  "corpus": "assistant_v05",
+  "conditions": [
+    "self",
+    "other",
+    "mixed",
+    "neutral",
+    "spp"
+  ],
+  "families": [
+    "resource_allocation",
+    "exploration",
+    "cooperation",
+    "delayed_reward",
+    "belief_revision",
+    "trust",
+    "persistence"
+  ],
+  "per_family": 400,
+  "pairs": 2800,
+  "anchors": 40,
+  "rows_per_condition": 2840,
+  "mixed_binding_counts": {
+    "neutral": 914,
+    "other": 940,
+    "self": 946
+  },
+  "correct_option_positions": {
+    "C": 914,
+    "A": 931,
+    "B": 955
+  },
+  "split_counts": {
+    "train": 2257,
+    "test": 268,
+    "validation": 275
+  },
+  "external_provider_used": false,
+  "notes": "`mixed` chooses self/other/neutral per item while the target stays a function of the latent history, so self-vs-other at eval is not explained by binding familiarity."
+}

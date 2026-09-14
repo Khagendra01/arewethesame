@@ -1,0 +1,424 @@
+{
+  "summary": {
+    "base_model": "Qwen/Qwen3-4B-Instruct-2507",
+    "items": 268,
+    "models": [
+      "base",
+      "self",
+      "other",
+      "mixed",
+      "neutral",
+      "spp"
+    ],
+    "contexts": [
+      "neutral",
+      "self",
+      "other",
+      "shuffled",
+      "spp"
+    ],
+    "primary_metric": "option-letter log-likelihood (E[P(correct)])",
+    "matrix_expected_correct_prob": {
+      "base": {
+        "neutral": 0.6171204713966197,
+        "self": 0.6444536871249362,
+        "other": 0.5923992284446359,
+        "shuffled": 0.5566880044021917,
+        "spp": 0.5516105443355535
+      },
+      "self": {
+        "neutral": 0.9776163435296007,
+        "self": 0.9957203326542761,
+        "other": 0.9791479850039929,
+        "shuffled": 0.5022797270311952,
+        "spp": 0.8999876761061778
+      },
+      "other": {
+        "neutral": 0.9567934991700785,
+        "self": 0.950808385505302,
+        "other": 0.9976747726837173,
+        "shuffled": 0.5183095429367789,
+        "spp": 0.9045647186364661
+      },
+      "mixed": {
+        "neutral": 0.9971935748631336,
+        "self": 0.9972389442338196,
+        "other": 0.9970958382053751,
+        "shuffled": 0.49914286664191054,
+        "spp": 0.988649041240687
+      },
+      "neutral": {
+        "neutral": 0.9986997313395187,
+        "self": 0.9886385466305182,
+        "other": 0.993346562334729,
+        "shuffled": 0.5018067607060901,
+        "spp": 0.9938227167737198
+      },
+      "spp": {
+        "neutral": 0.9950793500807512,
+        "self": 0.9614377910596994,
+        "other": 0.9629809328081504,
+        "shuffled": 0.49381670171600633,
+        "spp": 0.9975108639766483
+      }
+    },
+    "matrix_accuracy": {
+      "base": {
+        "neutral": 0.6231343283582089,
+        "self": 0.6529850746268657,
+        "other": 0.5895522388059702,
+        "shuffled": 0.5559701492537313,
+        "spp": 0.5559701492537313
+      },
+      "self": {
+        "neutral": 0.996268656716418,
+        "self": 0.996268656716418,
+        "other": 0.9925373134328358,
+        "shuffled": 0.503731343283582,
+        "spp": 0.914179104477612
+      },
+      "other": {
+        "neutral": 0.9626865671641791,
+        "self": 0.9589552238805971,
+        "other": 1.0,
+        "shuffled": 0.5149253731343284,
+        "spp": 0.917910447761194
+      },
+      "mixed": {
+        "neutral": 1.0,
+        "self": 1.0,
+        "other": 1.0,
+        "shuffled": 0.503731343283582,
+        "spp": 0.9888059701492538
+      },
+      "neutral": {
+        "neutral": 1.0,
+        "self": 0.996268656716418,
+        "other": 1.0,
+        "shuffled": 0.5,
+        "spp": 0.996268656716418
+      },
+      "spp": {
+        "neutral": 1.0,
+        "self": 0.9626865671641791,
+        "other": 0.9626865671641791,
+        "shuffled": 0.5,
+        "spp": 1.0
+      }
+    },
+    "interactions": {
+      "correct_prob": {
+        "delta_bind": 0.06343873482869844,
+        "delta_bind_ci95": [
+          0.038263052372325766,
+          0.0918608524928166
+        ],
+        "delta_coherence": 0.060941763054557785,
+        "delta_coherence_ci95": [
+          0.03324501020119563,
+          0.09189071333418837
+        ],
+        "n_items": 268,
+        "n_bootstrap": 2000
+      },
+      "correct": {
+        "delta_bind": 0.04477611940298509,
+        "delta_bind_ci95": [
+          0.02238805970149249,
+          0.07089552238805974
+        ],
+        "delta_coherence": 0.04850746268656725,
+        "delta_coherence_ci95": [
+          0.022294776119402893,
+          0.08208955223880587
+        ],
+        "n_items": 268,
+        "n_bootstrap": 2000
+      }
+    },
+    "per_family_expected_correct_prob": {
+      "base": {
+        "neutral": {
+          "belief_revision": 0.5460927353577187,
+          "cooperation": 0.5945954485617847,
+          "delayed_reward": 0.6278718387974233,
+          "exploration": 0.5715421509013506,
+          "persistence": 0.66457178766363,
+          "resource_allocation": 0.6999654627350378,
+          "trust": 0.6070651432421853
+        },
+        "self": {
+          "belief_revision": 0.547701803510774,
+          "cooperation": 0.5945948996723007,
+          "delayed_reward": 0.6279065274835124,
+          "exploration": 0.6222164721805764,
+          "persistence": 0.7193569366566142,
+          "resource_allocation": 0.6999582104820123,
+          "trust": 0.6962597363337284
+        },
+        "other": {
+          "belief_revision": 0.5233939859348377,
+          "cooperation": 0.5946621464615471,
+          "delayed_reward": 0.6279061807833407,
+          "exploration": 0.4738828264765531,
+          "persistence": 0.62101308430843,
+          "resource_allocation": 0.6999600149373979,
+          "trust": 0.5851167208018874
+        },
+        "shuffled": {
+          "belief_revision": 0.39501019256163145,
+          "cooperation": 0.5945945419048652,
+          "delayed_reward": 0.6279067572957533,
+          "exploration": 0.5464219062473126,
+          "persistence": 0.32276563935994607,
+          "resource_allocation": 0.6999758483530207,
+          "trust": 0.6746266871190114
+        },
+        "spp": {
+          "belief_revision": 0.3294162414052807,
+          "cooperation": 0.5945945953139785,
+          "delayed_reward": 0.6278957151705289,
+          "exploration": 0.5882352911943589,
+          "persistence": 0.36111116276944694,
+          "resource_allocation": 0.6578344513380046,
+          "trust": 0.6750228278937301
+        }
+      },
+      "self": {
+        "neutral": {
+          "belief_revision": 0.9976893891329136,
+          "cooperation": 0.9999612816608423,
+          "delayed_reward": 0.9268351832587506,
+          "exploration": 0.9993844398118151,
+          "persistence": 0.9984955549878012,
+          "resource_allocation": 0.9944912599815765,
+          "trust": 0.938298541121981
+        },
+        "self": {
+          "belief_revision": 0.9997386043853972,
+          "cooperation": 0.9999291212955441,
+          "delayed_reward": 0.9998101667467342,
+          "exploration": 0.9998965665237196,
+          "persistence": 0.9999398054761818,
+          "resource_allocation": 0.9996143981205741,
+          "trust": 0.9723718835721066
+        },
+        "other": {
+          "belief_revision": 0.9975839559206392,
+          "cooperation": 0.999944586377239,
+          "delayed_reward": 0.9464499979013195,
+          "exploration": 0.9703620600766788,
+          "persistence": 0.9956356035825844,
+          "resource_allocation": 0.996691505382195,
+          "trust": 0.9526329515875837
+        },
+        "shuffled": {
+          "belief_revision": 0.42106457112824885,
+          "cooperation": 0.5405392140589699,
+          "delayed_reward": 0.46515452043807676,
+          "exploration": 0.4411520947693519,
+          "persistence": 0.49997650183214326,
+          "resource_allocation": 0.6248504150669871,
+          "trust": 0.5154143987918258
+        },
+        "spp": {
+          "belief_revision": 0.9770579344537357,
+          "cooperation": 0.9997078377760984,
+          "delayed_reward": 0.8060084217101097,
+          "exploration": 0.9894527516528356,
+          "persistence": 0.6596957285405293,
+          "resource_allocation": 0.9462730509924248,
+          "trust": 0.9294895433152728
+        }
+      },
+      "other": {
+        "neutral": {
+          "belief_revision": 0.999911900688629,
+          "cooperation": 0.9963247534525729,
+          "delayed_reward": 0.7865507414043637,
+          "exploration": 0.9999378057867971,
+          "persistence": 0.9999893997882978,
+          "resource_allocation": 0.999299588351966,
+          "trust": 0.944220511751795
+        },
+        "self": {
+          "belief_revision": 0.9999308150076573,
+          "cooperation": 0.9998892181036051,
+          "delayed_reward": 0.7427149685336695,
+          "exploration": 0.9999624620568942,
+          "persistence": 0.9999735318406535,
+          "resource_allocation": 0.9904128635891087,
+          "trust": 0.9568086557146629
+        },
+        "other": {
+          "belief_revision": 0.9999300729566339,
+          "cooperation": 0.9999946937299039,
+          "delayed_reward": 0.9999689251990387,
+          "exploration": 0.9999859875200924,
+          "persistence": 0.9999950888799464,
+          "resource_allocation": 0.9999946965111853,
+          "trust": 0.9845473554877602
+        },
+        "shuffled": {
+          "belief_revision": 0.4210417390187488,
+          "cooperation": 0.5405869316789357,
+          "delayed_reward": 0.5631567098861047,
+          "exploration": 0.4412306237286825,
+          "persistence": 0.49999601491528256,
+          "resource_allocation": 0.615498367086514,
+          "trust": 0.5267070999983805
+        },
+        "spp": {
+          "belief_revision": 0.984813562489659,
+          "cooperation": 0.9212016200840164,
+          "delayed_reward": 0.7318191739137657,
+          "exploration": 0.999319048313209,
+          "persistence": 0.9999821368593914,
+          "resource_allocation": 0.8426135800963135,
+          "trust": 0.8941749256281408
+        }
+      },
+      "mixed": {
+        "neutral": {
+          "belief_revision": 0.999855125884401,
+          "cooperation": 0.9999844158124933,
+          "delayed_reward": 0.9992786324639891,
+          "exploration": 0.9999092547106491,
+          "persistence": 0.9999739184049719,
+          "resource_allocation": 0.9997945198467939,
+          "trust": 0.9824305545521493
+        },
+        "self": {
+          "belief_revision": 0.9998969166263639,
+          "cooperation": 0.9999862009477951,
+          "delayed_reward": 0.9997935756980297,
+          "exploration": 0.999918567076129,
+          "persistence": 0.9999764682867028,
+          "resource_allocation": 0.9997542968179246,
+          "trust": 0.9821696255287866
+        },
+        "other": {
+          "belief_revision": 0.9998180454643154,
+          "cooperation": 0.9999828003512669,
+          "delayed_reward": 0.9996977067408678,
+          "exploration": 0.9999048837467193,
+          "persistence": 0.9999785557496553,
+          "resource_allocation": 0.9997578946753682,
+          "trust": 0.9813981016787892
+        },
+        "shuffled": {
+          "belief_revision": 0.4210298269134545,
+          "cooperation": 0.5405401613798291,
+          "delayed_reward": 0.4651507583896747,
+          "exploration": 0.4411351529037186,
+          "persistence": 0.500000201702088,
+          "resource_allocation": 0.6249506985213298,
+          "trust": 0.4943263963664076
+        },
+        "spp": {
+          "belief_revision": 0.9903316701064355,
+          "cooperation": 0.9999815300791578,
+          "delayed_reward": 0.9988560669179896,
+          "exploration": 0.9997209558250749,
+          "persistence": 0.9998868289252256,
+          "resource_allocation": 0.9991829320592338,
+          "trust": 0.9355364119081795
+        }
+      },
+      "neutral": {
+        "neutral": {
+          "belief_revision": 0.9999284658299527,
+          "cooperation": 0.9999411782996217,
+          "delayed_reward": 0.9993214536310596,
+          "exploration": 0.9996320898417541,
+          "persistence": 0.999968412365565,
+          "resource_allocation": 0.9998789924562989,
+          "trust": 0.992602164904983
+        },
+        "self": {
+          "belief_revision": 0.9997747540198111,
+          "cooperation": 0.9998954919706522,
+          "delayed_reward": 0.9639187171438939,
+          "exploration": 0.9992351158317848,
+          "persistence": 0.9999215849270572,
+          "resource_allocation": 0.9980730370472635,
+          "trust": 0.9656239831644804
+        },
+        "other": {
+          "belief_revision": 0.9996674148343119,
+          "cooperation": 0.9998080885288939,
+          "delayed_reward": 0.9788916545387115,
+          "exploration": 0.9982107870599966,
+          "persistence": 0.9998686284998635,
+          "resource_allocation": 0.9976733357728008,
+          "trust": 0.9825726426080713
+        },
+        "shuffled": {
+          "belief_revision": 0.4210152655485983,
+          "cooperation": 0.5406196986443741,
+          "delayed_reward": 0.4591019677226452,
+          "exploration": 0.4407695960490824,
+          "persistence": 0.49999624721058644,
+          "resource_allocation": 0.6263492176239362,
+          "trust": 0.5175329611565616
+        },
+        "spp": {
+          "belief_revision": 0.9983660512193687,
+          "cooperation": 0.99227024358902,
+          "delayed_reward": 0.9980623808612106,
+          "exploration": 0.9996631184282,
+          "persistence": 0.9990866372306579,
+          "resource_allocation": 0.9994392862356228,
+          "trust": 0.9710665085726923
+        }
+      },
+      "spp": {
+        "neutral": {
+          "belief_revision": 0.9987385318237582,
+          "cooperation": 0.9998798567929954,
+          "delayed_reward": 0.9979421393246344,
+          "exploration": 0.9911450299717801,
+          "persistence": 0.998332058918698,
+          "resource_allocation": 0.9982917575790651,
+          "trust": 0.9812894869190533
+        },
+        "self": {
+          "belief_revision": 0.9979740302506124,
+          "cooperation": 0.9997959859702542,
+          "delayed_reward": 0.9043331124022266,
+          "exploration": 0.9440096698346859,
+          "persistence": 0.9954874017737217,
+          "resource_allocation": 0.9926641568097926,
+          "trust": 0.9055774507414007
+        },
+        "other": {
+          "belief_revision": 0.9982147791886228,
+          "cooperation": 0.9977661991404745,
+          "delayed_reward": 0.983645677457946,
+          "exploration": 0.8755764036586995,
+          "persistence": 0.9977526672224621,
+          "resource_allocation": 0.9281309515961726,
+          "trust": 0.9529670769069017
+        },
+        "shuffled": {
+          "belief_revision": 0.42085545660324497,
+          "cooperation": 0.5405459706276772,
+          "delayed_reward": 0.5078933875352929,
+          "exploration": 0.42814439755939526,
+          "persistence": 0.5011358007845691,
+          "resource_allocation": 0.6265283891781037,
+          "trust": 0.42129545548341624
+        },
+        "spp": {
+          "belief_revision": 0.9997091171108397,
+          "cooperation": 0.9998634965009766,
+          "delayed_reward": 0.9995969997496152,
+          "exploration": 0.9996747837872269,
+          "persistence": 0.9999718539377445,
+          "resource_allocation": 0.9998441442982987,
+          "trust": 0.9846162393325951
+        }
+      }
+    }
+  }
+}

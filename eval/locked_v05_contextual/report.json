@@ -1,0 +1,19 @@
+{
+  "items": 268,
+  "families": {
+    "belief_revision": 38,
+    "cooperation": 37,
+    "delayed_reward": 43,
+    "exploration": 34,
+    "persistence": 36,
+    "resource_allocation": 40,
+    "trust": 40
+  },
+  "correct_option_positions": {
+    "B": 97,
+    "C": 87,
+    "A": 84
+  },
+  "split": "v0.5 test (held-out instances, same generator policy as training)",
+  "external_provider_used": false
+}

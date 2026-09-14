@@ -21,7 +21,7 @@ image = (
         "numpy>=1.26",
         "hf_transfer>=0.1",
     )
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "CACHE_BUST": "v2"})
     .add_local_dir("scripts", remote_path=f"{REPO_ROOT}/scripts")
     .add_local_dir("src", remote_path=f"{REPO_ROOT}/src")
     .add_local_dir("eval", remote_path=f"{REPO_ROOT}/eval")
