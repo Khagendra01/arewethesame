@@ -40,21 +40,31 @@ hf_vol = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
         "/root/.cache/huggingface": hf_vol,
     },
 )
-def evaluate(generation_subset: int = 30, limit_items: int = 0):
+def evaluate(
+    generation_subset: int = 30,
+    limit_items: int = 0,
+    adapters_root: str = "/outputs/lora_pilot_seed31",
+    output: str = "/outputs/eval_locked_v2/factorial.json",
+    models: str = "",
+    items: str = f"{REPO_ROOT}/eval/locked_v2_contextual/items.jsonl",
+):
     cmd = [
         "python",
+        "-u",
         f"{REPO_ROOT}/scripts/eval_factorial_locked_v2.py",
         "--adapters-root",
-        "/outputs/lora_pilot_seed31",
+        adapters_root,
         "--items",
-        f"{REPO_ROOT}/eval/locked_v2_contextual/items.jsonl",
+        items,
         "--output",
-        "/outputs/eval_locked_v2/factorial.json",
+        output,
         "--bootstrap",
         "2000",
         "--generation-subset",
         str(generation_subset),
     ]
+    if models:
+        cmd += ["--models", *models.split()]
     if limit_items:
         cmd += ["--limit-items", str(limit_items)]
     print("+ " + " ".join(cmd), flush=True)
@@ -64,5 +74,19 @@ def evaluate(generation_subset: int = 30, limit_items: int = 0):
 
 
 @app.local_entrypoint()
-def main(generation_subset: int = 30, limit_items: int = 0):
-    evaluate.remote(generation_subset=generation_subset, limit_items=limit_items)
+def main(
+    generation_subset: int = 30,
+    limit_items: int = 0,
+    adapters_root: str = "/outputs/lora_pilot_seed31",
+    output: str = "/outputs/eval_locked_v2/factorial.json",
+    models: str = "",
+    items: str = f"{REPO_ROOT}/eval/locked_v2_contextual/items.jsonl",
+):
+    evaluate.remote(
+        generation_subset=generation_subset,
+        limit_items=limit_items,
+        adapters_root=adapters_root,
+        output=output,
+        models=models,
+        items=items,
+    )

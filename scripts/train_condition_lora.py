@@ -140,19 +140,20 @@ def verify_rows(rows: list[dict], condition: str, split: str) -> None:
             raise ValueError(f"rejected row present in frozen training data: {row['row_id']}")
 
 
-def verify_matched_supervision(data_root: Path, split: str) -> None:
+def verify_matched_supervision(data_root: Path, split: str, conditions: tuple[str, ...] | None = None) -> None:
+    conditions = conditions or CONDITIONS
     by_condition = {}
-    for condition in CONDITIONS:
+    for condition in conditions:
         path = data_root / "training" / condition / f"{split}.jsonl"
         verify_frozen_file(data_root, path)
         rows = read_jsonl(path)
         verify_rows(rows, condition, split)
         by_condition[condition] = rows
 
-    reference = by_condition["neutral"]
+    reference = by_condition[conditions[0]]
     ref_pairs = [row["pair_id"] for row in reference]
     ref_responses = [row["response"] for row in reference]
-    for condition in CONDITIONS[1:]:
+    for condition in conditions[1:]:
         rows = by_condition[condition]
         if [row["pair_id"] for row in rows] != ref_pairs:
             raise ValueError(f"pair ordering differs for {condition}/{split}")
@@ -165,6 +166,12 @@ def parse_args() -> argparse.Namespace:
         description="Train one matched-condition QLoRA adapter on the frozen assistant v0.3 pilot."
     )
     parser.add_argument("--condition", required=True, choices=CONDITIONS)
+    parser.add_argument(
+        "--conditions",
+        nargs="+",
+        default=list(CONDITIONS),
+        help="Condition files to cross-verify for matched supervision.",
+    )
     parser.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT)
     parser.add_argument("--base-model", default=DEFAULT_MODEL)
     parser.add_argument("--output-root", type=Path, default=Path("outputs/lora_pilot_seed31"))
@@ -187,7 +194,7 @@ def main() -> None:
     torch.backends.cuda.matmul.allow_tf32 = True
 
     for split in ("train", "validation", "test"):
-        verify_matched_supervision(args.data_root, split)
+        verify_matched_supervision(args.data_root, split, tuple(args.conditions))
 
     train_path = args.data_root / "training" / args.condition / "train.jsonl"
     validation_path = args.data_root / "training" / args.condition / "validation.jsonl"

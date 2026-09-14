@@ -1,0 +1,66 @@
+{
+  "corpus": "assistant_v04",
+  "conditions": [
+    "neutral",
+    "self",
+    "other",
+    "spp"
+  ],
+  "families": [
+    "resource_allocation",
+    "exploration",
+    "cooperation",
+    "delayed_reward",
+    "belief_revision",
+    "trust",
+    "persistence"
+  ],
+  "per_family": 200,
+  "pairs": 1400,
+  "anchors": 40,
+  "rows_per_condition": 1440,
+  "correct_option_positions": {
+    "A": 471,
+    "C": 440,
+    "B": 489
+  },
+  "semantic_correct_by_family": {
+    "resource_allocation": {
+      "1": 144,
+      "0": 56
+    },
+    "exploration": {
+      "0": 112,
+      "1": 88
+    },
+    "cooperation": {
+      "1": 97,
+      "0": 103
+    },
+    "delayed_reward": {
+      "0": 86,
+      "1": 114
+    },
+    "belief_revision": {
+      "1": 102,
+      "0": 45,
+      "2": 53
+    },
+    "trust": {
+      "1": 117,
+      "2": 59,
+      "0": 24
+    },
+    "persistence": {
+      "1": 87,
+      "2": 113
+    }
+  },
+  "split_counts": {
+    "train": 1125,
+    "validation": 146,
+    "test": 129
+  },
+  "external_provider_used": false,
+  "notes": "History determines target for all seven families (threshold functions of the latent state written into the history). Neutral uses impersonal history; self/other are deterministic ownership bindings of one canonical history; spp adds a fixed reflection to impersonal history. shuffled_self omitted (ill-defined under history-dependent matched targets)."
+}
