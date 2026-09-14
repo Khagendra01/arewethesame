@@ -1,0 +1,2105 @@
+{
+  "items": 200,
+  "models": {
+    "base": {
+      "n_layers": 37,
+      "best_latent_self_layer": 24,
+      "best_latent_self": 1.0,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.975,
+        "latent_other": 0.9400000000000001,
+        "latent_neutral": 0.805,
+        "xown_self_to_other": 0.805,
+        "xown_other_to_self": 0.89,
+        "diff_alignment": 0.5669844746589661
+      },
+      "mean_diff_alignment": 0.6121406708214734,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.905,
+          "latent_other": 0.95,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.705,
+          "xown_other_to_self": 0.615,
+          "diff_alignment": 0.4778099060058594
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.925,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.625,
+          "xown_other_to_self": 0.72,
+          "diff_alignment": 0.6009483337402344
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.905,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.641663134098053
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.635,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.7330332398414612
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.61,
+          "xown_other_to_self": 0.68,
+          "diff_alignment": 0.711739718914032
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.6974207758903503
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.8950000000000001,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.8,
+          "xown_other_to_self": 0.73,
+          "diff_alignment": 0.6978608965873718
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.635,
+          "diff_alignment": 0.6896279454231262
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.76,
+          "xown_other_to_self": 0.66,
+          "diff_alignment": 0.7305280566215515
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9250000000000002,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.725,
+          "xown_other_to_self": 0.705,
+          "diff_alignment": 0.6959843635559082
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.715,
+          "diff_alignment": 0.7011028528213501
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.775,
+          "diff_alignment": 0.6885253190994263
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.595,
+          "xown_other_to_self": 0.775,
+          "diff_alignment": 0.6953459978103638
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.915,
+          "diff_alignment": 0.6974268555641174
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.724286675453186
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.845,
+          "xown_other_to_self": 0.83,
+          "diff_alignment": 0.7169308662414551
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.96,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.79,
+          "diff_alignment": 0.744025468826294
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.96,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.775,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.7439941167831421
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.84,
+          "diff_alignment": 0.7367213368415833
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9700000000000001,
+          "latent_other": 0.975,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.82,
+          "xown_other_to_self": 0.845,
+          "diff_alignment": 0.7182258367538452
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.975,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.6944630146026611
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9800000000000001,
+          "latent_other": 0.9949999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.725,
+          "xown_other_to_self": 0.78,
+          "diff_alignment": 0.6726690530776978
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.97,
+          "latent_other": 0.975,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.705,
+          "diff_alignment": 0.6055358648300171
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 1.0,
+          "latent_other": 0.9949999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.825,
+          "diff_alignment": 0.5735965371131897
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 1.0,
+          "latent_other": 0.9949999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.51925128698349
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 1.0,
+          "latent_other": 0.9949999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.775,
+          "xown_other_to_self": 0.835,
+          "diff_alignment": 0.5404316186904907
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.99,
+          "latent_other": 0.99,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.73,
+          "xown_other_to_self": 0.795,
+          "diff_alignment": 0.5114603638648987
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9800000000000001,
+          "latent_other": 0.97,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.865,
+          "diff_alignment": 0.5082798004150391
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.99,
+          "latent_other": 0.975,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.81,
+          "diff_alignment": 0.5088428258895874
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.99,
+          "latent_other": 0.99,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.85,
+          "diff_alignment": 0.49837788939476013
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.99,
+          "latent_other": 0.96,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.825,
+          "xown_other_to_self": 0.81,
+          "diff_alignment": 0.48979008197784424
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9949999999999999,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.795,
+          "xown_other_to_self": 0.85,
+          "diff_alignment": 0.5141677260398865
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.985,
+          "latent_other": 0.97,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.9,
+          "xown_other_to_self": 0.915,
+          "diff_alignment": 0.5213843584060669
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.975,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.88,
+          "xown_other_to_self": 0.885,
+          "diff_alignment": 0.5315027236938477
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.985,
+          "latent_other": 0.9700000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.865,
+          "xown_other_to_self": 0.92,
+          "diff_alignment": 0.5492655038833618
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.805,
+          "xown_other_to_self": 0.89,
+          "diff_alignment": 0.5669844746589661
+        }
+      }
+    },
+    "neutral": {
+      "n_layers": 37,
+      "best_latent_self_layer": 27,
+      "best_latent_self": 0.975,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.9200000000000002,
+        "latent_other": 0.9100000000000001,
+        "latent_neutral": 0.7849999999999999,
+        "xown_self_to_other": 0.725,
+        "xown_other_to_self": 0.8,
+        "diff_alignment": 0.44441691040992737
+      },
+      "mean_diff_alignment": 0.5738581523701951,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.93,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.73,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.4590139091014862
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.915,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.73,
+          "xown_other_to_self": 0.61,
+          "diff_alignment": 0.5694905519485474
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.648674726486206
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.7056780457496643
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9199999999999999,
+          "latent_other": 0.95,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.615,
+          "xown_other_to_self": 0.615,
+          "diff_alignment": 0.7013530135154724
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.605,
+          "xown_other_to_self": 0.625,
+          "diff_alignment": 0.7016909718513489
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.775,
+          "diff_alignment": 0.6865485906600952
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.89,
+          "latent_neutral": 0.7799999999999999,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.6693710684776306
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.9100000000000001,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.65,
+          "diff_alignment": 0.7354918718338013
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.805,
+          "xown_other_to_self": 0.595,
+          "diff_alignment": 0.6880754828453064
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.95,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.655,
+          "diff_alignment": 0.7060770988464355
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.68,
+          "diff_alignment": 0.7042449116706848
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.73,
+          "diff_alignment": 0.7113120555877686
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.645,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.7031787633895874
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.95,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.85,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.7144587635993958
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.705,
+          "xown_other_to_self": 0.825,
+          "diff_alignment": 0.6983057260513306
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.675,
+          "xown_other_to_self": 0.895,
+          "diff_alignment": 0.7000761032104492
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.84,
+          "diff_alignment": 0.6846042275428772
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.6814500689506531
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.665,
+          "xown_other_to_self": 0.905,
+          "diff_alignment": 0.6348599195480347
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9549999999999998,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.845,
+          "diff_alignment": 0.6007975935935974
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.67,
+          "xown_other_to_self": 0.825,
+          "diff_alignment": 0.5795096755027771
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9299999999999999,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.83,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.563305139541626
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.83,
+          "xown_other_to_self": 0.83,
+          "diff_alignment": 0.5155718922615051
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.81,
+          "diff_alignment": 0.4950099289417267
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.855,
+          "diff_alignment": 0.47807222604751587
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.795,
+          "diff_alignment": 0.4689006507396698
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.75,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.46491968631744385
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.9,
+          "diff_alignment": 0.45951202511787415
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9549999999999998,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.81,
+          "xown_other_to_self": 0.83,
+          "diff_alignment": 0.45637351274490356
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.915,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.72,
+          "xown_other_to_self": 0.87,
+          "diff_alignment": 0.44352957606315613
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9250000000000002,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.89,
+          "diff_alignment": 0.43813541531562805
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9549999999999998,
+          "latent_other": 0.9100000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.75,
+          "xown_other_to_self": 0.865,
+          "diff_alignment": 0.4370037615299225
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.685,
+          "xown_other_to_self": 0.9,
+          "diff_alignment": 0.4396410584449768
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.44409671425819397
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9100000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.725,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.44441691040992737
+        }
+      }
+    },
+    "self": {
+      "n_layers": 37,
+      "best_latent_self_layer": 18,
+      "best_latent_self": 0.9650000000000001,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.9250000000000002,
+        "latent_other": 0.915,
+        "latent_neutral": 0.78,
+        "xown_self_to_other": 0.73,
+        "xown_other_to_self": 0.78,
+        "diff_alignment": 0.49517515301704407
+      },
+      "mean_diff_alignment": 0.5987849614104709,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.7799999999999999,
+          "xown_self_to_other": 0.815,
+          "xown_other_to_self": 0.67,
+          "diff_alignment": 0.47441747784614563
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.885,
+          "latent_other": 0.9,
+          "latent_neutral": 0.765,
+          "xown_self_to_other": 0.605,
+          "xown_other_to_self": 0.62,
+          "diff_alignment": 0.5581233501434326
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.9100000000000001,
+          "latent_neutral": 0.7699999999999999,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.78,
+          "diff_alignment": 0.6509844660758972
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.95,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.835,
+          "diff_alignment": 0.7344294786453247
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.705,
+          "xown_other_to_self": 0.75,
+          "diff_alignment": 0.7097318172454834
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.925,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.72,
+          "diff_alignment": 0.7154051065444946
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.72,
+          "diff_alignment": 0.7072154879570007
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9149999999999998,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.625,
+          "xown_other_to_self": 0.725,
+          "diff_alignment": 0.6924904584884644
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.685,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.7596009969711304
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9350000000000002,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.635,
+          "xown_other_to_self": 0.65,
+          "diff_alignment": 0.699391782283783
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.95,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.7196663022041321
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.945,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.725,
+          "diff_alignment": 0.7019240260124207
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9399999999999998,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.72,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.695878803730011
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9350000000000002,
+          "latent_other": 0.9549999999999998,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.73,
+          "diff_alignment": 0.6825864315032959
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.97,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.675,
+          "xown_other_to_self": 0.765,
+          "diff_alignment": 0.690704345703125
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.79,
+          "diff_alignment": 0.68276447057724
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.925,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.765,
+          "diff_alignment": 0.6958621144294739
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.775,
+          "xown_other_to_self": 0.825,
+          "diff_alignment": 0.6956084370613098
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.6801100373268127
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.795,
+          "diff_alignment": 0.6763339638710022
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.67,
+          "xown_other_to_self": 0.775,
+          "diff_alignment": 0.6539971232414246
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.705,
+          "xown_other_to_self": 0.81,
+          "diff_alignment": 0.6466052532196045
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.915,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.77,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.6053544282913208
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.815,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.5598982572555542
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.95,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.645,
+          "xown_other_to_self": 0.855,
+          "diff_alignment": 0.5341733694076538
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.63,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.513117790222168
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.695,
+          "xown_other_to_self": 0.815,
+          "diff_alignment": 0.5061964988708496
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.5138355493545532
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9250000000000002,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.595,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.5108162760734558
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9100000000000001,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.595,
+          "xown_other_to_self": 0.83,
+          "diff_alignment": 0.5036745071411133
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9199999999999999,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.66,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.5015791058540344
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9199999999999999,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.5008943676948547
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.68,
+          "xown_other_to_self": 0.805,
+          "diff_alignment": 0.49267956614494324
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.77,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.49209922552108765
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.795,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.501717746257782
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.915,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.73,
+          "xown_other_to_self": 0.78,
+          "diff_alignment": 0.49517515301704407
+        }
+      }
+    },
+    "other": {
+      "n_layers": 37,
+      "best_latent_self_layer": 1,
+      "best_latent_self": 0.96,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.93,
+        "latent_other": 0.915,
+        "latent_neutral": 0.785,
+        "xown_self_to_other": 0.69,
+        "xown_other_to_self": 0.6,
+        "diff_alignment": 0.5141693949699402
+      },
+      "mean_diff_alignment": 0.59773076869346,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.89,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.4540599584579468
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.765,
+          "xown_self_to_other": 0.73,
+          "xown_other_to_self": 0.7,
+          "diff_alignment": 0.5338991284370422
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.6611253023147583
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9549999999999998,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.77,
+          "xown_other_to_self": 0.75,
+          "diff_alignment": 0.721724808216095
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9199999999999999,
+          "latent_other": 0.93,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.7014093995094299
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9299999999999999,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.84,
+          "diff_alignment": 0.6969698071479797
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.905,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.655,
+          "xown_other_to_self": 0.765,
+          "diff_alignment": 0.7017844915390015
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9049999999999999,
+          "latent_other": 0.93,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.55,
+          "xown_other_to_self": 0.64,
+          "diff_alignment": 0.697531521320343
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9,
+          "latent_other": 0.9149999999999998,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.72,
+          "xown_other_to_self": 0.63,
+          "diff_alignment": 0.7692275643348694
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.7037984728813171
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.815,
+          "xown_other_to_self": 0.845,
+          "diff_alignment": 0.7567521333694458
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.7295219898223877
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.95,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.715,
+          "xown_other_to_self": 0.63,
+          "diff_alignment": 0.7426503300666809
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.69,
+          "diff_alignment": 0.7304596304893494
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.81,
+          "xown_other_to_self": 0.64,
+          "diff_alignment": 0.7188844680786133
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.84,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.7041087746620178
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.945,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.83,
+          "xown_other_to_self": 0.905,
+          "diff_alignment": 0.7043225169181824
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.875,
+          "xown_other_to_self": 0.79,
+          "diff_alignment": 0.6933214664459229
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.82,
+          "diff_alignment": 0.6522807478904724
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.84,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.6336882710456848
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.835,
+          "xown_other_to_self": 0.835,
+          "diff_alignment": 0.6002156734466553
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.73,
+          "diff_alignment": 0.5921616554260254
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.95,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.76,
+          "xown_other_to_self": 0.88,
+          "diff_alignment": 0.56009840965271
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.625,
+          "xown_other_to_self": 0.79,
+          "diff_alignment": 0.5210631489753723
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.83,
+          "diff_alignment": 0.5113958716392517
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.5052261352539062
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.67,
+          "xown_other_to_self": 0.765,
+          "diff_alignment": 0.5065042972564697
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.95,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.75,
+          "xown_other_to_self": 0.765,
+          "diff_alignment": 0.5209321975708008
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.685,
+          "xown_other_to_self": 0.805,
+          "diff_alignment": 0.5165084004402161
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.84,
+          "diff_alignment": 0.5054540634155273
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.925,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.49964600801467896
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.805,
+          "xown_other_to_self": 0.675,
+          "diff_alignment": 0.5143197774887085
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.66,
+          "diff_alignment": 0.5117422342300415
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.93,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.805,
+          "diff_alignment": 0.5157233476638794
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.655,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.5133570432662964
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.915,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.6,
+          "diff_alignment": 0.5141693949699402
+        }
+      }
+    },
+    "shuffled_self": {
+      "n_layers": 37,
+      "best_latent_self_layer": 19,
+      "best_latent_self": 0.975,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.93,
+        "latent_other": 0.9349999999999999,
+        "latent_neutral": 0.7899999999999999,
+        "xown_self_to_other": 0.69,
+        "xown_other_to_self": 0.785,
+        "diff_alignment": 0.4752281606197357
+      },
+      "mean_diff_alignment": 0.5820674348521877,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.875,
+          "latent_other": 0.9299999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.695,
+          "xown_other_to_self": 0.635,
+          "diff_alignment": 0.4752890467643738
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.89,
+          "latent_other": 0.9299999999999999,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.73,
+          "diff_alignment": 0.5691688060760498
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.855,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.6477376222610474
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.68,
+          "xown_other_to_self": 0.7,
+          "diff_alignment": 0.7122594714164734
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.93,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.695,
+          "xown_other_to_self": 0.715,
+          "diff_alignment": 0.7012670040130615
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.7063133120536804
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.915,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.815,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.6969234347343445
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.9049999999999999,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.67,
+          "diff_alignment": 0.7089568972587585
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.925,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.885,
+          "xown_other_to_self": 0.745,
+          "diff_alignment": 0.7598376870155334
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.915,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.72,
+          "diff_alignment": 0.6976924538612366
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.7397005558013916
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.945,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.885,
+          "xown_other_to_self": 0.78,
+          "diff_alignment": 0.7400235533714294
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.95,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.7294813394546509
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.945,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.84,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.7082186341285706
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.77,
+          "xown_other_to_self": 0.775,
+          "diff_alignment": 0.7143504023551941
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.84,
+          "diff_alignment": 0.7152283191680908
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.93,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.91,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.7099624872207642
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.895,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.6967625021934509
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.86,
+          "xown_other_to_self": 0.87,
+          "diff_alignment": 0.6578141450881958
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.805,
+          "xown_other_to_self": 0.725,
+          "diff_alignment": 0.6389905214309692
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.81,
+          "xown_other_to_self": 0.88,
+          "diff_alignment": 0.6123515963554382
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.635,
+          "xown_other_to_self": 0.705,
+          "diff_alignment": 0.5740935206413269
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.93,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.795,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.5479542016983032
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.5105050802230835
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.93,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.775,
+          "xown_other_to_self": 0.63,
+          "diff_alignment": 0.48448896408081055
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.915,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.755,
+          "xown_other_to_self": 0.675,
+          "diff_alignment": 0.47770512104034424
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.925,
+          "latent_neutral": 0.785,
+          "xown_self_to_other": 0.735,
+          "xown_other_to_self": 0.705,
+          "diff_alignment": 0.4633033275604248
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.795,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.4576835036277771
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.74,
+          "diff_alignment": 0.455887109041214
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.915,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.44563981890678406
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9049999999999999,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.74,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.44815942645072937
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.9200000000000002,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.705,
+          "diff_alignment": 0.45203083753585815
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.915,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.695,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.45768749713897705
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9200000000000002,
+          "latent_other": 0.89,
+          "latent_neutral": 0.78,
+          "xown_self_to_other": 0.68,
+          "xown_other_to_self": 0.75,
+          "diff_alignment": 0.46606793999671936
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.9250000000000002,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.675,
+          "xown_other_to_self": 0.735,
+          "diff_alignment": 0.48173078894615173
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9349999999999999,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.69,
+          "xown_other_to_self": 0.785,
+          "diff_alignment": 0.4752281606197357
+        }
+      }
+    },
+    "spp": {
+      "n_layers": 37,
+      "best_latent_self_layer": 23,
+      "best_latent_self": 0.9799999999999999,
+      "final_layer": {
+        "ownership_probe": 1.0,
+        "latent_self": 0.9450000000000001,
+        "latent_other": 0.9450000000000001,
+        "latent_neutral": 0.805,
+        "xown_self_to_other": 0.77,
+        "xown_other_to_self": 0.855,
+        "diff_alignment": 0.4954179525375366
+      },
+      "mean_diff_alignment": 0.5632752961403614,
+      "layers": {
+        "0": {
+          "ownership_probe": 0.5,
+          "latent_self": 0.5599999999999999,
+          "latent_other": 0.5599999999999999,
+          "latent_neutral": 0.5599999999999999,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.56,
+          "diff_alignment": 0.0
+        },
+        "1": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9,
+          "latent_neutral": 0.7899999999999999,
+          "xown_self_to_other": 0.64,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.4886932671070099
+        },
+        "2": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.915,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.56,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.6008418798446655
+        },
+        "3": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.575,
+          "xown_other_to_self": 0.78,
+          "diff_alignment": 0.660253643989563
+        },
+        "4": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.8049999999999999,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.61,
+          "diff_alignment": 0.7299134731292725
+        },
+        "5": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.915,
+          "latent_neutral": 0.775,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.72,
+          "diff_alignment": 0.7082459330558777
+        },
+        "6": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9250000000000002,
+          "latent_other": 0.915,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.79,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.6952474117279053
+        },
+        "7": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9199999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.635,
+          "xown_other_to_self": 0.87,
+          "diff_alignment": 0.6848822832107544
+        },
+        "8": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9099999999999999,
+          "latent_other": 0.905,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.715,
+          "xown_other_to_self": 0.71,
+          "diff_alignment": 0.6389182209968567
+        },
+        "9": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.905,
+          "latent_other": 0.9099999999999999,
+          "latent_neutral": 0.7699999999999999,
+          "xown_self_to_other": 0.625,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.6456674933433533
+        },
+        "10": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9350000000000002,
+          "latent_other": 0.9299999999999999,
+          "latent_neutral": 0.79,
+          "xown_self_to_other": 0.725,
+          "xown_other_to_self": 0.68,
+          "diff_alignment": 0.6382293701171875
+        },
+        "11": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9349999999999999,
+          "latent_other": 0.945,
+          "latent_neutral": 0.7849999999999999,
+          "xown_self_to_other": 0.695,
+          "xown_other_to_self": 0.65,
+          "diff_alignment": 0.6629151701927185
+        },
+        "12": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.925,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.7949999999999999,
+          "xown_self_to_other": 0.805,
+          "xown_other_to_self": 0.695,
+          "diff_alignment": 0.6416100263595581
+        },
+        "13": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.93,
+          "latent_other": 0.9350000000000002,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.82,
+          "xown_other_to_self": 0.625,
+          "diff_alignment": 0.6479337811470032
+        },
+        "14": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.97,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.71,
+          "xown_other_to_self": 0.665,
+          "diff_alignment": 0.6471653580665588
+        },
+        "15": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9650000000000001,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.81,
+          "xown_other_to_self": 0.715,
+          "diff_alignment": 0.6365499496459961
+        },
+        "16": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9400000000000001,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.84,
+          "xown_other_to_self": 0.8,
+          "diff_alignment": 0.6244994401931763
+        },
+        "17": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.575,
+          "diff_alignment": 0.6263341307640076
+        },
+        "18": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9400000000000001,
+          "latent_other": 0.945,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.86,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.6323529481887817
+        },
+        "19": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.76,
+          "xown_other_to_self": 0.7,
+          "diff_alignment": 0.5878099203109741
+        },
+        "20": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.945,
+          "latent_other": 0.95,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.7,
+          "xown_other_to_self": 0.63,
+          "diff_alignment": 0.5791337490081787
+        },
+        "21": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.945,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.745,
+          "xown_other_to_self": 0.85,
+          "diff_alignment": 0.5606574416160583
+        },
+        "22": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.97,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.775,
+          "xown_other_to_self": 0.885,
+          "diff_alignment": 0.5498588681221008
+        },
+        "23": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9799999999999999,
+          "latent_other": 0.975,
+          "latent_neutral": 0.8099999999999999,
+          "xown_self_to_other": 0.685,
+          "xown_other_to_self": 0.835,
+          "diff_alignment": 0.540840208530426
+        },
+        "24": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.97,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.785,
+          "xown_other_to_self": 0.76,
+          "diff_alignment": 0.5264878273010254
+        },
+        "25": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9799999999999999,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.88,
+          "xown_other_to_self": 0.755,
+          "diff_alignment": 0.5160336494445801
+        },
+        "26": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.825,
+          "xown_other_to_self": 0.77,
+          "diff_alignment": 0.5019384026527405
+        },
+        "27": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.84,
+          "xown_other_to_self": 0.86,
+          "diff_alignment": 0.49330613017082214
+        },
+        "28": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9650000000000001,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.82,
+          "xown_other_to_self": 0.89,
+          "diff_alignment": 0.4874670207500458
+        },
+        "29": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.975,
+          "latent_other": 0.975,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.76,
+          "xown_other_to_self": 0.87,
+          "diff_alignment": 0.4836885929107666
+        },
+        "30": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.96,
+          "latent_neutral": 0.7950000000000002,
+          "xown_self_to_other": 0.675,
+          "xown_other_to_self": 0.815,
+          "diff_alignment": 0.4880599081516266
+        },
+        "31": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.97,
+          "latent_other": 0.96,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.8,
+          "xown_other_to_self": 0.825,
+          "diff_alignment": 0.47707244753837585
+        },
+        "32": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.96,
+          "latent_other": 0.9550000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.815,
+          "xown_other_to_self": 0.855,
+          "diff_alignment": 0.4874562621116638
+        },
+        "33": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.95,
+          "latent_other": 0.93,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.765,
+          "xown_other_to_self": 0.85,
+          "diff_alignment": 0.48628950119018555
+        },
+        "34": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9550000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.8,
+          "xown_self_to_other": 0.825,
+          "xown_other_to_self": 0.865,
+          "diff_alignment": 0.4879794120788574
+        },
+        "35": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.78,
+          "xown_other_to_self": 0.845,
+          "diff_alignment": 0.4814348816871643
+        },
+        "36": {
+          "ownership_probe": 1.0,
+          "latent_self": 0.9450000000000001,
+          "latent_other": 0.9450000000000001,
+          "latent_neutral": 0.805,
+          "xown_self_to_other": 0.77,
+          "xown_other_to_self": 0.855,
+          "diff_alignment": 0.4954179525375366
+        }
+      }
+    }
+  }
+}
