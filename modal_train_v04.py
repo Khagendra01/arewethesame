@@ -1,8 +1,8 @@
 """Modal GPU runner for the v0.4 history-dependent corpus.
 
-Trains the matched adapters (neutral, self, other, spp) with the unmodified
-completion-only QLoRA recipe and the same seed/hyperparameters, on data where
-the correct answer is a threshold function of the history state.
+Trains each matched adapter as an independent function invocation and commits
+the output volume after every condition, so progress survives client or
+container interruptions. `main` maps the conditions in parallel.
 """
 
 import subprocess
@@ -42,33 +42,36 @@ hf_vol = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 
 @app.function(
     gpu="L4",
-    timeout=14400,
+    timeout=10800,
     volumes={
         "/outputs": out_vol,
         "/root/.cache/huggingface": hf_vol,
     },
 )
-def train_all():
-    for condition in CONDITIONS:
-        cmd = [
-            "python",
-            f"{REPO_ROOT}/scripts/train_condition_lora.py",
-            "--condition",
-            condition,
-            "--conditions",
-            *CONDITIONS,
-            "--data-root",
-            DATA_ROOT,
-            "--output-root",
-            "/outputs/lora_v04_seed101",
-        ]
-        print("+ " + " ".join(cmd), flush=True)
-        subprocess.run(cmd, check=True, cwd=REPO_ROOT)
-        print(f"===== done {condition} =====", flush=True)
+def train_one(condition: str):
+    cmd = [
+        "python",
+        "-u",
+        f"{REPO_ROOT}/scripts/train_condition_lora.py",
+        "--condition",
+        condition,
+        "--conditions",
+        *CONDITIONS,
+        "--data-root",
+        DATA_ROOT,
+        "--output-root",
+        "/outputs/lora_v04_seed101",
+    ]
+    print("+ " + " ".join(cmd), flush=True)
+    subprocess.run(cmd, check=True, cwd=REPO_ROOT)
     out_vol.commit()
-    print("all conditions done", flush=True)
+    print(f"===== done {condition} =====", flush=True)
+    return condition
 
 
 @app.local_entrypoint()
-def main():
-    train_all.remote()
+def main(condition: str = ""):
+    targets = [condition] if condition else list(CONDITIONS)
+    for target in targets:
+        result = train_one.remote(target)
+        print(f"completed: {result}", flush=True)
