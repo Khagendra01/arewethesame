@@ -165,7 +165,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train one matched-condition QLoRA adapter on the frozen assistant v0.3 pilot."
     )
-    parser.add_argument("--condition", required=True, choices=CONDITIONS)
+    parser.add_argument("--condition", required=True)
     parser.add_argument(
         "--conditions",
         nargs="+",
@@ -187,6 +187,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.condition not in args.conditions:
+        raise SystemExit(f"--condition {args.condition!r} is not in --conditions {args.conditions}")
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA GPU is required. This is the GPU handoff boundary.")
 
