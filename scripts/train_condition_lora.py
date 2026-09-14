@@ -182,6 +182,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--grad-accum", type=int, default=4)
     parser.add_argument("--lora-r", type=int, default=16)
     parser.add_argument("--lora-alpha", type=int, default=32)
+    parser.add_argument("--seed", type=int, default=SEED)
     return parser.parse_args()
 
 
@@ -192,7 +193,7 @@ def main() -> None:
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA GPU is required. This is the GPU handoff boundary.")
 
-    set_seed(SEED)
+    set_seed(args.seed)
     torch.backends.cuda.matmul.allow_tf32 = True
 
     for split in ("train", "validation", "test"):
@@ -274,8 +275,8 @@ def main() -> None:
         tf32=True,
         gradient_checkpointing=True,
         report_to="none",
-        seed=SEED,
-        data_seed=SEED,
+        seed=args.seed,
+        data_seed=args.seed,
         remove_unused_columns=False,
     )
 
@@ -290,7 +291,7 @@ def main() -> None:
     metadata = {
         "condition": args.condition,
         "base_model": args.base_model,
-        "seed": SEED,
+        "seed": args.seed,
         "train_examples": len(train_rows),
         "validation_examples": len(validation_rows),
         "train_dataset_sha256": sha256(train_path),
