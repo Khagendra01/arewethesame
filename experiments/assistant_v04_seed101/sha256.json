@@ -1,0 +1,14 @@
+{
+  "training/neutral/train.jsonl": "a83a864b1bd89b3d2fdd4a6248b39059b3766f5641dd73efbb2cae2d53311985",
+  "training/neutral/validation.jsonl": "b69e17d23ae57bec4c452168b268d9e9ad17fbf3e2285897b40da9c814bb990f",
+  "training/neutral/test.jsonl": "c27771f04130c6e4ef36b12e064b64a6188f75ecdfd19e26cee18b795881cd2f",
+  "training/self/train.jsonl": "391d5df92f7f860f12c3595834e35606bc879ef7f3198ca51e81cf00bdc693f4",
+  "training/self/validation.jsonl": "7e4ff63ebd4d8787124d9d40a0631785367cc2b3353b21ba41b037021f9e0b5e",
+  "training/self/test.jsonl": "bf729c27a110192b19dcc4b13c0c97c069c40dcb7f21ee3ed3cf80e810829871",
+  "training/other/train.jsonl": "1d8127aba9de42a6e5fce06cd1ff0e310431f6aba054930069ee87010f3a3fe7",
+  "training/other/validation.jsonl": "cd500f032f06924378d6631c08adec4b348a2dbca772f2e68f2382ddc59bf31e",
+  "training/other/test.jsonl": "6c20b7b70e75af8652c1b2358afd56d282636c1917202c1ec11316e693017c0e",
+  "training/spp/train.jsonl": "59f9651992c01a830ccb396ccc99204e4f05bf578c5192662d3b2e71d315cb7d",
+  "training/spp/validation.jsonl": "2bd43b95cf9e3744154034d6a8d0b650c1a91a64210e31f0515effb28f781fbe",
+  "training/spp/test.jsonl": "4a170dd722202e8c4ac0c89f2ae906f37f670a3eff30aad5dc826f6c34d8167b"
+}
