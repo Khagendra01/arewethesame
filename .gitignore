@@ -8,3 +8,5 @@ dist/
 *.egg-info/
 .DS_Store
 outputs/
+.v05_heldout.json
+.v04_*.json
