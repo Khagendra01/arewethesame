@@ -1,0 +1,113 @@
+==============================================================================================
+V0.7 CONTRAST ANALYSIS — CROSSED HIERARCHICAL BOOTSTRAP
+NO NEW INFERENCE; frozen per-item output JSONs only
+==============================================================================================
+
+1. BASE, MIXED, AND MIXED-BASE CONTRASTS
+
+--- QWEN ---
+delta_ownership_sensitivity                base +0.7152  [+0.5705, +0.8609] *** | mixed +0.7297  [+0.5758, +0.8968] *** | change +0.0145  [-0.1183, +0.1489]
+delta_self_vs_focal_sensitivity            base +0.2846  [+0.1656, +0.4061] *** | mixed -0.0482  [-0.2141, +0.1589] | change -0.3328  [-0.5440, -0.0978] ***
+delta_focal_vs_other_sensitivity           base +0.4307  [+0.2496, +0.6080] *** | mixed +0.7779  [+0.5003, +1.0570] *** | change +0.3473  [+0.0491, +0.6199] ***
+ownership_by_order_interaction             base +0.4016  [+0.2512, +0.5598] *** | mixed +0.7044  [+0.4981, +0.9343] *** | change +0.3028  [+0.0601, +0.5645] ***
+delta_control_margin                       base -0.3912  [-0.5416, -0.2455] *** | mixed -0.0708  [-0.1460, +0.0027] | change +0.3204  [+0.1759, +0.4690] ***
+delta_irrelevant_sensitivity               base -0.0416  [-0.0838, -0.0004] *** | mixed -0.0161  [-0.0325, +0.0012] | change +0.0255  [-0.0193, +0.0714]
+delta_policy_score                         base +0.0089  [+0.0043, +0.0137] *** | mixed +0.0148  [+0.0072, +0.0224] *** | change +0.0059  [-0.0025, +0.0139]
+
+--- MISTRAL ---
+delta_ownership_sensitivity                base +0.1277  [+0.0462, +0.2089] *** | mixed -0.0075  [-0.0868, +0.0653] | change -0.1352  [-0.2423, -0.0334] ***
+delta_self_vs_focal_sensitivity            base +0.0441  [-0.0352, +0.1209] | mixed -0.1588  [-0.2305, -0.0838] *** | change -0.2029  [-0.3012, -0.1058] ***
+delta_focal_vs_other_sensitivity           base +0.0836  [+0.0096, +0.1603] *** | mixed +0.1512  [+0.0773, +0.2364] *** | change +0.0677  [-0.0400, +0.1796]
+ownership_by_order_interaction             base -0.0561  [-0.1707, +0.0554] | mixed -0.2768  [-0.5448, -0.0467] *** | change -0.2207  [-0.5200, +0.0370]
+delta_control_margin                       base +0.1532  [+0.0808, +0.2241] *** | mixed +0.0193  [-0.0274, +0.0676] | change -0.1339  [-0.2136, -0.0563] ***
+delta_irrelevant_sensitivity               base -0.0063  [-0.0345, +0.0213] | mixed +0.0014  [-0.0058, +0.0086] | change +0.0078  [-0.0224, +0.0372]
+delta_policy_score                         base +0.0147  [+0.0070, +0.0231] *** | mixed +0.0009  [-0.0020, +0.0046] | change -0.0138  [-0.0225, -0.0060] ***
+
+==============================================================================================
+2. DIRECT QWEN - MISTRAL INTERACTIONS
+
+--- base ---
+delta_ownership_sensitivity                +0.5875  [+0.4649, +0.7084] ***
+delta_self_vs_focal_sensitivity            +0.2404  [+0.0763, +0.3990] ***
+delta_focal_vs_other_sensitivity           +0.3471  [+0.1740, +0.5293] ***
+ownership_by_order_interaction             +0.4577  [+0.2639, +0.6534] ***
+delta_control_margin                       -0.5444  [-0.7157, -0.3791] ***
+delta_irrelevant_sensitivity               -0.0353  [-0.0833, +0.0116]
+delta_policy_score                         -0.0058  [-0.0155, +0.0038]
+
+--- mixed ---
+delta_ownership_sensitivity                +0.7372  [+0.5826, +0.9060] ***
+delta_self_vs_focal_sensitivity            +0.1105  [-0.0724, +0.3347]
+delta_focal_vs_other_sensitivity           +0.6267  [+0.3454, +0.9198] ***
+ownership_by_order_interaction             +0.9811  [+0.6525, +1.3524] ***
+delta_control_margin                       -0.0901  [-0.1856, -0.0002] ***
+delta_irrelevant_sensitivity               -0.0175  [-0.0356, +0.0013]
+delta_policy_score                         +0.0139  [+0.0056, +0.0221] ***
+
+==============================================================================================
+3. LEAVE-ONE-OUT: EXCLUDING evidence_quality
+
+--- QWEN ---
+delta_ownership_sensitivity                base +0.1701  [+0.0487, +0.2953] *** | mixed +0.1169  [-0.0005, +0.2282] | change -0.0532  [-0.1919, +0.0856]
+delta_self_vs_focal_sensitivity            base +0.2109  [+0.1078, +0.3180] *** | mixed +0.0557  [-0.0754, +0.2072] | change -0.1553  [-0.3229, +0.0242]
+delta_focal_vs_other_sensitivity           base -0.0409  [-0.1958, +0.1078] | mixed +0.0612  [-0.0844, +0.2155] | change +0.1021  [-0.0975, +0.2913]
+ownership_by_order_interaction             base +0.2464  [+0.0604, +0.4401] *** | mixed +0.2569  [+0.0855, +0.4606] *** | change +0.0105  [-0.2422, +0.2669]
+delta_control_margin                       base -0.4807  [-0.6425, -0.3151] *** | mixed -0.1541  [-0.2380, -0.0761] *** | change +0.3267  [+0.1600, +0.4960] ***
+delta_irrelevant_sensitivity               base -0.0367  [-0.0823, +0.0086] | mixed -0.0207  [-0.0354, -0.0048] *** | change +0.0160  [-0.0324, +0.0637]
+delta_policy_score                         base +0.0102  [+0.0049, +0.0158] *** | mixed +0.0129  [+0.0059, +0.0202] *** | change +0.0027  [-0.0054, +0.0104]
+
+--- MISTRAL ---
+delta_ownership_sensitivity                base -0.0978  [-0.1740, -0.0215] *** | mixed -0.0926  [-0.1613, -0.0253] *** | change +0.0053  [-0.0932, +0.1063]
+delta_self_vs_focal_sensitivity            base -0.0943  [-0.1742, -0.0145] *** | mixed -0.1997  [-0.3507, -0.0827] *** | change -0.1054  [-0.2659, +0.0314]
+delta_focal_vs_other_sensitivity           base -0.0035  [-0.0901, +0.0821] | mixed +0.1071  [+0.0011, +0.2582] *** | change +0.1107  [-0.0286, +0.2812]
+ownership_by_order_interaction             base -0.1391  [-0.2817, -0.0037] *** | mixed -0.0119  [-0.1304, +0.1115] | change +0.1273  [-0.0434, +0.3081]
+delta_control_margin                       base +0.1857  [+0.1009, +0.2712] *** | mixed +0.0116  [-0.0418, +0.0733] | change -0.1741  [-0.2678, -0.0828] ***
+delta_irrelevant_sensitivity               base -0.0018  [-0.0326, +0.0286] | mixed +0.0021  [-0.0064, +0.0101] | change +0.0039  [-0.0279, +0.0351]
+delta_policy_score                         base -0.0036  [-0.0066, -0.0009] *** | mixed -0.0022  [-0.0056, +0.0008] | change +0.0014  [-0.0024, +0.0056]
+
+==============================================================================================
+4. PER-FAMILY BASE AND MIXED ESTIMATES
+
+--- QWEN ---
+  [capacity]
+    delta_ownership_sensitivity            base +0.0414  [-0.0734, +0.1578] | mixed +0.2269  [+0.1208, +0.3661] ***
+    delta_self_vs_focal_sensitivity        base +0.0961  [-0.0141, +0.2055] | mixed +0.2586  [+0.1739, +0.3669] ***
+    delta_focal_vs_other_sensitivity       base -0.0547  [-0.1813, +0.0719] | mixed -0.0317  [-0.1109, +0.0623]
+    ownership_by_order_interaction         base -0.0078  [-0.2000, +0.1875] | mixed +0.0094  [-0.0869, +0.1081]
+  [evidence_quality]
+    delta_ownership_sensitivity            base +2.3508  [+2.2000, +2.5008] *** | mixed +2.5681  [+2.2134, +2.9097] ***
+    delta_self_vs_focal_sensitivity        base +0.5055  [+0.1461, +0.8578] *** | mixed -0.3600  [-0.7517, +0.1061]
+    delta_focal_vs_other_sensitivity       base +1.8453  [+1.4320, +2.2773] *** | mixed +2.9281  [+2.1470, +3.6258] ***
+    ownership_by_order_interaction         base +0.8672  [+0.6593, +1.0704] *** | mixed +2.0469  [+1.1575, +2.8759] ***
+  [horizon]
+    delta_ownership_sensitivity            base +0.3680  [+0.1953, +0.5406] *** | mixed +0.0452  [-0.0344, +0.1342]
+    delta_self_vs_focal_sensitivity        base +0.1258  [-0.0313, +0.2781] | mixed +0.1591  [+0.0375, +0.3224] ***
+    delta_focal_vs_other_sensitivity       base +0.2422  [-0.0250, +0.5062] | mixed -0.1139  [-0.2474, +0.0041]
+    ownership_by_order_interaction         base -0.3672  [-0.6359, -0.1016] *** | mixed +0.5103  [+0.2087, +0.8862] ***
+  [reliability]
+    delta_ownership_sensitivity            base +0.1008  [-0.2031, +0.4094] | mixed +0.0786  [-0.2259, +0.3911]
+    delta_self_vs_focal_sensitivity        base +0.4109  [+0.1703, +0.6508] *** | mixed -0.2506  [-0.5405, +0.0729]
+    delta_focal_vs_other_sensitivity       base -0.3102  [-0.6578, +0.0297] | mixed +0.3292  [-0.1086, +0.7358]
+    ownership_by_order_interaction         base +1.1141  [+0.7109, +1.5172] *** | mixed +0.2509  [-0.1225, +0.6272]
+
+--- MISTRAL ---
+  [capacity]
+    delta_ownership_sensitivity            base -0.0084  [-0.0592, +0.0436] | mixed -0.1053  [-0.2540, +0.0109]
+    delta_self_vs_focal_sensitivity        base +0.0086  [-0.0477, +0.0625] | mixed -0.1465  [-0.2679, -0.0416] ***
+    delta_focal_vs_other_sensitivity       base -0.0170  [-0.0666, +0.0332] | mixed +0.0412  [-0.1242, +0.1994]
+    ownership_by_order_interaction         base +0.0090  [-0.1043, +0.1227] | mixed +0.1147  [-0.0241, +0.2795]
+  [evidence_quality]
+    delta_ownership_sensitivity            base +0.8043  [+0.6523, +0.9629] *** | mixed +0.2476  [+0.0684, +0.4351] ***
+    delta_self_vs_focal_sensitivity        base +0.4594  [+0.2980, +0.6219] *** | mixed -0.0360  [-0.3748, +0.3385]
+    delta_focal_vs_other_sensitivity       base +0.3449  [+0.2058, +0.4836] *** | mixed +0.2836  [-0.1120, +0.6909]
+    ownership_by_order_interaction         base +0.1930  [+0.0398, +0.3508] *** | mixed -1.0714  [-1.9741, -0.2878] ***
+  [horizon]
+    delta_ownership_sensitivity            base +0.0367  [-0.0936, +0.1682] | mixed -0.0413  [-0.1239, +0.0228]
+    delta_self_vs_focal_sensitivity        base -0.0082  [-0.1031, +0.0838] | mixed -0.0830  [-0.2223, +0.0288]
+    delta_focal_vs_other_sensitivity       base +0.0449  [-0.0346, +0.1287] | mixed +0.0416  [-0.0290, +0.1480]
+    ownership_by_order_interaction         base -0.2109  [-0.3758, -0.0508] *** | mixed +0.1295  [-0.0359, +0.3923]
+  [reliability]
+    delta_ownership_sensitivity            base -0.3218  [-0.4987, -0.1500] *** | mixed -0.1310  [-0.2956, +0.0187]
+    delta_self_vs_focal_sensitivity        base -0.2832  [-0.4936, -0.0736] *** | mixed -0.3696  [-0.6575, -0.1594] ***
+    delta_focal_vs_other_sensitivity       base -0.0386  [-0.2813, +0.2039] | mixed +0.2386  [+0.0021, +0.5670] ***
+    ownership_by_order_interaction         base -0.2154  [-0.5842, +0.1352] | mixed -0.2798  [-0.4956, -0.1022] ***

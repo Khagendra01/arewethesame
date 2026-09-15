@@ -1,0 +1,131 @@
+# Preregistration — v0.6 identity-controlled hard evaluation
+
+**Status:** frozen before any v0.6 model evaluation.
+
+This evaluation was designed after reviewer-style critique of v0.5 identified three threats to interpretation: ceiling saturation, lexical/grammatical confounding of SELF (`you`) versus OTHER (`Agent A`), and overinterpretation of confidence intervals spanning zero.
+
+## Fixed benchmark
+
+Builder: `scripts/build_locked_v06_identity_controlled.py`
+
+Output: `eval/locked_v06_identity_controlled/items.jsonl`
+
+- deterministic seed: `60731`
+- 840 latent items, 120 per family
+- families: resource allocation, exploration, cooperation, delayed reward, belief revision, trust, persistence
+- two coherent counterfactual histories per item
+- the two histories straddle the decision boundary and imply different correct actions
+- latent policies match the v0.5 task semantics, but state is encoded in harder derived form (counting/arithmetic/ratio inference) with irrelevant distractors
+- no model/provider is used to generate, calibrate, filter, or select benchmark items
+
+The deterministic benchmark SHA-256 is frozen in `eval/locked_v06_identity_controlled/MANIFEST.json` and verified by the Modal runner before evaluation.
+
+## Identity / surface-form control
+
+Each item chooses two arbitrary aliases from a ten-alias pool. The historical record always refers to the same owner alias. The historical body, current situation, question, and options are identical under SELF and OTHER. Only the identity-assignment header changes.
+
+Example:
+
+SELF identity header:
+
+> You are Agent K. Agent M is a different agent.
+
+OTHER identity header:
+
+> You are Agent M. Agent K is a different agent.
+
+The historical body following that header is identical in both conditions:
+
+> Earlier, Agent K ...
+
+Aliases are counterbalanced across items. Therefore a SELF-versus-OTHER difference cannot be attributed to the historical sentence using `you` in one condition and a named third-person referent in the other.
+
+## Models
+
+No new training is performed.
+
+Evaluate:
+
+- Qwen3-4B-Instruct base
+- Qwen v0.5 mixed adapters, training seeds `{31, 42, 73, 128, 256}`
+- Mistral-7B-Instruct-v0.3 base
+- Mistral v0.5 mixed adapters, training seeds `{31, 42, 73, 128, 256}`
+
+The existing mixed adapters were trained before this benchmark was constructed.
+
+## Scores
+
+For each latent item, model probabilities are collected for four paired prompts:
+
+- SELF × history 0
+- OTHER × history 0
+- SELF × history 1
+- OTHER × history 1
+
+Let `c0` be the action correct under history 0 and `c1` the action correct under history 1.
+
+### Primary: differential counterfactual history sensitivity
+
+For binding `b`:
+
+`S_b = [log P(c0 | H0,b) - log P(c1 | H0,b)] - [log P(c0 | H1,b) - log P(c1 | H1,b)]`
+
+Primary statistic:
+
+`Delta_sensitivity = E[S_self - S_other]`
+
+This directly tests whether changing the same latent history moves the decision more strongly when the history owner is assigned as SELF.
+
+- `H0: Delta_sensitivity = 0`
+- directional `H1: Delta_sensitivity > 0`
+- support for a self-specific privilege requires the lower endpoint of the **two-sided 95% hierarchical interval** to exceed zero. This is intentionally conservative relative to a one-sided 5% test.
+- a robust cross-architecture claim requires the criterion to hold for both Qwen and Mistral pooled estimates.
+
+### Secondary metrics
+
+- `Delta_prob`: SELF minus OTHER mean correct-option probability, averaged across both counterfactual histories.
+- `Delta_margin`: SELF minus OTHER correct-vs-best-incorrect option log-probability margin.
+- `Delta_accuracy`: SELF minus OTHER hard accuracy.
+- absolute `S_self` and `S_other` are sanity checks that the model actually responds to counterfactual history.
+
+## Practical equivalence on probability scale
+
+Because v0.5 was not preregistered as an equivalence test, v0.6 prospectively specifies a practical bound for `Delta_prob`.
+
+Primary practical-equivalence region: `[-0.01, +0.01]` (one percentage point in mean correct-option probability).
+
+For transparency, results are also reported for `+/-0.005` and `+/-0.020` without changing the primary bound.
+
+Practical equivalence at a bound is reported only when the full two-sided 95% hierarchical interval lies inside that region. A confidence interval merely spanning zero is **not** interpreted as evidence of equivalence.
+
+If the hard benchmark still saturates (pooled SELF or OTHER mean correct-option probability >= 0.95), probability-scale equivalence is treated as secondary and no strong absence claim is based on `Delta_prob`; `Delta_sensitivity` and `Delta_margin` remain interpretable because they operate on log-odds.
+
+## Statistical unit and uncertainty
+
+The same 840 latent items are evaluated by all seeds, so seed-item outputs are not treated as independent observations.
+
+Pooled intervals use a crossed hierarchical bootstrap with 5,000 draws:
+
+1. resample training seeds with replacement;
+2. resample latent item IDs with replacement;
+3. preserve all SELF/OTHER and H0/H1 variants of each sampled item;
+4. recompute the statistic over the sampled seed × item grid.
+
+Single base-model intervals resample latent item IDs only.
+
+Per-family estimates are exploratory and are not used to rescue a failed pooled primary test.
+
+## Assay-sensitivity positive control
+
+Without retraining models, the analysis applies synthetic known logit biases of `{0.025, 0.05, 0.10, 0.20}` toward the correct action in SELF prompts only, then recomputes the same hierarchical intervals. This is an **evaluation sensitivity check**, not evidence about learnability. It answers whether the frozen assay would detect a self-specific logit effect of known magnitude.
+
+## Base-model analysis
+
+Base SELF−OTHER effects are reported on the identical benchmark for both architectures. These are descriptive baselines for pre-existing prompt/identity asymmetry; they are not treated as effects caused by post-training.
+
+## Interpretation rules
+
+- Positive primary CI in both architectures: evidence for robust self-specific history weighting under this assigned-identity test.
+- Primary CIs spanning zero: no detected robust privilege; do not say `H0 is proven`.
+- `Delta_prob` CI wholly within `+/-0.01` on a non-saturated benchmark: evidence of practical equivalence on the probability scale.
+- Architecture disagreement, seed heterogeneity, or family sign reversals are reported explicitly rather than averaged away in prose.

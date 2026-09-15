@@ -1,0 +1,9 @@
+{
+  "benchmark": "locked_v06_identity_controlled",
+  "builder": "scripts/build_locked_v06_identity_controlled.py",
+  "seed": 60731,
+  "per_family": 120,
+  "items": 840,
+  "sha256_items": "153e2af5c2e5578ae54094e8d7d43ca8536b5976a27901a56f086b42ba581aac",
+  "note": "Items are generated deterministically at run time and hash-checked before evaluation; no model is used for selection. SELF/OTHER share identical history text and differ only in an identity-assignment header."
+}
