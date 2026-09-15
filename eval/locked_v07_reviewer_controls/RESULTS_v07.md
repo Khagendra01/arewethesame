@@ -1,6 +1,6 @@
 # V0.7 Results: Reviewer Controls — Hierarchical Final
 
-**Status:** Complete. All 12 jobs finished. Primary inference below uses the preregistered crossed bootstrap over training seeds and latent items for mixed-adapter quantities.
+**Status:** Complete. All 12 jobs finished. Primary inference below uses the preregistered crossed bootstrap structure over training seeds and latent items for mixed-adapter quantities. The preregistration specified 5,000 draws; the final analysis uses 10,000 draws to reduce Monte Carlo error, with the resampling scheme and estimands otherwise unchanged.
 
 ## Qwen decomposition
 
@@ -11,7 +11,9 @@
 | FOCAL-OTHER | +0.431 [+0.250,+0.608] | +0.778 [+0.500,+1.057] | +0.347 [+0.049,+0.620] |
 | header-order interaction | +0.402 [+0.251,+0.560] | +0.704 [+0.498,+0.934] | +0.303 [+0.060,+0.565] |
 
-Base Qwen therefore contains both a SELF-over-FOCAL and a FOCAL-over-OTHER component. After SELF/OTHER/NEUTRAL mixed training, total ownership is unchanged, while the aggregate SELF-FOCAL component decreases significantly and FOCAL-OTHER increases significantly. FOCAL is evaluation-only and was not exposure-matched during training, so this decomposition is a behavioral control, not a pure causal isolation of semantic selfhood.
+Base Qwen therefore contains both a SELF-over-FOCAL and a FOCAL-over-OTHER component. After SELF/OTHER/NEUTRAL mixed training, we detect no base-to-mixed change in total ownership (+0.015 [-0.118,+0.149]), while the aggregate SELF-FOCAL component decreases significantly and FOCAL-OTHER increases significantly. FOCAL is evaluation-only and was not exposure-matched during training, so this decomposition is a behavioral control, not a pure causal isolation of semantic selfhood.
+
+The preregistered legacy max-token scoring convention gives the same qualitative Qwen mixed pattern: ownership +0.730 [+0.575,+0.899], SELF-FOCAL -0.048 [-0.211,+0.157], and FOCAL-OTHER +0.778 [+0.503,+1.060]. The primary conclusion therefore does not depend qualitatively on the token aggregation convention.
 
 ## Mistral
 
@@ -38,6 +40,8 @@ The mixed SELF-FOCAL checkpoint difference is not reliably different from zero. 
 - Qwen irrelevant-metadata sensitivity is small: base -0.042 [-0.084,-0.000] and mixed -0.016 [-0.033,+0.001].
 - Excluding `evidence_quality`, Qwen ownership is +0.170 [+0.049,+0.295] in base but +0.117 [-0.001,+0.228] in mixed. Thus evidence-quality is a disproportionate driver and the mixed residual outside that family is inconclusive.
 - Qwen mixed SELF-FOCAL is heterogeneous by family: capacity +0.259 [+0.174,+0.367], evidence_quality -0.360 [-0.752,+0.106], horizon +0.159 [+0.038,+0.322], reliability -0.251 [-0.541,+0.073]. Aggregate near-zero SELF-FOCAL therefore does not imply every family is null.
+
+Per-family and leave-one-family-out analyses are exploratory, as preregistered.
 
 ## Authoritative artifacts
 
