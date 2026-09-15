@@ -8,5 +8,7 @@ dist/
 *.egg-info/
 .DS_Store
 outputs/
+!eval/locked_v07_reviewer_controls/outputs/
+!eval/locked_v07_reviewer_controls/outputs/**
 .v05_heldout.json
 .v04_*.json
