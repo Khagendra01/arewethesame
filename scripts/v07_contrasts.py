@@ -1,393 +1,355 @@
 #!/usr/bin/env python3
-"""
-Compute all v0.7 contrasts from existing output JSONs.
-No model inference required — reads per-item metrics from frozen outputs.
-"""
+"""Recompute v0.7 reviewer contrasts with preregistered hierarchical uncertainty.
 
+This script performs NO model inference. It reads the frozen per-item output JSONs and
+uses the eligible-token-mass metrics already stored in those files.
+
+Critical rule: any statistic involving the five mixed adapters resamples BOTH training
+seeds and latent items. The earlier contrast script averaged seeds before bootstrapping
+items, which understated uncertainty. Base checkpoints have one realization, so their
+intervals resample items only. Qwen/Mistral mixed interactions resample the two seed sets
+independently while sharing the sampled item IDs.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
 import json
-import numpy as np
 from pathlib import Path
-from collections import defaultdict
+from typing import Callable
 
-OUT = Path("eval/locked_v07_reviewer_controls/outputs")
+import numpy as np
 
-def load_all():
-    """Load all 12 output JSONs."""
-    data = {}
-    for arch in ["qwen", "mistral"]:
-        data[arch] = {}
-        for variant in ["base", "mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-            p = OUT / arch / f"{variant}.json"
-            if p.exists():
-                with open(p) as f:
-                    data[arch][variant] = json.load(f)
-    return data
-
-
-def item_metrics(d, scoring="mass"):
-    """Extract per-item metric dict keyed by item_id."""
-    items = {}
-    for item_id, item_data in d["items"].items():
-        metrics = item_data[f"metrics_{scoring}"]
-        items[item_id] = metrics
-    return items
-
-
-def pool_items(*item_dicts):
-    """Pool per-item metrics across multiple dicts (e.g., multiple seeds).
-    Returns dict of metric_name -> list of per-item values."""
-    pooled = defaultdict(list)
-    for d in item_dicts:
-        for item_id, metrics in d.items():
-            for k, v in metrics.items():
-                if isinstance(v, (int, float)):
-                    pooled[k].append(v)
-    return dict(pooled)
+SEEDS = (31, 42, 73, 128, 256)
+ARCHES = ("qwen", "mistral")
+EXPECTED_ITEMS = 320
+CONVENTION = "mass"
+METRICS = (
+    "delta_ownership_sensitivity",
+    "delta_owner_first",
+    "delta_owner_second",
+    "ownership_by_order_interaction",
+    "delta_self_vs_focal_sensitivity",
+    "delta_focal_vs_other_sensitivity",
+    "delta_irrelevant_sensitivity",
+    "delta_control_margin",
+    "delta_control_entropy",
+    "delta_policy_score",
+)
+KEY_METRICS = (
+    "delta_ownership_sensitivity",
+    "delta_self_vs_focal_sensitivity",
+    "delta_focal_vs_other_sensitivity",
+    "ownership_by_order_interaction",
+    "delta_control_margin",
+    "delta_irrelevant_sensitivity",
+    "delta_policy_score",
+)
 
 
-def bootstrap_ci(values, n_boot=10000, ci=0.95, seed=42):
-    """Bootstrap mean CI."""
-    rng = np.random.RandomState(seed)
-    arr = np.array(values)
-    boot_means = []
-    for _ in range(n_boot):
-        sample = rng.choice(arr, size=len(arr), replace=True)
-        boot_means.append(np.mean(sample))
-    boot_means = np.array(boot_means)
-    lo = np.percentile(boot_means, (1 - ci) / 2 * 100)
-    hi = np.percentile(boot_means, (1 + ci) / 2 * 100)
-    return float(np.mean(arr)), float(lo), float(hi)
+def load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
-def bootstrap_diff_ci(vals_a, vals_b, n_boot=10000, ci=0.95, seed=42):
-    """Bootstrap CI for mean(a) - mean(b), paired on items."""
-    rng = np.random.RandomState(seed)
-    a = np.array(vals_a)
-    b = np.array(vals_b)
-    assert len(a) == len(b), f"Length mismatch: {len(a)} vs {len(b)}"
-    n = len(a)
-    boot_diffs = []
-    for _ in range(n_boot):
-        idx = rng.choice(n, size=n, replace=True)
-        boot_diffs.append(np.mean(a[idx]) - np.mean(b[idx]))
-    boot_diffs = np.array(boot_diffs)
-    mean_diff = float(np.mean(a) - np.mean(b))
-    lo = float(np.percentile(boot_diffs, (1 - ci) / 2 * 100))
-    hi = float(np.percentile(boot_diffs, (1 + ci) / 2 * 100))
-    return mean_diff, lo, hi
+def validate(payload: dict, label: str) -> list[str]:
+    if payload.get("metadata", {}).get("items") != EXPECTED_ITEMS:
+        raise ValueError(f"{label}: metadata.items != {EXPECTED_ITEMS}")
+    items = payload.get("items", {})
+    if len(items) != EXPECTED_ITEMS:
+        raise ValueError(f"{label}: expected {EXPECTED_ITEMS} items, found {len(items)}")
+    for item_id, record in items.items():
+        key = f"metrics_{CONVENTION}"
+        if key not in record:
+            raise ValueError(f"{label}/{item_id}: missing {key}")
+        for metric in METRICS:
+            if metric not in record[key]:
+                raise ValueError(f"{label}/{item_id}: missing {metric}")
+    return sorted(items)
 
 
-def sig_marker(ci_lo, ci_hi):
-    if ci_lo > 0 or ci_hi < 0:
-        return "***"
-    return ""
+def rng_for(master_seed: int, key: str) -> np.random.Generator:
+    digest = hashlib.sha256(f"{master_seed}:{key}".encode()).digest()
+    seed = int.from_bytes(digest[:8], "little", signed=False)
+    return np.random.default_rng(seed)
 
 
-def format_result(mean, lo, hi):
-    return f"{mean:+.4f}  [{lo:+.4f}, {hi:+.4f}] {sig_marker(lo, hi)}"
+def item_vector(payload: dict, metric: str, ids: list[str]) -> np.ndarray:
+    return np.asarray(
+        [float(payload["items"][i][f"metrics_{CONVENTION}"][metric]) for i in ids],
+        dtype=float,
+    )
 
 
-def main():
-    data = load_all()
+def mixed_matrix(payloads: list[dict], metric: str, ids: list[str]) -> np.ndarray:
+    return np.asarray([item_vector(p, metric, ids) for p in payloads], dtype=float)
 
-    # ---- Aggregate metrics from summary for reference ----
-    print("=" * 90)
-    print("V0.7 CONTRAST ANALYSIS — FROM EXISTING DATA (NO NEW INFERENCE)")
-    print("=" * 90)
 
-    # =========================================================================
-    # 1. MIXED-BASE CONTRASTS (paired on items)
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("1. MIXED-BASE CONTRASTS (Δ_mixed - Δ_base)")
-    print("   Paired bootstrap over 320 shared items × 5 seeds")
-    print("=" * 90)
+def ci(draws: np.ndarray) -> list[float]:
+    return [float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))]
 
-    key_metrics = [
-        "delta_ownership_sensitivity",
-        "delta_owner_first",
-        "delta_owner_second",
-        "ownership_by_order_interaction",
-        "delta_self_vs_focal_sensitivity",
-        "delta_focal_vs_other_sensitivity",
-        "delta_irrelevant_sensitivity",
-        "delta_control_margin",
-        "delta_control_entropy",
-        "delta_policy_score",
-    ]
 
-    for arch in ["qwen", "mistral"]:
-        print(f"\n--- {arch.upper()} ---")
-        base_items = item_metrics(data[arch]["base"])
+def base_bootstrap(values: np.ndarray, n_boot: int, rng: np.random.Generator) -> dict:
+    n = values.size
+    draws = np.empty(n_boot, dtype=float)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        draws[b] = values[idx].mean()
+    return {"mean": float(values.mean()), "ci95": ci(draws)}
 
-        # Collect all mixed-seed item metrics
-        mixed_seeds = {}
-        for seed_name in ["mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-            if seed_name in data[arch]:
-                mixed_seeds[seed_name] = item_metrics(data[arch][seed_name])
 
-        # For each metric, compute pooled mixed mean vs base mean, paired on items
-        for metric in key_metrics:
-            base_vals = []
-            mixed_vals = []
-            # Pool across seeds for each item
-            item_ids = sorted(base_items.keys())
-            for item_id in item_ids:
-                base_v = base_items[item_id].get(metric)
-                if base_v is None or not isinstance(base_v, (int, float)):
-                    continue
-                # Average across mixed seeds for this item
-                mixed_vs = []
-                for sn, sd in mixed_seeds.items():
-                    if item_id in sd and metric in sd[item_id]:
-                        mv = sd[item_id][metric]
-                        if isinstance(mv, (int, float)):
-                            mixed_vs.append(mv)
-                if mixed_vs:
-                    base_vals.append(base_v)
-                    mixed_vals.append(np.mean(mixed_vs))
+def mixed_bootstrap(values: np.ndarray, n_boot: int, rng: np.random.Generator) -> dict:
+    s, n = values.shape
+    draws = np.empty(n_boot, dtype=float)
+    for b in range(n_boot):
+        seed_idx = rng.integers(0, s, size=s)
+        item_idx = rng.integers(0, n, size=n)
+        draws[b] = values[seed_idx][:, item_idx].mean()
+    return {
+        "mean": float(values.mean()),
+        "ci95": ci(draws),
+        "seed_means": [float(x) for x in values.mean(axis=1)],
+    }
 
-            if len(base_vals) > 10:
-                mean_diff, lo, hi = bootstrap_diff_ci(mixed_vals, base_vals)
-                print(f"  {metric:42s} {format_result(mean_diff, lo, hi)}")
-            else:
-                print(f"  {metric:42s} [insufficient paired items]")
 
-    # =========================================================================
-    # 2. CROSS-ARCHITECTURE CHECKPOINT INTERACTIONS
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("2. CROSS-ARCHITECTURE INTERACTIONS (Qwen - Mistral)")
-    print("   Paired on shared benchmark items")
-    print("=" * 90)
+def mixed_minus_base_bootstrap(
+    mixed: np.ndarray, base: np.ndarray, n_boot: int, rng: np.random.Generator
+) -> dict:
+    """Paired on item draw; mixed training seeds are resampled hierarchically."""
+    s, n = mixed.shape
+    if base.size != n:
+        raise ValueError("mixed/base item count mismatch")
+    draws = np.empty(n_boot, dtype=float)
+    for b in range(n_boot):
+        seed_idx = rng.integers(0, s, size=s)
+        item_idx = rng.integers(0, n, size=n)
+        draws[b] = mixed[seed_idx][:, item_idx].mean() - base[item_idx].mean()
+    return {
+        "mean": float(mixed.mean() - base.mean()),
+        "ci95": ci(draws),
+        "seed_minus_base_means": [float(x - base.mean()) for x in mixed.mean(axis=1)],
+    }
 
-    for variant_label, variant in [("base", "base"), ("mixed (pooled)", "mixed")]:
-        print(f"\n--- {variant_label} ---")
-        qwen_base = item_metrics(data["qwen"]["base"])
-        mistral_base = item_metrics(data["mistral"]["base"])
 
-        if variant == "mixed":
-            # Pool across seeds
-            qwen_mixed_seeds = {}
-            mistral_mixed_seeds = {}
-            for sn in ["mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-                if sn in data["qwen"]:
-                    qwen_mixed_seeds[sn] = item_metrics(data["qwen"][sn])
-                if sn in data["mistral"]:
-                    mistral_mixed_seeds[sn] = item_metrics(data["mistral"][sn])
+def cross_mixed_bootstrap(
+    qwen: np.ndarray, mistral: np.ndarray, n_boot: int, rng: np.random.Generator
+) -> dict:
+    """Qwen minus Mistral; seed sets independently resampled, shared item draw."""
+    qs, n = qwen.shape
+    ms, n2 = mistral.shape
+    if n != n2:
+        raise ValueError("Qwen/Mistral item count mismatch")
+    draws = np.empty(n_boot, dtype=float)
+    for b in range(n_boot):
+        item_idx = rng.integers(0, n, size=n)
+        q_seed_idx = rng.integers(0, qs, size=qs)
+        m_seed_idx = rng.integers(0, ms, size=ms)
+        draws[b] = (
+            qwen[q_seed_idx][:, item_idx].mean()
+            - mistral[m_seed_idx][:, item_idx].mean()
+        )
+    return {"mean": float(qwen.mean() - mistral.mean()), "ci95": ci(draws)}
 
-        for metric in key_metrics:
-            qwen_vals = []
-            mistral_vals = []
-            item_ids = sorted(set(qwen_base.keys()) & set(mistral_base.keys()))
 
-            for item_id in item_ids:
-                if variant == "base":
-                    qv = qwen_base[item_id].get(metric)
-                    mv = mistral_base[item_id].get(metric)
-                    if isinstance(qv, (int, float)) and isinstance(mv, (int, float)):
-                        qwen_vals.append(qv)
-                        mistral_vals.append(mv)
-                else:
-                    # Pool mixed seeds
-                    q_vs = []
-                    m_vs = []
-                    for sn in ["mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-                        if sn in qwen_mixed_seeds and item_id in qwen_mixed_seeds[sn]:
-                            v = qwen_mixed_seeds[sn][item_id].get(metric)
-                            if isinstance(v, (int, float)):
-                                q_vs.append(v)
-                        if sn in mistral_mixed_seeds and item_id in mistral_mixed_seeds[sn]:
-                            v = mistral_mixed_seeds[sn][item_id].get(metric)
-                            if isinstance(v, (int, float)):
-                                m_vs.append(v)
-                    if q_vs and m_vs:
-                        qwen_vals.append(np.mean(q_vs))
-                        mistral_vals.append(np.mean(m_vs))
+def cross_base_bootstrap(
+    qwen: np.ndarray, mistral: np.ndarray, n_boot: int, rng: np.random.Generator
+) -> dict:
+    """Single base checkpoint per family; paired item bootstrap."""
+    n = qwen.size
+    if mistral.size != n:
+        raise ValueError("Qwen/Mistral item count mismatch")
+    draws = np.empty(n_boot, dtype=float)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        draws[b] = qwen[idx].mean() - mistral[idx].mean()
+    return {"mean": float(qwen.mean() - mistral.mean()), "ci95": ci(draws)}
 
-            if len(qwen_vals) > 10:
-                mean_diff, lo, hi = bootstrap_diff_ci(qwen_vals, mistral_vals)
-                print(f"  {metric:42s} {format_result(mean_diff, lo, hi)}")
-            else:
-                print(f"  {metric:42s} [insufficient paired items]")
 
-    # =========================================================================
-    # 3. HEADER-ORDER INTERACTION & PER-FAMILY ESTIMATES
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("3. HEADER-ORDER INTERACTION & PER-FAMILY ESTIMATES")
-    print("=" * 90)
+def fmt(x: float) -> str:
+    return f"{x:+.4f}"
 
-    for arch in ["qwen", "mistral"]:
-        print(f"\n--- {arch.upper()} ---")
-        base_d = data[arch]["base"]
 
-        # Summary-level header-order interaction
-        ho = base_d["summary_mass"]["ownership_by_order_interaction"]
-        print(f"  Base header-order interaction: {format_result(ho['mean'], ho['ci95'][0], ho['ci95'][1])}")
+def fmt_result(r: dict) -> str:
+    lo, hi = r["ci95"]
+    sig = " ***" if (lo > 0 or hi < 0) else ""
+    return f"{fmt(r['mean'])}  [{fmt(lo)}, {fmt(hi)}]{sig}"
 
-        # Order-specific contrasts
-        of = base_d["summary_mass"]["delta_owner_first"]
-        os_ = base_d["summary_mass"]["delta_owner_second"]
-        print(f"    delta_owner_first:            {format_result(of['mean'], of['ci95'][0], of['ci95'][1])}")
-        print(f"    delta_owner_second:           {format_result(os_['mean'], os_['ci95'][0], os_['ci95'][1])}")
 
-        # Per-family
-        print(f"\n  Per-family (base, mass scoring):")
-        for fam in ["capacity", "reliability", "horizon", "evidence_quality"]:
-            fam_d = base_d["per_family_mass"][fam]
-            ownership = fam_d["delta_ownership_sensitivity"]
-            self_focal = fam_d["delta_self_vs_focal_sensitivity"]
-            focal_other = fam_d["delta_focal_vs_other_sensitivity"]
-            ctrl = fam_d["delta_control_margin"]
-            irr = fam_d["delta_irrelevant_sensitivity"]
-            ho_fam = fam_d["ownership_by_order_interaction"]
-            print(f"    {fam:20s} ownership={format_result(ownership['mean'], ownership['ci95'][0], ownership['ci95'][1])}")
-            print(f"    {'':20s} self_vs_focal={format_result(self_focal['mean'], self_focal['ci95'][0], self_focal['ci95'][1])}")
-            print(f"    {'':20s} focal_vs_other={format_result(focal_other['mean'], focal_other['ci95'][0], focal_other['ci95'][1])}")
-            print(f"    {'':20s} header_interaction={format_result(ho_fam['mean'], ho_fam['ci95'][0], ho_fam['ci95'][1])}")
-            print(f"    {'':20s} control_margin={format_result(ctrl['mean'], ctrl['ci95'][0], ctrl['ci95'][1])}")
-            print(f"    {'':20s} irrelevant={format_result(irr['mean'], irr['ci95'][0], irr['ci95'][1])}")
+def main() -> None:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--root",
+        type=Path,
+        default=Path("eval/locked_v07_reviewer_controls/outputs"),
+        help="Directory containing qwen/ and mistral/ output folders.",
+    )
+    p.add_argument(
+        "--json-output",
+        type=Path,
+        default=Path("eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json"),
+    )
+    p.add_argument(
+        "--text-output",
+        type=Path,
+        default=Path("eval/locked_v07_reviewer_controls/CONTRASTS.txt"),
+    )
+    p.add_argument("--bootstrap", type=int, default=10000)
+    p.add_argument("--seed", type=int, default=70917)
+    args = p.parse_args()
 
-    # =========================================================================
-    # 4. LEAVE-ONE-OUT: DELTA WITHOUT EVIDENCE_QUALITY
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("4. LEAVE-ONE-OUT: AGGREGATE delta WITHOUT evidence_quality FAMILY")
-    print("=" * 90)
+    data: dict[str, dict] = {}
+    common_ids: list[str] | None = None
+    for arch in ARCHES:
+        base = load(args.root / arch / "base.json")
+        mixed = [load(args.root / arch / f"mixed_s{s}.json") for s in SEEDS]
+        ids = validate(base, f"{arch}/base")
+        for seed, payload in zip(SEEDS, mixed):
+            if validate(payload, f"{arch}/mixed_s{seed}") != ids:
+                raise ValueError(f"{arch}/mixed_s{seed}: item-ID mismatch")
+        if common_ids is None:
+            common_ids = ids
+        elif ids != common_ids:
+            raise ValueError("Qwen/Mistral item-ID mismatch")
+        data[arch] = {"base": base, "mixed": mixed, "ids": ids}
 
-    for arch in ["qwen", "mistral"]:
-        print(f"\n--- {arch.upper()} ---")
-        for variant_label, variant in [("base", "base"), ("mixed (pooled)", "mixed")]:
-            if variant == "base":
-                item_d = item_metrics(data[arch]["base"])
-            else:
-                # Pool mixed seeds
-                pooled_seeds = {}
-                for sn in ["mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-                    if sn in data[arch]:
-                        pooled_seeds[sn] = item_metrics(data[arch][sn])
+    assert common_ids is not None
+    result: dict = {
+        "benchmark": "locked_v07_reviewer_controls",
+        "scoring": "eligible-token-mass",
+        "bootstrap": {
+            "draws": args.bootstrap,
+            "master_seed": args.seed,
+            "rule": "mixed statistics resample training seeds and latent items; cross-checkpoint mixed statistics resample Qwen/Mistral seeds independently and share the sampled item IDs",
+        },
+        "architectures": {},
+        "qwen_minus_mistral": {"base": {}, "mixed": {}},
+        "leave_one_out_evidence_quality": {},
+    }
 
-            # Get family assignment from base
-            base_items = data[arch]["base"]["items"]
-            families = {item_id: item_data["family"] for item_id, item_data in base_items.items()}
+    for arch in ARCHES:
+        base_payload = data[arch]["base"]
+        mixed_payloads = data[arch]["mixed"]
+        ids = data[arch]["ids"]
+        result["architectures"][arch] = {
+            "base": {},
+            "mixed": {},
+            "mixed_minus_base": {},
+            "per_family": {},
+        }
+        for metric in METRICS:
+            bvec = item_vector(base_payload, metric, ids)
+            mmat = mixed_matrix(mixed_payloads, metric, ids)
+            result["architectures"][arch]["base"][metric] = base_bootstrap(
+                bvec, args.bootstrap, rng_for(args.seed, f"{arch}:base:{metric}")
+            )
+            result["architectures"][arch]["mixed"][metric] = mixed_bootstrap(
+                mmat, args.bootstrap, rng_for(args.seed, f"{arch}:mixed:{metric}")
+            )
+            result["architectures"][arch]["mixed_minus_base"][metric] = mixed_minus_base_bootstrap(
+                mmat,
+                bvec,
+                args.bootstrap,
+                rng_for(args.seed, f"{arch}:mixed-base:{metric}"),
+            )
 
-            for metric in ["delta_ownership_sensitivity", "delta_self_vs_focal_sensitivity",
-                           "delta_focal_vs_other_sensitivity", "delta_control_margin",
-                           "delta_irrelevant_sensitivity", "delta_policy_score"]:
-                vals = []
-                for item_id in sorted(families.keys()):
-                    if families[item_id] == "evidence_quality":
-                        continue
-                    if variant == "base":
-                        v = item_d.get(item_id, {}).get(metric)
-                        if isinstance(v, (int, float)):
-                            vals.append(v)
-                    else:
-                        vs = []
-                        for sn, sd in pooled_seeds.items():
-                            if item_id in sd:
-                                mv = sd[item_id].get(metric)
-                                if isinstance(mv, (int, float)):
-                                    vs.append(mv)
-                        if vs:
-                            vals.append(np.mean(vs))
+        families = sorted({base_payload["items"][i]["family"] for i in ids})
+        for family in families:
+            fids = [i for i in ids if base_payload["items"][i]["family"] == family]
+            result["architectures"][arch]["per_family"][family] = {"base": {}, "mixed": {}}
+            for metric in KEY_METRICS:
+                bvec = item_vector(base_payload, metric, fids)
+                mmat = mixed_matrix(mixed_payloads, metric, fids)
+                result["architectures"][arch]["per_family"][family]["base"][metric] = base_bootstrap(
+                    bvec, args.bootstrap, rng_for(args.seed, f"{arch}:{family}:base:{metric}")
+                )
+                result["architectures"][arch]["per_family"][family]["mixed"][metric] = mixed_bootstrap(
+                    mmat, args.bootstrap, rng_for(args.seed, f"{arch}:{family}:mixed:{metric}")
+                )
 
-                if len(vals) > 10:
-                    mean, lo, hi = bootstrap_ci(vals)
-                    print(f"  {variant_label:12s} {metric:42s} {format_result(mean, lo, hi)}")
-                else:
-                    print(f"  {variant_label:12s} {metric:42s} [insufficient items]")
+        loo_ids = [i for i in ids if base_payload["items"][i]["family"] != "evidence_quality"]
+        loo_block = {"base": {}, "mixed": {}, "mixed_minus_base": {}}
+        for metric in KEY_METRICS:
+            bvec = item_vector(base_payload, metric, loo_ids)
+            mmat = mixed_matrix(mixed_payloads, metric, loo_ids)
+            loo_block["base"][metric] = base_bootstrap(
+                bvec, args.bootstrap, rng_for(args.seed, f"{arch}:loo:base:{metric}")
+            )
+            loo_block["mixed"][metric] = mixed_bootstrap(
+                mmat, args.bootstrap, rng_for(args.seed, f"{arch}:loo:mixed:{metric}")
+            )
+            loo_block["mixed_minus_base"][metric] = mixed_minus_base_bootstrap(
+                mmat, bvec, args.bootstrap, rng_for(args.seed, f"{arch}:loo:mixed-base:{metric}")
+            )
+        result["leave_one_out_evidence_quality"][arch] = loo_block
 
-    # =========================================================================
-    # 5. SELF vs FOCAL DECOMPOSITION SUMMARY
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("5. SELF-FOCAL DECOMPOSITION (THE KEY RESULT)")
-    print("=" * 90)
+    for metric in METRICS:
+        qb = item_vector(data["qwen"]["base"], metric, common_ids)
+        mb = item_vector(data["mistral"]["base"], metric, common_ids)
+        qm = mixed_matrix(data["qwen"]["mixed"], metric, common_ids)
+        mm = mixed_matrix(data["mistral"]["mixed"], metric, common_ids)
+        result["qwen_minus_mistral"]["base"][metric] = cross_base_bootstrap(
+            qb, mb, args.bootstrap, rng_for(args.seed, f"cross:base:{metric}")
+        )
+        result["qwen_minus_mistral"]["mixed"][metric] = cross_mixed_bootstrap(
+            qm, mm, args.bootstrap, rng_for(args.seed, f"cross:mixed:{metric}")
+        )
 
-    for arch in ["qwen", "mistral"]:
-        print(f"\n--- {arch.upper()} ---")
-        base_d = data[arch]["base"]
+    lines: list[str] = []
+    lines.append("=" * 94)
+    lines.append("V0.7 CONTRAST ANALYSIS — CROSSED HIERARCHICAL BOOTSTRAP")
+    lines.append("NO NEW INFERENCE; frozen per-item output JSONs only")
+    lines.append("=" * 94)
+    lines.append("")
+    lines.append("1. BASE, MIXED, AND MIXED-BASE CONTRASTS")
+    for arch in ARCHES:
+        lines.append(f"\n--- {arch.upper()} ---")
+        for metric in KEY_METRICS:
+            b = result["architectures"][arch]["base"][metric]
+            m = result["architectures"][arch]["mixed"][metric]
+            d = result["architectures"][arch]["mixed_minus_base"][metric]
+            lines.append(f"{metric:42s} base {fmt_result(b)} | mixed {fmt_result(m)} | change {fmt_result(d)}")
 
-        s = base_d["summary_mass"]
-        ownership = s["delta_ownership_sensitivity"]
-        self_focal = s["delta_self_vs_focal_sensitivity"]
-        focal_other = s["delta_focal_vs_other_sensitivity"]
+    lines.append("\n" + "=" * 94)
+    lines.append("2. DIRECT QWEN - MISTRAL INTERACTIONS")
+    for variant in ("base", "mixed"):
+        lines.append(f"\n--- {variant} ---")
+        for metric in KEY_METRICS:
+            lines.append(f"{metric:42s} {fmt_result(result['qwen_minus_mistral'][variant][metric])}")
 
-        print(f"  Base:")
-        print(f"    delta_ownership_sensitivity (S_self - S_other):  {format_result(ownership['mean'], ownership['ci95'][0], ownership['ci95'][1])}")
-        print(f"    delta_self_vs_focal (S_self - S_focal):          {format_result(self_focal['mean'], self_focal['ci95'][0], self_focal['ci95'][1])}")
-        print(f"    delta_focal_vs_other (S_focal - S_other):        {format_result(focal_other['mean'], focal_other['ci95'][0], focal_other['ci95'][1])}")
+    lines.append("\n" + "=" * 94)
+    lines.append("3. LEAVE-ONE-OUT: EXCLUDING evidence_quality")
+    for arch in ARCHES:
+        lines.append(f"\n--- {arch.upper()} ---")
+        block = result["leave_one_out_evidence_quality"][arch]
+        for metric in KEY_METRICS:
+            lines.append(
+                f"{metric:42s} base {fmt_result(block['base'][metric])} | "
+                f"mixed {fmt_result(block['mixed'][metric])} | "
+                f"change {fmt_result(block['mixed_minus_base'][metric])}"
+            )
 
-        # For mixed, pool across seeds
-        pooled_seeds = {}
-        for sn in ["mixed_s31", "mixed_s42", "mixed_s73", "mixed_s128", "mixed_s256"]:
-            if sn in data[arch]:
-                pooled_seeds[sn] = item_metrics(data[arch][sn])
+    lines.append("\n" + "=" * 94)
+    lines.append("4. PER-FAMILY BASE AND MIXED ESTIMATES")
+    for arch in ARCHES:
+        lines.append(f"\n--- {arch.upper()} ---")
+        for family, block in result["architectures"][arch]["per_family"].items():
+            lines.append(f"  [{family}]")
+            for metric in (
+                "delta_ownership_sensitivity",
+                "delta_self_vs_focal_sensitivity",
+                "delta_focal_vs_other_sensitivity",
+                "ownership_by_order_interaction",
+            ):
+                lines.append(
+                    f"    {metric:38s} base {fmt_result(block['base'][metric])} | mixed {fmt_result(block['mixed'][metric])}"
+                )
 
-        item_ids = sorted(data[arch]["base"]["items"].keys())
-        for metric_name, metric_key in [
-            ("ownership", "delta_ownership_sensitivity"),
-            ("self_vs_focal", "delta_self_vs_focal_sensitivity"),
-            ("focal_vs_other", "delta_focal_vs_other_sensitivity"),
-        ]:
-            vals = []
-            for item_id in item_ids:
-                vs = []
-                for sn, sd in pooled_seeds.items():
-                    if item_id in sd:
-                        mv = sd[item_id].get(metric_key)
-                        if isinstance(mv, (int, float)):
-                            vs.append(mv)
-                if vs:
-                    vals.append(np.mean(vs))
-            if len(vals) > 10:
-                mean, lo, hi = bootstrap_ci(vals)
-                print(f"  Mixed (pooled):")
-                print(f"    delta_{metric_name:20s} {format_result(mean, lo, hi)}")
-
-        # Decomposition check: does self ≈ focal in mixed?
-        print(f"\n  Decomposition check:")
-        print(f"    Base:   SELF > FOCAL > OTHER ? (ownership > self_focal > 0)")
-        print(f"    Mixed:  SELF ≈ FOCAL > OTHER ? (self_focal → 0, ownership stays positive)")
-
-    # =========================================================================
-    # 6. CONFIDENCE OBJECTION: DIRECTION CHECK
-    # =========================================================================
-    print("\n" + "=" * 90)
-    print("6. CONFIDENCE OBJECTION: DIRECTION CHECK")
-    print("   Does SELF merely sharpen all logits, or is the effect specific?")
-    print("=" * 90)
-
-    for arch in ["qwen", "mistral"]:
-        print(f"\n--- {arch.upper()} ---")
-        s = data[arch]["base"]["summary_mass"]
-        ownership = s["delta_ownership_sensitivity"]
-        ctrl = s["delta_control_margin"]
-        irr = s["delta_irrelevant_sensitivity"]
-
-        print(f"  Relevant-history ownership sensitivity:  {format_result(ownership['mean'], ownership['ci95'][0], ownership['ci95'][1])}")
-        print(f"  Current-facts-only control margin:        {format_result(ctrl['mean'], ctrl['ci95'][0], ctrl['ci95'][1])}")
-        print(f"  Irrelevant-evidence sensitivity:          {format_result(irr['mean'], irr['ci95'][0], irr['ci95'][1])}")
-
-        # Direction check
-        own_dir = "positive" if ownership['mean'] > 0 else "negative"
-        ctrl_dir = "positive" if ctrl['mean'] > 0 else "negative"
-        irr_dir = "nonzero" if (irr['ci95'][0] > 0 or irr['ci95'][1] < 0) else "zero"
-
-        if ownership['mean'] > 0 and ctrl['mean'] < 0:
-            print(f"  → Ownership {own_dir}, control margin {ctrl_dir}: OPPOSITE directions")
-            print(f"    → Rules out uniform SELF-induced confidence increase")
-        elif ownership['mean'] > 0 and ctrl['mean'] > 0:
-            print(f"  → Both positive: confidence scaling remains plausible")
-        else:
-            print(f"  → Ownership {own_dir}, control margin {ctrl_dir}")
-
-        if irr_dir == "zero":
-            print(f"  → Irrelevant sensitivity ≈ 0: SELF does not amplify arbitrary changes")
-        else:
-            print(f"  → Irrelevant sensitivity nonzero:SELF amplifies irrelevant changes too")
+    args.json_output.parent.mkdir(parents=True, exist_ok=True)
+    args.json_output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    args.text_output.parent.mkdir(parents=True, exist_ok=True)
+    args.text_output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("\n".join(lines))
+    print(f"\nWrote {args.text_output}")
+    print(f"Wrote {args.json_output}")
 
 
 if __name__ == "__main__":
