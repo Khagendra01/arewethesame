@@ -11,10 +11,14 @@
 ## Full-paper deadline — September 25, 2026, 11:59 PM AoE
 
 - [x] Paper compiles with the ICLR 2027 style and BibTeX in CI.
-- [x] Main text ends on page 8; references begin on page 8, so the counted main text is below the 9-page limit.
-- [x] AI-use disclosure is present.
-- [x] Reproducibility statement describes committed artifacts.
+- [x] Counted manuscript content stays within the 9-page main-text limit: the conclusion and AI-use statement end on page 8, the reproducibility statement occupies the top of page 9, and references begin on page 9.
+- [x] AI-use disclosure explicitly covers methodological critique/design feedback, implementation, orchestration, statistical-analysis code and interpretation, literature search, and drafting/editing.
+- [x] Reproducibility statement describes the frozen supplementary materials.
+- [x] Title line breaks are fixed so `Focal-Agent Effects` is not hyphenated across lines.
+- [x] CI builds an anonymized supplementary ZIP and scans it for author/repository identifiers.
+- [x] CI regenerates the frozen v0.7 benchmark and verifies SHA-256 `d4960832076326ba5ed31ff3664095dea8c916ea3fabf7e482bcde8207f5cc7a` before packaging.
 - [ ] Upload the final PDF generated from the submission branch.
+- [ ] Upload the anonymous supplementary ZIP rather than linking the identifying public development repository.
 
 ## V0.7 evidence package
 
@@ -24,6 +28,9 @@
 - [x] Mixed-minus-base contrasts resample training seeds and shared latent items.
 - [x] Direct mixed Qwen–Mistral interactions resample checkpoint seed sets independently and share item draws.
 - [x] `RESULTS_v07.md` is synchronized to the corrected hierarchical inference.
+- [x] The manuscript discloses the preregistered 5,000 bootstrap draws and the final 10,000-draw analysis, with the resampling scheme and estimands unchanged.
+- [x] The preregistered legacy max-token scoring robustness result is reported and preserves the qualitative Qwen mixed pattern.
+- [x] Per-family and leave-one-family-out analyses are explicitly labeled exploratory.
 - [x] FOCAL is described as evaluation-only and not exposure-matched during training.
 - [x] Targets are described as agreement with explicit simulator policy, not normative correctness.
 
@@ -33,7 +40,7 @@
 - [x] Qwen mixed SELF–FOCAL is reported with hierarchical CI spanning zero: about -0.05 [-0.21,+0.16].
 - [x] The significant base-to-mixed SELF–FOCAL decrease is reported: about -0.33 [-0.54,-0.10].
 - [x] The significant FOCAL–OTHER increase is reported: about +0.35 [+0.05,+0.62].
-- [x] The total Qwen ownership change is reported as nondetectable.
+- [x] The total Qwen ownership change is described as not detected, rather than as statistical equivalence.
 - [x] Mixed Qwen–Mistral SELF–FOCAL difference is NOT called significant.
 - [x] Evidence-quality family dominance and family heterogeneity are explicit.
 - [x] Confidence controls are described as evidence against the simplest uniform-sharpening account, not proof of a mechanism.
