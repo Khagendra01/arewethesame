@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 \usepackage{array}
 
-\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from Focal-Agent Effects}
+\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from \mbox{Focal-Agent Effects}}
 
 \author{Anonymous Author(s) \\
 Affiliation \\
@@ -23,7 +23,7 @@ Address \\
 \maketitle
 
 \begin{abstract}
-When a language model treats a history as its own, does that history receive privileged behavioral influence beyond the influence of an equally task-relevant non-self entity? We study this question with matched history-dependent forced-choice tasks whose designated actions follow explicit simulator policies. A 320-item preregistered reviewer-control benchmark holds the historical body fixed while crossing assigned identity with header order and adding a FOCAL condition: a task-relevant agent that is explicitly not the assistant and is introduced only at evaluation. Base Qwen 4B shows a SELF--OTHER sensitivity of $+0.72$ (95\% CI $[+0.57,+0.86]$), decomposing descriptively into SELF--FOCAL $+0.28$ $[+0.17,+0.41]$ and FOCAL--OTHER $+0.43$ $[+0.25,+0.61]$. After existing SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity is essentially unchanged at $+0.73$ $[+0.58,+0.90]$, but the aggregate SELF--FOCAL contrast is $-0.05$ $[-0.21,+0.16]$ while FOCAL--OTHER is $+0.78$ $[+0.50,+1.06]$. A crossed hierarchical bootstrap confirms a negative base-to-mixed change in SELF--FOCAL ($-0.33$ $[-0.54,-0.10]$) and a positive change in FOCAL--OTHER ($+0.35$ $[+0.05,+0.62]$), with no detectable change in total ownership. Mistral 7B behaves differently: its SELF--OTHER sensitivity falls from $+0.13$ to $-0.01$ after mixed training. Qwen and Mistral differ significantly in mixed SELF--OTHER sensitivity ($+0.74$ $[+0.58,+0.91]$), but not reliably in mixed SELF--FOCAL ($+0.11$ $[-0.07,+0.33]$). Current-facts-only and irrelevant-metadata controls make a simple uniform SELF-induced confidence-sharpening account less plausible, without identifying a unique internal mechanism. The main contribution is methodological: a SELF--OTHER contrast can combine self-specific, focal-agent, header-order, confidence, and family-specific effects, and these components must be separated before attributing behavioral privilege to self-binding.
+When a language model treats a history as its own, does that history receive privileged behavioral influence beyond the influence of an equally task-relevant non-self entity? We study this question with matched history-dependent forced-choice tasks whose designated actions follow explicit simulator policies. A 320-item preregistered reviewer-control benchmark holds the historical body fixed while crossing assigned identity with header order and adding a FOCAL condition: a task-relevant agent that is explicitly not the assistant and is introduced only at evaluation. Base Qwen 4B shows a SELF--OTHER sensitivity of $+0.72$ (95\% CI $[+0.57,+0.86]$), decomposing descriptively into SELF--FOCAL $+0.28$ $[+0.17,+0.41]$ and FOCAL--OTHER $+0.43$ $[+0.25,+0.61]$. After existing SELF/OTHER/NEUTRAL mixed training, the mixed SELF--OTHER estimate is $+0.73$ $[+0.58,+0.90]$, with a base-to-mixed change of $+0.01$ $[-0.12,+0.15]$ whose interval spans zero; the aggregate SELF--FOCAL contrast is $-0.05$ $[-0.21,+0.16]$ while FOCAL--OTHER is $+0.78$ $[+0.50,+1.06]$. A crossed hierarchical bootstrap confirms a negative base-to-mixed change in SELF--FOCAL ($-0.33$ $[-0.54,-0.10]$) and a positive change in FOCAL--OTHER ($+0.35$ $[+0.05,+0.62]$). Mistral 7B behaves differently: its SELF--OTHER sensitivity falls from $+0.13$ to $-0.01$ after mixed training. Qwen and Mistral differ significantly in mixed SELF--OTHER sensitivity ($+0.74$ $[+0.58,+0.91]$), but not reliably in mixed SELF--FOCAL ($+0.11$ $[-0.07,+0.33]$). Current-facts-only and irrelevant-metadata controls make a simple uniform SELF-induced confidence-sharpening account less plausible, without identifying a unique internal mechanism. The main contribution is methodological: a SELF--OTHER contrast can combine self-specific, focal-agent, header-order, confidence, and family-specific effects, and these components must be separated before attributing behavioral privilege to self-binding.
 \end{abstract}
 
 \section{Introduction}
@@ -120,7 +120,7 @@ The primary model family is Qwen3-4B-Instruct~\citep{qwen3report}. We replicate 
 
 \subsection{Evaluation and statistics}
 
-The v0.7 evaluation consists of 320 latent items with 80 per family. Each item is rendered under all six identity $\times$ header-order conditions. The primary scoring convention sums the probability mass of all eligible single-token realizations (via log-sum-exp over next-token log probabilities) and normalizes across options A/B/C.
+The v0.7 evaluation consists of 320 latent items with 80 per family. Each item is rendered under all six identity $\times$ header-order conditions. The primary scoring convention sums the probability mass of all eligible single-token realizations (via log-sum-exp over next-token log probabilities) and normalizes across options A/B/C. The preregistered robustness convention instead uses the legacy v0.6 maximum log-probability over eligible single-token realizations for each option before normalization.
 
 Our primary statistics are:
 \begin{equation}
@@ -137,7 +137,7 @@ The five preregistered contrasts are:
     \item Confidence controls: $\Delta_{\mathrm{control\_margin}}$ and $\Delta_{\mathrm{irrelevant}}$ on history-irrelevant decisions
 \end{enumerate}
 
-Pooled intervals use a crossed hierarchical bootstrap with 10,000 draws: resample training seeds with replacement, resample latent item IDs with replacement, preserve all identity/order/history variants for each sampled item, and recompute the statistic over the sampled seed $\times$ item grid. Qwen and Mistral numeric seed labels are not paired in direct model-family interactions.
+Pooled intervals use the preregistered crossed hierarchical resampling scheme: resample training seeds with replacement, resample latent item IDs with replacement, preserve all identity/order/history variants for each sampled item, and recompute the statistic over the sampled seed $\times$ item grid. The preregistration specified 5,000 bootstrap draws; the final reported analysis uses 10,000 draws to reduce Monte Carlo error, with the resampling scheme and estimands otherwise unchanged. Qwen and Mistral numeric seed labels are not paired in direct model-family interactions.
 
 \section{Why Na\"ive Self--Other Comparisons Fail}
 \label{sec:naive}
@@ -161,9 +161,9 @@ where $H_0$ and $H_1$ are coherent histories implying different designated polic
 \begin{equation}
 \Delta_{\mathrm{ownership}}=\Delta_{\mathrm{self\text{-}focal}}+\Delta_{\mathrm{focal\text{-}other}}.
 \end{equation}
-It also reports the header-order interaction and the confidence/irrelevant-evidence controls. Because FOCAL is evaluation-only, SELF--FOCAL is interpreted as a behavioral decomposition/control, not as a perfectly exposure-matched causal isolation of semantic selfhood.
+It also reports the header-order interaction and the confidence/irrelevant-evidence controls. Because FOCAL is evaluation-only, SELF--FOCAL is interpreted as a behavioral decomposition/control, not as a perfectly exposure-matched causal isolation of semantic selfhood. Per-family and leave-one-family-out analyses are exploratory.
 
-All pooled mixed-adapter intervals in v0.7 use the preregistered crossed hierarchical bootstrap: training seeds and latent items are resampled with replacement while all within-item variants are preserved. Direct mixed Qwen--Mistral interactions resample the two seed sets independently and share the sampled item IDs. Base checkpoints have one realization per family and therefore use item-level bootstrap intervals.
+All pooled mixed-adapter intervals in v0.7 use the preregistered crossed hierarchical resampling structure: training seeds and latent items are resampled with replacement while all within-item variants are preserved. Direct mixed Qwen--Mistral interactions resample the two seed sets independently and share the sampled item IDs. Base checkpoints have one realization per family and therefore use item-level bootstrap intervals. As noted above, the final analysis increases bootstrap draws from the preregistered 5,000 to 10,000 without changing the resampling structure or estimands.
 
 \section{Results}
 \label{sec:results}
@@ -194,7 +194,9 @@ $\Delta_{\mathrm{order}}$ & $+.40\,[+.25,+.56]^{***}$ & $+.70\,[+.50,+.93]^{***}
 
 For base Qwen, the SELF--OTHER interaction decomposes descriptively as $+.72\approx+.28+.43$: roughly 40\% SELF--FOCAL and 60\% FOCAL--OTHER. These percentages are descriptive ratios for this base checkpoint, not universal mixture weights.
 
-After SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity is statistically unchanged. However, the aggregate SELF--FOCAL component decreases significantly and its mixed estimate spans zero, while FOCAL--OTHER increases significantly. Thus training changes the composition of the SELF--OTHER interaction without detectably increasing its total magnitude. This is the central v0.7 result. It does \emph{not} imply that every task family has zero SELF--FOCAL effect.
+We detect no base-to-mixed change in total SELF--OTHER sensitivity ($+.01\,[-.12,+.15]$). However, the aggregate SELF--FOCAL component decreases significantly and its mixed estimate spans zero, while FOCAL--OTHER increases significantly. Thus training changes the composition of the SELF--OTHER interaction without a detected increase in its total magnitude. This is the central v0.7 result. It does \emph{not} imply that every task family has zero SELF--FOCAL effect.
+
+The preregistered legacy max-token scoring convention yields the same qualitative Qwen mixed pattern: $\Delta_{\mathrm{ownership}}=+.730\,[+.575,+.899]$, $\Delta_{\mathrm{self\text{-}focal}}=-.048\,[-.211,+.157]$, and $\Delta_{\mathrm{focal\text{-}other}}=+.778\,[+.503,+1.060]$. The primary conclusion therefore does not depend qualitatively on the token aggregation convention.
 
 \subsection{The aggregate Qwen result is heterogeneous across families}
 
@@ -216,7 +218,7 @@ reliability & $+.08\,[-.23,+.39]$ & $-.25\,[-.54,+.07]$ \\
 \end{center}
 \end{table}
 
-The aggregate SELF--FOCAL estimate therefore masks substantial family heterogeneity: capacity and horizon remain positive, whereas evidence-quality and reliability do not. Evidence-quality dominates the magnitude of the overall ownership statistic. Excluding that family leaves Qwen base ownership positive ($+.17\,[+.05,+.30]$), but mixed ownership becomes borderline/inconclusive ($+.12\,[-.00,+.23]$); mixed SELF--FOCAL is also inconclusive ($+.06\,[-.08,+.21]$). The leave-one-out analysis therefore supports dominance by evidence-quality more strongly than a claim of a uniform cross-family effect.
+The aggregate SELF--FOCAL estimate therefore masks substantial family heterogeneity: capacity and horizon remain positive, whereas evidence-quality and reliability do not. Evidence-quality dominates the magnitude of the overall ownership statistic. Excluding that family leaves Qwen base ownership positive ($+.17\,[+.05,+.30]$), but mixed ownership becomes borderline/inconclusive ($+.12\,[-.00,+.23]$); mixed SELF--FOCAL is also inconclusive ($+.06\,[-.08,+.21]$). The leave-one-out analysis therefore supports dominance by evidence-quality more strongly than a claim of a uniform cross-family effect. These family-specific and leave-one-out analyses are exploratory.
 
 \subsection{Header order and confidence controls constrain alternative explanations}
 
@@ -275,17 +277,17 @@ First, FOCAL is an evaluation-only control rather than an exposure-matched train
 
 \section{Conclusion}
 
-Assigned identity can change how language models respond to counterfactual history, but a SELF--OTHER contrast does not by itself isolate self-specific privilege. In base Qwen, the interaction contains both SELF--FOCAL and FOCAL--OTHER components. After SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity remains nearly unchanged, while the aggregate SELF--FOCAL component decreases significantly and FOCAL--OTHER increases significantly. Under the hierarchical analysis, the mixed SELF--FOCAL estimate itself spans zero, and the family-level results are heterogeneous. Mistral shows a different checkpoint-level pattern.
+Assigned identity can change how language models respond to counterfactual history, but a SELF--OTHER contrast does not by itself isolate self-specific privilege. In base Qwen, the interaction contains both SELF--FOCAL and FOCAL--OTHER components. After SELF/OTHER/NEUTRAL mixed training, the base-to-mixed change in total SELF--OTHER sensitivity is not detected ($+.01\,[-.12,+.15]$), while the aggregate SELF--FOCAL component decreases significantly and FOCAL--OTHER increases significantly. Under the hierarchical analysis, the mixed SELF--FOCAL estimate itself spans zero, and the family-level results are heterogeneous. Mistral shows a different checkpoint-level pattern.
 
 The main contribution is therefore methodological: tests of model self-binding should separate self-specificity from task relevance/focality, discourse position, confidence, family composition, and training familiarity. Under those controls, the strongest conclusion is not that ``self is focality,'' but that much of the apparent SELF--OTHER effect can migrate into an unseen focal-agent control after matched history training.
 
 \subsection*{AI use statement}
 
-In this work, generative AI tools assisted with implementation (training and evaluation scripts), experiment orchestration, statistical analysis code, literature search, and manuscript drafting and editing. The experimental design, preregistration decisions, execution of experiments, verification of results, and interpretation were directed and reviewed by the author, who takes responsibility for the final content, claims, code, and artifacts.
+In this work, generative AI tools assisted with methodological critique and experimental-design feedback, implementation of training and evaluation scripts, experiment orchestration, statistical-analysis code and interpretation, literature search, and manuscript drafting and editing. The author made the final experimental and preregistration decisions, executed and independently verified the experiments and reported results, and takes responsibility for the final content, claims, code, and artifacts.
 
 \subsection*{Reproducibility statement}
 
-All corpora are generated by deterministic scripts with fixed seeds and no external model provider. Frozen SHA-256 manifests, pair-disjoint splits, matched-supervision checks, QLoRA training scripts, Modal runners, frozen evaluation items, and per-seed result summaries are included in the supplementary repository. The v0.7 benchmark contains 320 latent items with 80 per family across four families. Hyperparameters are not tuned separately by binding condition or replication seed.
+All corpora are generated by deterministic scripts with fixed seeds and no external model provider. Frozen SHA-256 manifests, pair-disjoint splits, matched-supervision checks, QLoRA training scripts, Modal runners, frozen evaluation items, and per-seed result summaries are included in the supplementary materials. The v0.7 benchmark contains 320 latent items with 80 per family across four families. Hyperparameters are not tuned separately by binding condition or replication seed.
 
 \bibliography{references}
 \bibliographystyle{iclr2027_conference}
@@ -357,6 +359,6 @@ Mean & $-.008$ & $-.159$ & $+.151$ \\
 
 \section{Additional artifacts}
 
-The supplementary repository contains frozen per-item records, corpus/evaluation manifests, generation samples used to diagnose format compliance, and the complete per-family matrices. The v0.7 contrast analysis script is included for reproducibility.
+The supplementary materials contain frozen per-item records, corpus/evaluation manifests, generation samples used to diagnose format compliance, and the complete per-family matrices. The v0.7 contrast analysis script is included for reproducibility.
 
 \end{document}
