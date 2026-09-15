@@ -10,11 +10,16 @@ on:
       - 'eval/locked_v07_reviewer_controls/outputs/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v07/reviewer-controls
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -24,6 +29,17 @@ jobs:
           python scripts/v07_contrasts.py --bootstrap 10000
           echo '--- CONTRASTS.txt ---'
           cat eval/locked_v07_reviewer_controls/CONTRASTS.txt
+      - name: Commit corrected contrast artifacts
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add eval/locked_v07_reviewer_controls/CONTRASTS.txt \
+                  eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Regenerate v0.7 contrasts with hierarchical bootstrap'
+            git push origin HEAD:v07/reviewer-controls
+          fi
       - name: Upload corrected contrast artifacts
         uses: actions/upload-artifact@v4
         with:
