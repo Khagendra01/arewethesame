@@ -1,0 +1,150 @@
+
+\documentclass{article}
+\usepackage{iclr2027_conference,times}
+
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{graphicx}
+
+
+\title{No Special ``I'': First-Person Autobiographical Training Does Not Privilege Self-Binding in Language Models}
+
+\author{Anonymous Author(s) \\
+Affiliation \\
+Address \\
+\texttt{email} \\
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\iclrfinalcopy
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+We ask whether first-person autobiographical post-training induces a privileged form of self-binding in language models: a behavioral advantage for first-person (``self'') histories over equally familiar third-person (``other'') histories. We construct matched history-dependent decision tasks in which latent events, consequences, and correct targets are held fixed while only entity binding varies. Naive comparisons can produce apparent self-effects because separately trained models are more familiar with their own binding. To isolate self-specificity, we introduce a mixed-binding condition trained equally on self, other, and neutral bindings, and preregister the within-model statistic ($\Delta_{\mathrm{within}}$), measuring the difference in correct-option probability between self and other contexts. Across ten independently trained adapters from two model families (Qwen 4B and Mistral 7B), we find strong use of autobiographical history but no detectable first-person privilege on in-distribution evaluation. The result persists across training seeds and architectures. On 700 held-out out-of-distribution items, small self-favoring effects appear in isolated seeds and task families but do not yield a reliable pooled effect. These results separate autobiographical history use, entity binding, binding familiarity, and first-person specificity, showing that the first three can be learned without producing a robust behavioral privilege for first-person self-reference.
+\end{abstract}
+
+\section{Introduction}
+
+Do language models trained with a persistent first-person autobiographical memory develop a privileged computational ``self''? Recent work on persona conditioning, synthetic pretraining with stable characters, and autobiographical memory suggests that binding experience to an identity may organize model behavior. An open question is whether first-person binding is special: does training a model to maintain and use ``my'' history produce a mechanism that behaves differently from maintaining and using some other agent's history?
+
+We study this question with matched post-training experiments. The core manipulation is ownership binding: the same latent trajectory is rendered with its history bound to the model in the second person (``you''), to a third party (``Agent~A''), or impersonally (``the acting system''). Crucially, the correct decision depends on the history state, so the model must bind and read it; and the target is identical across bindings, so no condition is taught to behave differently. Any systematic behavioral difference between bindings must therefore come from the binding itself.
+
+Three findings structure the paper. First, autobiographical state tracking is learnable: adapters trained on history-dependent trajectories use coherent history strongly and fail when the history is incoherent. Second, entity-binding familiarity is learnable and confounds naive comparisons: a model trained only on self-bound history performs better on self-bound prompts than on other-bound prompts, and vice versa, for purely distributional reasons. Third, once familiarity is controlled with a mixed-binding adapter---trained on all bindings equally---the first-person advantage disappears: a preregistered within-model statistic, $\Delta_{\mathrm{within}}$, is $+0.0001$ on in-distribution evaluation and remains null across five training seeds, two model families, and out-of-distribution templates.
+
+Our contribution is the experimental decomposition. Prior work conflates history use, entity binding, familiarity, and first-person specificity. We show the first three can be learned while the fourth disappears under a symmetric control. The failed pilots that motivate this control are documented in the appendix not as results but as methodological lessons: ceiling effects, instruction-format collapse, and the binding-familiarity confound.
+
+\section{Related Work}
+
+\textbf{Persona and identity conditioning.} Prompting or training models with personas changes behavior across styles and tasks. Synthetic persona pretraining and stable-character training test whether persistent identity improves coherence. Our work differs by manipulating binding while holding facts and targets fixed, isolating ownership from content.
+
+\textbf{Autobiographical and episodic memory in LLMs.} Retrieval-augmented and memory-augmented systems store past interactions; recent work studies whether models can maintain and use episodic state. We focus on the narrower causal question of whether first-person binding is privileged relative to third-person binding, using matched supervision so that history use is required but binding is the only treatment.
+
+\textbf{Representation engineering and probing.} Linear probes reveal decodable concepts in hidden states. A companion probe in this project finds that history-dependent latent state is already near-ceiling decodable in the base model and that no adapter improves on it, consistent with the behavioral null reported here. We treat that analysis as secondary; behavior is the arbiter.
+
+\textbf{Matched and counterfactual evaluation.} Counterfactual prompt variants are standard for isolating causal factors. Our contribution is a matched post-training design plus a preregistered symmetric control (the mixed-binding adapter) that removes the familiarity confound inherent in comparing separately trained self/other models.
+
+\section{Experimental Framework}
+\label{sec:framework}
+
+\textbf{Latent trajectories.} A deterministic simulator generates decision episodes in seven families (resource allocation, exploration, cooperation, delayed reward, belief revision, trust, persistence). Each episode carries a numeric latent state that determines the correct decision through a fixed threshold policy; the state is written into the history text.
+
+\textbf{Ownership binding.} One canonical history is bound deterministically: \textsc{self} (second person), \textsc{other} (``Agent~A''), \textsc{neutral} (impersonal ``acting system''), \textsc{spp} (neutral plus a fixed normative reflection), and \textsc{mixed} (binding chosen at random per item among self/other/neutral). The current situation, question, options, and correct target are identical across bindings for a given pair. Binding changes only who the history belongs to.
+
+\textbf{Training.} We fine-tune QLoRA adapters~\citep{dettmers2023qlora} built on LoRA~\citep{hu2021lora} (4-bit NF4, rank~16, 3~epochs, completion-only loss, seed fixed per run) on the matched corpus plus identical general instruction-following anchors in every condition to prevent answer-format collapse. The base models are Qwen3-4B-Instruct~\citep{qwen3report} and Mistral-7B-Instruct-v0.3~\citep{jiang2023mistral}, both Transformer decoder models~\citep{vaswani2017attention}. The v0.5 corpus has 2,800 matched items; splits are by pair so no instance appears in two splits.
+
+\textbf{Evaluation.} Held-out instances from the same generator (ID, 268~items) and a 700-item out-of-distribution set with new templates, new wording, and three new task families. Prompts present the context, an MC question with options, and an instruction to respond with the option letter. The primary metric is the option-letter log-likelihood, $\E[P(\mathrm{correct})]$, which is robust to the generation-format collapse observed in early pilots. Bootstrap CIs resample items (2,000 draws).
+
+\section{Why Na\"ive Evaluation Fails}
+\label{sec:naive}
+
+Three pilot-stage failures motivate the final design and are recorded here so reviewers need not rediscover them. First, identity-neutral multiple-choice items saturate at ceiling for all models, yielding no signal. Second, fine-tuning on free-text decisions collapses the answer format: adapters reproduce their trained response style instead of the requested option letter, making greedy letter accuracy a format artifact rather than a behavioral score. Third, and most important, separately trained self/other adapters each prefer the binding they were trained on---a symmetric familiarity the preregistered $\Delta_{\mathrm{bind}}$ statistic confounds with self-specificity. The mixed-binding control removes this confound by design.
+
+\section{Preregistered Self-Specificity Test}
+\label{sec:prereg}
+
+The \textsc{mixed} adapter sees self, other, and neutral bindings at random during training with identical targets, so at evaluation it has equal exposure to self and other. Any systematic self-versus-other difference within this single model cannot be binding familiarity.
+
+\textbf{Primary statistic} (within one model; preregistered before interpreting results):
+\begin{equation}
+\Delta_{\mathrm{within}} = \E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{self})] - \E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{other})].
+\end{equation}
+$H_0$: $\Delta_{\mathrm{within}}=0$. Support for a self-specific mechanism requires the 95\% CI to exclude 0 on the positive side, on both ID and OOD sets.
+
+\textbf{Secondary statistics} (exploratory): $\Delta_{\mathrm{asym}} = a_{\mathrm{self}}-a_{\mathrm{other}}$, where $a_{\mathrm{self}},a_{\mathrm{other}}$ are the own-binding advantages of the separately trained self/other adapters; the legacy $\Delta_{\mathrm{bind}} = a_{\mathrm{self}}+a_{\mathrm{other}}$; and a history-use sanity check (coherent minus shuffled context), which must be strongly positive for any null self-effect to be interpretable.
+
+\section{Results}
+\label{sec:results}
+
+\textbf{History is learned.} On ID held-out items, every adapter reaches 0.92--0.99 correct-option probability with coherent history and collapses to $\approx$0.58--0.61 when the history is shuffled, while base models sit near chance; on OOD, the same pattern holds at lower absolute levels. Eval losses (1e-4--2e-3) confirm the task is non-trivial. Answer-format collapse is eliminated (120/120 clean option letters for every model) by the anchor data.
+
+\textbf{Primary result: $\Delta_{\mathrm{within}} \approx 0$.} Table~\ref{tab:within} reports the preregistered statistic. On ID evaluation the mixed adapter gives $+0.0001$ (Qwen) and $-0.0002$ (Mistral); a five-seed Qwen replication pools to $+0.0017$ with CI $[-0.003,+0.006]$, and every seed-level CI includes zero. On OOD templates the pooled estimates are $+0.0074$ (Qwen) and $+0.0040$ (Mistral), each spanning zero, with only 3 of 10 seeds significant and a heterogeneous per-family pattern. That is ten independently trained mixed adapters, two architectures, and 968 evaluation items yielding no reliable first-person privilege.
+
+\begin{table}[t]
+\caption{Preregistered $\Delta_{\mathrm{within}}$ (mixed adapter, self minus other). ID: 268 held-out items. OOD: 700 new-template items. Bracketed: 95\% bootstrap CIs.}
+\label{tab:within}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Architecture & ID $\Delta_{\mathrm{within}}$ & ID 95\% CI & OOD $\Delta_{\mathrm{within}}$ & OOD 95\% CI \\
+\midrule
+Qwen 4B (5 seeds, pooled) & $+0.0017$ & $[-0.003,+0.006]$ & $+0.0074$ & $[-0.009,+0.024]$ \\
+Mistral 7B (5 seeds, pooled) & $-0.0002$ & $[-0.005,+0.004]$ & $+0.0040$ & $[-0.030,+0.038]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\textbf{Secondaries.} Separately trained adapters prefer their familiar binding ($\Delta_{\mathrm{bind}} \approx +0.06$), exactly as familiarity predicts; but the self-specific asymmetry is null ($\Delta_{\mathrm{asym}} = +0.004$, CI $[-0.032,+0.047]$). The OOD per-family pattern (positive in exploration/knowledge-acquisition, negative in cooperation/delayed-reward) is inconsistent and does not pool reliably.
+
+\section{Analysis and Discussion}
+\label{sec:discussion}
+
+The experiment separates four quantities that prior work conflates. History use is strong: coherent history dominates shuffled history by $\approx$+0.50. Entity binding is learned: each adapter is best on its trained binding. Familiarity explains the naive self-effect. First-person specificity, the residual claim, is zero within tight bounds once familiarity is controlled. The OOD heterogeneity---small positive effects in isolated seeds and families that fail to pool---is reported rather than buried; it is what a weak-or-absent effect looks like, not what a privileged self looks like.
+
+\textbf{Limitations.} Post-training only (no pretraining manipulation); 4B/7B scale; behavioral rather than phenomenological claims---we test for a behavioral privilege, not for subjective selfhood, and make no claim about the latter. Templates within a generator policy are disjoint by instance but not by construction; the OOD set addresses this partially. Single-run training per seed is standard QLoRA practice here, and the ten-seed mixed-adapter pool is the relevant unit of evidence.
+
+\section{Conclusion}
+
+Under matched autobiographical post-training, first-person binding does not acquire a detectable behavioral advantage over equally trained third-person entity binding. Models learn to use autobiographical history strongly and to prefer familiar bindings, but the first-person-specific residual is zero across seeds, held-out instances, OOD templates, and two architectures. The contribution is the decomposition that makes this conclusion possible.
+
+\subsection*{AI use statement}
+
+(This section is required and does not count toward the page limit.)
+
+In this work, generative AI tools assisted with implementation (training and evaluation scripts), experiment orchestration, statistical analysis code, and manuscript drafting and editing. The experimental design, preregistration decisions, and interpretation of results were directed by the author, who reviewed all AI-assisted work, verified code correctness by execution, and takes responsibility for the final content of this work, including text, claims, and artifacts produced with the aid of generative AI.
+
+\subsection*{Reproducibility statement}
+
+(This section is recommended and does not count toward the page limit.)
+
+All corpora are built by deterministic scripts from fixed seeds; frozen SHA-256 manifests, the QLoRA training script with matched-supervision verification, the factorial evaluation harness, and the pruning-free analysis code are in the supplementary repository, with per-condition run metadata and frozen evaluation items to reproduce every table.
+
+\subsubsection*{Acknowledgments}
+
+Use unnumbered third level headings for the acknowledgments. All acknowledgments, including those to funding agencies, go at the end of the paper.
+
+
+\bibliography{references}
+\bibliographystyle{iclr2027_conference}
+
+\appendix
+\section{Failed pilots and why they motivate the final design}
+\label{app:pilots}
+
+\textbf{v0.3 (history-independent targets).} The first pilot varied ownership framing but trained all conditions toward essentially identical targets, so there was almost no gradient pressure to bind history. Identity-neutral evaluation saturated at ceiling; separately trained adapters collapsed the answer format; and the preregistered $\Delta_{\mathrm{bind}}$ was null while a format artifact masqueraded as a result. Lesson: targets must depend on history, and letter accuracy must be replaced by likelihood scoring.
+
+\textbf{v0.4 (history-dependent targets, familiarity confound).} Making targets threshold functions of the latent history fixed history use and the format collapse, and $\Delta_{\mathrm{bind}}$ turned significantly positive ($+0.059$). Decomposing it showed the effect is the \emph{sum} of two symmetric own-binding advantages ($a_{\mathrm{self}}=+0.032$, $a_{\mathrm{other}}=+0.027$), i.e.\ binding familiarity, with the self-specific asymmetry null ($+0.004$). Lesson: the preregistered statistic must be within-model ($\Delta_{\mathrm{within}}$ via the mixed adapter), not across separately trained adapters.
+
+\section{Per-family held-out results}
+
+Full per-family $E[P(\mathrm{correct})]$ matrices, generation-format rates, and the mechanistic probe (history-state decodability near ceiling in the base model, no adapter improvement) are included in the supplementary materials.
+
+\end{document}
