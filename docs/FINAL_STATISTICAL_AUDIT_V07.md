@@ -1,6 +1,6 @@
 # Final statistical audit — v0.7
 
-**Status:** blocking promotion of the v0.7 manuscript until the corrected CPU-only contrast analysis is run.
+**Status:** RESOLVED. Corrected crossed-hierarchical contrasts were regenerated from the frozen per-item outputs and committed; manuscript claims must use `CONTRASTS_HIERARCHICAL.json` / `outputs/summary.json`.
 
 The frozen inference outputs are intact. No model inference needs to be rerun.
 

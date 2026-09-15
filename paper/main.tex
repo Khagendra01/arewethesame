@@ -23,7 +23,7 @@ Address \\
 \maketitle
 
 \begin{abstract}
-When a language model learns to treat a history as \emph{its own}, does self-binding become behaviorally privileged over binding the same history to another entity---or is the apparent privilege largely explained by discourse focalization? We construct matched history-dependent decision tasks in which latent events, consequences, and correct targets are held fixed while only entity binding varies. To decompose self-specificity from focal-agent effects, we introduce a focal-agent control (a non-self task-relevant entity that was not seen during training) crossed with identity header order, and preregister five contrasts: ownership sensitivity, self-vs-focal, focal-vs-other, header-order interaction, and confidence controls. On a 320-item benchmark with four task families, base Qwen 4B shows $\Delta_{\mathrm{ownership}}=+0.72$ (CI $[+0.57,+0.86]$), decomposing as $\Delta_{\mathrm{self\text{-}focal}}=+0.28$ (CI $[+0.17,+0.41]$) and $\Delta_{\mathrm{focal\text{-}other}}=+0.43$ (CI $[+0.26,+0.61]$): self $>$ focal $>$ other. The mixed adapter was trained on self, other, and neutral bindings at approximately equal frequency; focal was introduced only at evaluation. After mixed training, $\Delta_{\mathrm{self\text{-}focal}}$ collapses to $-0.05$ (CI $[-0.13,+0.03]$) while $\Delta_{\mathrm{focal\text{-}other}}$ grows to $+0.78$ (CI $[+0.62,+0.94]$): self $\approx$ focal $>$ other. The total ownership effect is unchanged ($+0.73$), but its decomposition shifts entirely from self-specific to focal-agent. Mistral 7B shows the opposite: ownership collapses from $+0.13$ to $-0.01$ after mixed training, with no focal-agent amplification. Cross-checkpoint interactions confirm Qwen $>$ Mistral on ownership ($+0.74$, CI $[+0.62,+0.85]$) and on self-vs-focal ($+0.11$, CI $[+0.01,+0.21]$). Evidence against the simplest global-confidence explanation is strong: Qwen's relevant-history ownership sensitivity is positive while its current-facts-only control margin is negative ($-0.39$), and irrelevant-evidence sensitivity is approximately zero, though not every possible confidence mechanism has been eliminated. Leave-one-out analysis shows the evidence-quality family drives $\sim$76\% of the aggregate Qwen effect, but the residual without it remains significant ($+0.17$, CI $[+0.05,+0.29]$). The main contribution is not a claim about whether models ``have a self,'' but a methodological decomposition: matched history training changes the decomposition of identity-dependent sensitivity without increasing its total magnitude.
+When a language model treats a history as its own, does that history receive privileged behavioral influence beyond the influence of an equally task-relevant non-self entity? We study this question with matched history-dependent forced-choice tasks whose designated actions follow explicit simulator policies. A 320-item preregistered reviewer-control benchmark holds the historical body fixed while crossing assigned identity with header order and adding a FOCAL condition: a task-relevant agent that is explicitly not the assistant and is introduced only at evaluation. Base Qwen 4B shows a SELF--OTHER sensitivity of $+0.72$ (95\% CI $[+0.57,+0.86]$), decomposing descriptively into SELF--FOCAL $+0.28$ $[+0.17,+0.41]$ and FOCAL--OTHER $+0.43$ $[+0.25,+0.61]$. After existing SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity is essentially unchanged at $+0.73$ $[+0.58,+0.90]$, but the aggregate SELF--FOCAL contrast is $-0.05$ $[-0.21,+0.16]$ while FOCAL--OTHER is $+0.78$ $[+0.50,+1.06]$. A crossed hierarchical bootstrap confirms a negative base-to-mixed change in SELF--FOCAL ($-0.33$ $[-0.54,-0.10]$) and a positive change in FOCAL--OTHER ($+0.35$ $[+0.05,+0.62]$), with no detectable change in total ownership. Mistral 7B behaves differently: its SELF--OTHER sensitivity falls from $+0.13$ to $-0.01$ after mixed training. Qwen and Mistral differ significantly in mixed SELF--OTHER sensitivity ($+0.74$ $[+0.58,+0.91]$), but not reliably in mixed SELF--FOCAL ($+0.11$ $[-0.07,+0.33]$). Current-facts-only and irrelevant-metadata controls make a simple uniform SELF-induced confidence-sharpening account less plausible, without identifying a unique internal mechanism. The main contribution is methodological: a SELF--OTHER contrast can combine self-specific, focal-agent, header-order, confidence, and family-specific effects, and these components must be separated before attributing behavioral privilege to self-binding.
 \end{abstract}
 
 \section{Introduction}
@@ -32,7 +32,7 @@ Language models increasingly operate with persistent memories, personas, and lon
 
 This question is easy to pose but surprisingly easy to test incorrectly. If one model is trained only on histories phrased as ``you previously chose...'' and another only on ``Agent~A previously chose...'', each can simply become more familiar with its own surface binding. A self-trained model performing better on self-bound prompts is therefore not evidence for a special self representation unless the corresponding other-trained model fails to show the symmetric advantage.
 
-We isolate these factors with matched, history-dependent post-training. A deterministic simulator produces latent trajectories whose state changes the correct decision. Each trajectory is rendered into multiple ownership conditions while preserving the underlying facts, question, options, and target. In the \textsc{self} condition, the model is addressed in the second person and the history is semantically its own; in \textsc{other}, the identical history belongs to ``Agent~A''; in \textsc{neutral}, it belongs to an impersonal acting system. This distinction matters: throughout the paper, \emph{self-bound} denotes semantic ownership by the model, not grammatical first-person surface form.
+We isolate these factors with matched, history-dependent post-training. A deterministic simulator produces latent trajectories whose state changes the designated policy action. Each trajectory is rendered into multiple ownership conditions while preserving the underlying facts, question, options, and target. In the \textsc{self} condition, the model is addressed in the second person and the history is semantically its own; in \textsc{other}, the identical history belongs to ``Agent~A''; in \textsc{neutral}, it belongs to an impersonal acting system. This distinction matters: throughout the paper, \emph{self-bound} denotes semantic ownership by the model, not grammatical first-person surface form.
 
 The decisive extension in v0.7 is a \textbf{focal-agent control}: a non-self entity that is task-relevant (like self) but explicitly not the assistant. This decomposes the ownership effect into two components:
 \begin{equation}
@@ -60,7 +60,7 @@ Persistent personas can alter style, values, and behavior, but persona fidelity 
 The Artificial Self studies possible AI identity boundaries and reports that changing those boundaries can alter behavior~\citep{douglas2026artificialself}. SurvivalBench studies risky behavior under survival pressure and relates it to self-preservation characteristics~\citep{lu2026survive}. These works motivate studying self-representation, but their interventions change identity content, goals, or pressure. Our design instead holds latent content and target policy fixed and manipulates only who owns the history.
 
 \textbf{Autobiographical and episodic memory.}
-HEART-Bench combines personality profiles with large sets of autobiographical-style episodic memories to test psychologically coherent decisions~\citep{peng2026heart}. KnowMe-Bench evaluates person understanding over long autobiographical narratives, including temporal and principle-level inference beyond factual retrieval~\citep{wu2026knowme}. Complementary-learning approaches have also begun to store and consolidate naturalistic episodic memories inside or alongside model weights~\citep{pan2026episodic}. These studies establish that long-term history can matter. Our contribution is a causal ownership control: identical histories are rebound across entities while the correct decision remains fixed by the same latent state.
+HEART-Bench combines personality profiles with large sets of autobiographical-style episodic memories to test psychologically coherent decisions~\citep{peng2026heart}. KnowMe-Bench evaluates person understanding over long autobiographical narratives, including temporal and principle-level inference beyond factual retrieval~\citep{wu2026knowme}. Complementary-learning approaches have also begun to store and consolidate naturalistic episodic memories inside or alongside model weights~\citep{pan2026episodic}. These studies establish that long-term history can matter. Our contribution is a causal ownership control: identical histories are rebound across entities while the designated policy action remains fixed by the same latent state.
 
 \textbf{Internal representations and intervention.}
 Representation engineering treats population-level activation structure as an object for monitoring and intervention~\citep{zou2023representation}; inference-time intervention similarly demonstrates that activation directions can causally alter model behavior~\citep{li2023iti}. Such work motivates mechanistic follow-up, but our primary claim is behavioral: if self-binding is privileged in a way that matters for decisions, it should survive a within-model exposure-matched test that also controls for focal-agent effects.
@@ -73,30 +73,30 @@ A growing body of work documents that language models exhibit self-preference bi
 
 \subsection{Matched history-dependent corpus}
 
-A deterministic simulator generates 2,800 latent decision pairs across seven families: resource allocation, exploration, cooperation, delayed reward, belief revision, trust, and persistence. Each family defines a small latent state and a fixed decision policy, so the correct option changes when the relevant history changes. The v0.7 benchmark contains 320 latent items (80 per family across four families: capacity, reliability, horizon, evidence\_quality), with all identity/order/history variants preserved for each item.
+A deterministic simulator generates 2,800 latent training pairs across seven history-dependent families. The v0.7 reviewer-control benchmark is separate: it contains 320 latent items, 80 each from capacity, reliability, horizon, and evidence-quality families. Every v0.7 item prints an explicit decision rule and mutually exclusive actions; the target is therefore a \emph{designated policy action}, not a claim of normative optimality. No model or external provider is used to generate, calibrate, filter, or select these items.
 
-For each pair, binding is transformed deterministically while current facts and target remain unchanged. Table~\ref{tab:matched-example} gives a schematic example.
+For v0.7, the historical body is byte-identical across SELF, OTHER, and FOCAL assignments. Only the identity header changes. Table~\ref{tab:matched-example} gives a schematic example using the actual header pattern.
 
 \begin{table}[t]
-\caption{Schematic matched ownership manipulation. The latent history, current decision, and target are identical; only the owner of the history changes.}
+\caption{Schematic v0.7 identity manipulation. The history body, current facts, policy, options, and designated action are identical across conditions; only the identity header changes. Header order is crossed separately.}
 \label{tab:matched-example}
 \small
 \begin{center}
 \begin{tabular}{p{0.13\linewidth}p{0.77\linewidth}}
 \toprule
-Binding & Context shown to the model \\
+Condition & Header followed by the same history body \\
 \midrule
-\textsc{self} & Earlier, \textbf{you} used 8 of 10 experiment slots. Two slots remain. A new exploratory test is expensive; a confirmatory test fits the remaining capacity. \\
-\textsc{other} & Earlier, \textbf{Agent A} used 8 of 10 experiment slots. Two slots remain. A new exploratory test is expensive; a confirmatory test fits the remaining capacity. \\
-\textsc{focal} & Earlier, \textbf{the lead researcher} used 8 of 10 experiment slots. Two slots remain. A new exploratory test is expensive; a confirmatory test fits the remaining capacity. \\
+\textsc{self} & ``Agent K is you, the assistant. Agent M is a different agent.'' \\
+\textsc{other} & ``Agent K is a different agent. Agent M is you, the assistant.'' \\
+\textsc{focal} & ``Agent K is the focal agent for this decision. Agent M is a different agent. You are an outside evaluator and are neither agent.'' \\
 \midrule
-Target & Identical option letter for all three bindings, determined only by latent capacity. \\
+History & ``Earlier, Agent K reserved 12 slots and has used 8. The remaining count is not precomputed. ...'' \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-The key extension in v0.7 is the \textsc{focal} condition: the history belongs to a task-relevant entity that is explicitly not the assistant. This entity is matched to self and other on task-relevance but differs on assistant-identity binding.
+The FOCAL condition is an \emph{evaluation-only} control: unlike SELF, OTHER, and NEUTRAL, it was not included in mixed-adapter training. It therefore tests generalization to a task-relevant non-self entity, but it is not perfectly exposure-matched to the trained bindings.
 
 \subsection{Ownership $\times$ header-order design}
 
@@ -148,231 +148,136 @@ In v0.4, we fixed the first problem by making targets explicit functions of late
 
 These failures matter methodologically. A convincing self-specificity test must satisfy three conditions simultaneously: (i) the task must require historical state, (ii) scoring must not be dominated by response format, and (iii) exposure to self and other bindings must be matched within the model used for the primary comparison.
 
-\section{Preregistered Self-Specificity Test}
+\section{Preregistered Tests and Chronology}
 \label{sec:prereg}
 
-The \textsc{mixed} adapter is trained on self, other, and neutral bindings sampled at approximately equal frequency. The target depends only on latent history. The focal-agent control is introduced only at evaluation: the same mixed adapter is evaluated on prompts where the historical owner is a task-relevant entity that was not among the training bindings. The preregistered primary statistic is
-\begin{equation}
-\Delta_{\mathrm{within}} = \E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{self})] - \E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{other})].
-\end{equation}
-The null is $H_0:\Delta_{\mathrm{within}}=0$ and the directional alternative is $H_1:\Delta_{\mathrm{within}}>0$. Support for self-specificity requires the 95\% interval to exclude zero on the positive side.
+The experiments were developed sequentially, and we keep confirmatory and later reviewer-driven analyses distinct. In v0.5, the mixed adapter was trained on SELF, OTHER, and NEUTRAL bindings at approximately balanced frequency, with the designated target determined only by latent history. The v0.5 preregistered statistic was the within-model SELF-minus-OTHER difference in normalized designated-option score. V0.6 subsequently introduced byte-identical history bodies and assigned-identity aliases; its primary behavioral construct was an ownership-by-counterfactual-history log-odds interaction.
 
-The v0.7 extension decomposes $\Delta_{\mathrm{within}}$ into self-vs-focal and focal-vs-other components, and adds header-order, confidence, and irrelevant-evidence controls. The interpretation rules are:
-\begin{itemize}
-    \item A positive $\Delta_{\mathrm{self\text{-}focal}}$ after mixed training would indicate self-specific history weighting beyond focal-agent effects.
-    \item A null $\Delta_{\mathrm{self\text{-}focal}}$ with positive $\Delta_{\mathrm{focal\text{-}other}}$ would indicate that the apparent self-effect is largely focalization.
-    \item A positive ownership effect with negative control margin would rule out uniform self-induced confidence increase.
-    \item A nonzero irrelevant-evidence sensitivity would indicate that ownership changes sensitivity to arbitrary prompt variation.
-\end{itemize}
+V0.7 is a separate, post-v0.6 reviewer-driven preregistered extension. It adds an evaluation-only FOCAL condition, crosses historical-owner position in the identity header, uses explicit printed policies, and adds current-facts-only and irrelevant-metadata controls. For condition $b$,
+\begin{equation}
+S_b = [\log P(c_0|H_0,b)-\log P(c_1|H_0,b)]-[\log P(c_0|H_1,b)-\log P(c_1|H_1,b)],
+\end{equation}
+where $H_0$ and $H_1$ are coherent histories implying different designated policy actions. V0.7 preregisters $\Delta_{\mathrm{ownership}}=\E[S_{\mathrm{self}}-S_{\mathrm{other}}]$ as the primary directional statistic and reports the decomposition
+\begin{equation}
+\Delta_{\mathrm{ownership}}=\Delta_{\mathrm{self\text{-}focal}}+\Delta_{\mathrm{focal\text{-}other}}.
+\end{equation}
+It also reports the header-order interaction and the confidence/irrelevant-evidence controls. Because FOCAL is evaluation-only, SELF--FOCAL is interpreted as a behavioral decomposition/control, not as a perfectly exposure-matched causal isolation of semantic selfhood.
+
+All pooled mixed-adapter intervals in v0.7 use the preregistered crossed hierarchical bootstrap: training seeds and latent items are resampled with replacement while all within-item variants are preserved. Direct mixed Qwen--Mistral interactions resample the two seed sets independently and share the sampled item IDs. Base checkpoints have one realization per family and therefore use item-level bootstrap intervals.
 
 \section{Results}
 \label{sec:results}
 
-\subsection{The manipulation works: models use history}
+\subsection{Earlier controls establish history use and motivate v0.7}
 
-The preregistered Qwen mixed adapter reaches approximately 0.997 correct-option probability under both coherent self and coherent other contexts but approximately 0.499 under shuffled history, a coherent-minus-shuffled gap of about $+0.498$. Thus the self-specific null is not produced by ignoring the trajectory. The checkpoint replication shows the same qualitative sanity check: Mistral mixed adapters strongly outperform the base model on history-dependent items.
+The earlier mixed-adapter experiments show that the models can strongly use coherent historical state: on the v0.5 Qwen evaluation, coherent-history designated-option scores are near one while shuffled-history scores are near chance. V0.6 then removes the SELF/OTHER history-text difference and shows that identity assignment can change counterfactual log-odds sensitivity even when mean policy agreement changes little. V0.7 asks whether that sensitivity is specifically SELF-related or partly attributable to a task-relevant focal entity and discourse structure.
 
-\subsection{Base Qwen: self $>$ focal $>$ other}
-
-On the Qwen base model, all three tiers of the ownership decomposition are significant (Table~\ref{tab:decomposition}):
+\subsection{Base Qwen contains both SELF-over-FOCAL and FOCAL-over-OTHER components}
 
 \begin{table}[t]
-\caption{V0.7 decomposition: Qwen base vs mixed. Values are means with 95\% crossed hierarchical bootstrap CIs. $***$ = CI excludes zero.}
+\caption{V0.7 Qwen decomposition. Mixed intervals and changes use the crossed seed$\times$item bootstrap. $***$ indicates a 95\% CI excluding zero.}
 \label{tab:decomposition}
 \small
 \begin{center}
-\begin{tabular}{lcc}
+\begin{tabular}{lccc}
 \toprule
-Contrast & Qwen base & Qwen mixed (pooled) \\
+Contrast & Base & Mixed & Mixed $-$ Base \\
 \midrule
-$\Delta_{\mathrm{ownership}}$ (self $-$ other) & $+0.72\;[+0.57,+0.86]^{***}$ & $+0.73\;[+0.60,+0.86]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ (self $-$ focal) & $+0.28\;[+0.17,+0.41]^{***}$ & $-0.05\;[-0.13,+0.03]$ \\
-$\Delta_{\mathrm{focal\text{-}other}}$ (focal $-$ other) & $+0.43\;[+0.26,+0.61]^{***}$ & $+0.78\;[+0.62,+0.94]^{***}$ \\
-\midrule
-Mixed $-$ Base & & \\
-\midrule
-$\Delta_{\mathrm{ownership}}$ change & \multicolumn{2}{c}{$+0.01\;[-0.08,+0.11]$} \\
-$\Delta_{\mathrm{self\text{-}focal}}$ change & \multicolumn{2}{c}{$-0.33\;[-0.48,-0.19]^{***}$} \\
-$\Delta_{\mathrm{focal\text{-}other}}$ change & \multicolumn{2}{c}{$+0.35\;[+0.18,+0.51]^{***}$} \\
+$\Delta_{\mathrm{ownership}}$ & $+.72\,[+.57,+.86]^{***}$ & $+.73\,[+.58,+.90]^{***}$ & $+.01\,[-.12,+.15]$ \\
+$\Delta_{\mathrm{self\text{-}focal}}$ & $+.28\,[+.17,+.41]^{***}$ & $-.05\,[-.21,+.16]$ & $-.33\,[-.54,-.10]^{***}$ \\
+$\Delta_{\mathrm{focal\text{-}other}}$ & $+.43\,[+.25,+.61]^{***}$ & $+.78\,[+.50,+1.06]^{***}$ & $+.35\,[+.05,+.62]^{***}$ \\
+$\Delta_{\mathrm{order}}$ & $+.40\,[+.25,+.56]^{***}$ & $+.70\,[+.50,+.93]^{***}$ & $+.30\,[+.06,+.56]^{***}$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-The base pattern is a clear hierarchy: self $>$ focal $>$ other, with significant gaps at every level. The self-specific component ($\Delta_{\mathrm{self\text{-}focal}}=+0.28$) accounts for $\sim$40\% of the total ownership effect, while the focal-agent component ($\Delta_{\mathrm{focal\text{-}other}}=+0.43$) accounts for $\sim$60\%.
+For base Qwen, the SELF--OTHER interaction decomposes descriptively as $+.72\approx+.28+.43$: roughly 40\% SELF--FOCAL and 60\% FOCAL--OTHER. These percentages are descriptive ratios for this base checkpoint, not universal mixture weights.
 
-\subsection{Mixed Qwen: self $\approx$ focal $>$ other}
+After SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity is statistically unchanged. However, the aggregate SELF--FOCAL component decreases significantly and its mixed estimate spans zero, while FOCAL--OTHER increases significantly. Thus training changes the composition of the SELF--OTHER interaction without detectably increasing its total magnitude. This is the central v0.7 result. It does \emph{not} imply that every task family has zero SELF--FOCAL effect.
 
-After mixed training, the decomposition shifts dramatically (Table~\ref{tab:decomposition}). The total ownership effect is unchanged ($+0.73$), but its decomposition changes entirely:
-\begin{itemize}
-    \item $\Delta_{\mathrm{self\text{-}focal}}$ collapses from $+0.28$ to $-0.05$ (mixed $-$ base $= -0.33$, CI $[-0.48,-0.19]$, significant): the self-specific residual disappears.
-    \item $\Delta_{\mathrm{focal\text{-}other}}$ grows from $+0.43$ to $+0.78$ (mixed $-$ base $= +0.35$, CI $[+0.18,+0.51]$, significant): the focal-agent component absorbs the effect.
-    \item The total $\Delta_{\mathrm{ownership}}$ is unchanged ($+0.01$ change, not significant).
-\end{itemize}
-
-This is the key finding: \textbf{mixed training redistributes the ownership effect from self-specific to focal-agent without changing its total magnitude.} Self-binding does not add something beyond focalization; it IS focalization.
-
-\subsection{Header-order interaction grows}
-
-The header-order interaction increases from $+0.40$ (CI $[+0.25,+0.55]$) in base to a larger value in mixed (Table~\ref{tab:order}). The order-specific contrasts show:
-\begin{itemize}
-    \item $\Delta_{\mathrm{owner\_first}}$: $+0.92$ base $\to$ larger in mixed (mixed $-$ base $= +0.17$, CI $[+0.03,+0.29]$, significant)
-    \item $\Delta_{\mathrm{owner\_second}}$: $+0.51$ base $\to$ smaller in mixed (mixed $-$ base $= -0.14$, CI $[-0.27,-0.00]$, significant)
-\end{itemize}
-
-The growing order interaction suggests that mixed training amplifies discourse-position effects: when the owner is mentioned first, the effect is larger; when mentioned second, it is smaller. This is consistent with a focalization mechanism rather than a deep self-representation.
+\subsection{The aggregate Qwen result is heterogeneous across families}
 
 \begin{table}[t]
-\caption{Header-order interaction and per-family ownership estimates (Qwen base, mass scoring).}
-\label{tab:order}
+\caption{Qwen mixed-adapter family estimates under the hierarchical bootstrap.}
+\label{tab:families}
 \small
 \begin{center}
 \begin{tabular}{lcc}
 \toprule
-Family & $\Delta_{\mathrm{ownership}}$ & $\Delta_{\mathrm{order}}$ \\
+Family & $\Delta_{\mathrm{ownership}}$ & $\Delta_{\mathrm{self\text{-}focal}}$ \\
 \midrule
-capacity & $+0.04\;[-0.08,+0.16]$ & $-0.01\;[-0.20,+0.19]$ \\
-reliability & $+0.10\;[-0.19,+0.42]$ & $+1.11\;[+0.73,+1.52]^{***}$ \\
-horizon & $+0.37\;[+0.20,+0.53]^{***}$ & $-0.37\;[-0.62,-0.11]^{***}$ \\
-evidence\_quality & $+2.35\;[+2.20,+2.50]^{***}$ & $+0.87\;[+0.66,+1.06]^{***}$ \\
-\midrule
-Aggregate & $+0.72\;[+0.57,+0.86]^{***}$ & $+0.40\;[+0.25,+0.55]^{***}$ \\
+capacity & $+.23\,[+.12,+.37]^{***}$ & $+.26\,[+.17,+.37]^{***}$ \\
+evidence quality & $+2.57\,[+2.21,+2.91]^{***}$ & $-.36\,[-.75,+.11]$ \\
+horizon & $+.05\,[-.03,+.13]$ & $+.16\,[+.04,+.32]^{***}$ \\
+reliability & $+.08\,[-.23,+.39]$ & $-.25\,[-.54,+.07]$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-\subsection{Confidence objection: direction rules out uniform sharpening}
+The aggregate SELF--FOCAL estimate therefore masks substantial family heterogeneity: capacity and horizon remain positive, whereas evidence-quality and reliability do not. Evidence-quality dominates the magnitude of the overall ownership statistic. Excluding that family leaves Qwen base ownership positive ($+.17\,[+.05,+.30]$), but mixed ownership becomes borderline/inconclusive ($+.12\,[-.00,+.23]$); mixed SELF--FOCAL is also inconclusive ($+.06\,[-.08,+.21]$). The leave-one-out analysis therefore supports dominance by evidence-quality more strongly than a claim of a uniform cross-family effect.
 
-A simple alternative is that self-binding merely increases confidence on all logits. The data rule this out (Table~\ref{tab:confidence}):
+\subsection{Header order and confidence controls constrain alternative explanations}
 
-\begin{table}[t]
-\caption{Confidence controls. Ownership sensitivity is on relevant-history decisions; control margin and irrelevant sensitivity are on history-irrelevant decisions.}
-\label{tab:confidence}
-\small
-\begin{center}
-\begin{tabular}{lcc}
-\toprule
-Control & Qwen base & Mistral base \\
-\midrule
-$\Delta_{\mathrm{ownership}}$ (relevant history) & $+0.72\;[+0.57,+0.86]^{***}$ & $+0.13\;[+0.05,+0.21]^{***}$ \\
-$\Delta_{\mathrm{control\_margin}}$ (history-irrelevant) & $-0.39\;[-0.54,-0.25]^{***}$ & $+0.15\;[+0.08,+0.22]^{***}$ \\
-$\Delta_{\mathrm{irrelevant}}$ (irrelevant metadata) & $-0.04\;[-0.08,+0.00]$ & $-0.01\;[-0.04,+0.02]$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-\end{table}
+The Qwen header-order interaction rises from $+.40\,[+.25,+.56]$ in base to $+.70\,[+.50,+.93]$ in mixed; the base-to-mixed change is $+.30\,[+.06,+.56]$. Identity assignment is therefore entangled with discourse position even after explicitly crossing order, and header salience should not be treated as negligible.
 
-Qwen's ownership sensitivity is strongly positive while its control margin is strongly negative: these go in \emph{opposite directions}. If self merely sharpened all logits, both would be positive. The irrelevant-evidence sensitivity is approximately zero, confirming that self does not amplify arbitrary prompt changes indiscriminately. We can therefore state: \textbf{the Qwen interaction is not straightforwardly explained by a uniform SELF-induced confidence increase, because the history-irrelevant control changes in the opposite direction and irrelevant perturbations produce little corresponding sensitivity.} This is evidence against the simplest global-confidence explanation, though it does not eliminate every possible confidence mechanism.
+A simple alternative is uniform SELF-induced confidence sharpening. In base Qwen, relevant-history ownership sensitivity is positive ($+.72\,[+.57,+.86]$) while the current-facts-only SELF-minus-OTHER margin is negative ($-.39\,[-.54,-.25]$). In mixed Qwen, the control margin is near zero ($-.07\,[-.15,+.00]$) while ownership remains positive. These opposite/near-zero control patterns are inconsistent with the simplest global-sharpening account, although they do not eliminate all calibration or confidence mechanisms. Irrelevant-metadata sensitivity is small (base $-.04\,[-.08,-.00]$; mixed $-.02\,[-.03,+.00]$), providing little evidence that SELF indiscriminately amplifies arbitrary prompt perturbations.
 
-Mistral shows a different pattern: both ownership and control margin are positive, consistent with a confidence-scaling explanation for that checkpoint.
+\subsection{Mistral and direct checkpoint interactions}
 
-\subsection{Leave-one-out: evidence-quality dominance}
-
-The evidence-quality family drives a large portion of the aggregate Qwen effect. Table~\ref{tab:leaveoneout} shows the aggregate without evidence-quality items:
+Mistral behaves differently. Its ownership sensitivity changes from $+.13\,[+.05,+.21]$ in base to $-.01\,[-.09,+.07]$ in mixed (change $-.14\,[-.24,-.03]$). Its SELF--FOCAL contrast is $+.04\,[-.04,+.12]$ in base and $-.16\,[-.23,-.08]$ in mixed.
 
 \begin{table}[t]
-\caption{Leave-one-out analysis: aggregate statistics excluding the evidence-quality family.}
-\label{tab:leaveoneout}
-\small
-\begin{center}
-\begin{tabular}{lcc}
-\toprule
-Statistic & With all families & Without evidence\_quality \\
-\midrule
-\multicolumn{3}{c}{\textbf{Qwen}} \\
-\midrule
-$\Delta_{\mathrm{ownership}}$ base & $+0.72\;[+0.57,+0.86]^{***}$ & $+0.17\;[+0.05,+0.29]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ base & $+0.28\;[+0.17,+0.41]^{***}$ & $+0.21\;[+0.11,+0.31]^{***}$ \\
-$\Delta_{\mathrm{ownership}}$ mixed & $+0.73\;[+0.60,+0.86]^{***}$ & $+0.12\;[+0.03,+0.20]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ mixed & $-0.05\;[-0.13,+0.03]$ & $+0.06\;[-0.04,+0.15]$ \\
-\midrule
-\multicolumn{3}{c}{\textbf{Mistral}} \\
-\midrule
-$\Delta_{\mathrm{ownership}}$ base & $+0.13\;[+0.05,+0.21]^{***}$ & $-0.10\;[-0.17,-0.02]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ base & $+0.04\;[-0.04,+0.12]$ & $-0.09\;[-0.18,-0.01]^{***}$ \\
-$\Delta_{\mathrm{ownership}}$ mixed & $-0.01\;[-0.03,+0.01]$ & $-0.09\;[-0.11,-0.07]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ mixed & $-0.16\;[-0.20,-0.12]^{***}$ & $-0.20\;[-0.26,-0.14]^{***}$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-\end{table}
-
-Without evidence-quality, Qwen's ownership effect drops from $+0.72$ to $+0.17$ but remains significant. The self-vs-focal pattern still holds: base $+0.21$ (sig) $\to$ mixed $+0.06$ (not sig). Evidence-quality accounts for $\sim$76\% of the aggregate ownership effect, but the residual is not zero: assigned identity \emph{does} change how Qwen handles evidence-quality and reliability-type information, and this accounts for most of the aggregate.
-
-\subsection{Cross-checkpoint interaction}
-
-Table~\ref{tab:crossarch} shows the direct Qwen-minus-Mistral interactions:
-
-\begin{table}[t]
-\caption{Cross-checkpoint interactions (Qwen $-$ Mistral). Paired on shared benchmark items.}
+\caption{Direct Qwen-minus-Mistral interactions. These are checkpoint-family differences, not identified architectural causal effects.}
 \label{tab:crossarch}
 \small
 \begin{center}
 \begin{tabular}{lcc}
 \toprule
-Contrast & Base & Mixed (pooled) \\
+Contrast & Base & Mixed \\
 \midrule
-$\Delta_{\mathrm{ownership}}$ & $+0.59\;[+0.47,+0.71]^{***}$ & $+0.74\;[+0.62,+0.85]^{***}$ \\
-$\Delta_{\mathrm{self\text{-}focal}}$ & $+0.24\;[+0.08,+0.40]^{***}$ & $+0.11\;[+0.01,+0.21]^{***}$ \\
-$\Delta_{\mathrm{focal\text{-}other}}$ & $+0.35\;[+0.17,+0.53]^{***}$ & $+0.63\;[+0.48,+0.78]^{***}$ \\
-$\Delta_{\mathrm{order}}$ & $+0.46\;[+0.27,+0.66]^{***}$ & $+0.98\;[+0.81,+1.16]^{***}$ \\
-$\Delta_{\mathrm{control\_margin}}$ & $-0.54\;[-0.71,-0.37]^{***}$ & $-0.09\;[-0.16,-0.02]^{***}$ \\
+$\Delta_{\mathrm{ownership}}$ & $+.59\,[+.46,+.71]^{***}$ & $+.74\,[+.58,+.91]^{***}$ \\
+$\Delta_{\mathrm{self\text{-}focal}}$ & $+.24\,[+.08,+.40]^{***}$ & $+.11\,[-.07,+.33]$ \\
+$\Delta_{\mathrm{focal\text{-}other}}$ & $+.35\,[+.17,+.53]^{***}$ & $+.63\,[+.35,+.92]^{***}$ \\
+$\Delta_{\mathrm{order}}$ & $+.46\,[+.26,+.65]^{***}$ & $+.98\,[+.65,+1.35]^{***}$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-The checkpoint gap \emph{widens} for ownership ($+0.59 \to +0.74$) and order interaction ($+0.46 \to +0.98$) after mixed training, while \emph{narrowing} for self-vs-focal ($+0.24 \to +0.11$). This confirms that the focal-agent decomposition is checkpoint-specific: Qwen amplifies focal-agent effects under mixed training, while Mistral does not. We note that Qwen and Mistral differ in architecture, pretraining, tokenization, size, and instruction tuning; the checkpoint-family interaction is not identified as an architectural causal effect.
-
-\subsection{Per-family decomposition}
-
-The per-family analysis (Table~\ref{tab:order}) reveals that the evidence-quality family is a disproportionate driver:
-\begin{itemize}
-    \item Evidence-quality ownership: $+2.35$ (CI $[+2.20,+2.50]$)---drives $\sim$76\% of the aggregate
-    evidence-quality self-vs-focal: $+0.51$ (CI $[+0.13,+0.86]$)---still significant
-    \item Capacity ownership: $+0.04$ (not sig)---minimal effect
-    \item Reliability ownership: $+0.10$ (not sig)---minimal effect, but huge header-order interaction ($+1.11$)
-    \item Horizon ownership: $+0.37$ (sig)---moderate effect with negative order interaction ($-0.37$)
-\end{itemize}
-
-The evidence-quality family's dominance suggests that the primary phenomenon is: \textbf{assigned identity strongly changes how Qwen handles evidence-quality / reliability-type information.}
+The mixed checkpoint-family difference is clear for total ownership, focal-vs-other, and order, but the mixed SELF--FOCAL difference is not reliably separated from zero. Qwen and Mistral also differ in architecture, pretraining, tokenization, size, and instruction tuning; these contrasts therefore identify checkpoint-family heterogeneity, not an architectural cause.
 
 \section{Analysis and Discussion}
 \label{sec:discussion}
 
 \textbf{The decomposition is the finding.}
-The main result is not simply ``Qwen shows ownership bias'' or ``no self effect.'' It is that the apparent self-effect decomposes into a large focal-agent component ($\sim$60\% in base) plus a smaller self-specific residual ($\sim$40\% in base), and after mixed training, the self-specific residual disappears entirely while the focal-agent component grows. Self-binding does not add something beyond focalization; it IS focalization.
+A SELF--OTHER contrast alone is insufficient evidence for a privileged SELF representation. In base Qwen, both SELF--FOCAL and FOCAL--OTHER are positive. After mixed SELF/OTHER/NEUTRAL training, the aggregate SELF--FOCAL component decreases significantly and is no longer distinguishable from zero, while FOCAL--OTHER grows. This redistribution survives the preregistered crossed hierarchical bootstrap. The result is behavioral: it separates components of an identity-dependent log-odds interaction but does not identify an internal ``focalization mechanism.''
 
-This is scientifically stronger than a simple null because it tells us \emph{what generates} the apparent self-effect. The reviewer's concern about focal-agent confounding was exactly right: much of what looked like ``self'' is ``focal.'' But the decomposition reveals that this is not a failure of the method---it IS the finding.
+\textbf{Aggregate nulls can hide heterogeneous effects.}
+The mixed Qwen SELF--FOCAL aggregate is near zero, but family estimates have different signs and capacity/horizon remain positive. We therefore do not interpret the aggregate as evidence that self-specific effects are absent on every task. Instead, v0.7 shows that the aggregate SELF--OTHER effect is compositionally heterogeneous and heavily influenced by evidence-quality items.
 
-\textbf{The confidence evidence.}
-Qwen's ownership sensitivity is positive while its control margin is negative. This is evidence against the simplest alternative hypothesis (self merely sharpens all logits), though it does not eliminate every possible confidence mechanism. The irrelevant-evidence sensitivity is approximately zero, confirming that self does not amplify arbitrary prompt changes. The interaction is specific to relevant-history decisions, not a generic confidence effect.
+\textbf{The FOCAL control is informative but not exposure-matched.}
+FOCAL was not present during mixed training. Its value is that it tests whether a task-relevant non-self entity can reproduce much of the SELF--OTHER sensitivity on an unseen binding. Its limitation is equally important: SELF--FOCAL can reflect both semantic ownership and generalization/novelty differences. It should therefore be read as a decomposition/control rather than a pure causal estimate of ``selfhood.''
 
-\textbf{Evidence-quality dominance.}
-The evidence-quality family drives $\sim$76\% of the aggregate Qwen effect. Without it, the residual ownership effect is $+0.17$ (still significant). This means the phenomenon is partially---but not entirely---specific to evidence-quality / reliability-type information. Future work should investigate why assigned identity has such a disproportionate effect on this family.
+\textbf{Confidence and discourse alternatives are narrowed, not eliminated.}
+The current-facts-only control goes in the opposite direction from base Qwen ownership, making a simple uniform SELF-induced logit sharpening account implausible. The small irrelevant-metadata effects similarly argue against indiscriminate amplification of all prompt changes. At the same time, the strong header-order interaction shows that discourse salience remains behaviorally important. More general calibration transformations or representation-level mechanisms remain possible.
 
 \textbf{Checkpoint specificity.}
-The decomposition pattern is checkpoint-specific. Qwen shows focal-agent amplification under mixed training; Mistral shows ownership collapse. The cross-checkpoint interaction widens for ownership and order, narrows for self-vs-focal. This means any claim about ``how models handle self-binding'' must specify which checkpoint, because the mechanisms differ. We note that the checkpoint difference is not identified as an architectural causal effect, since Qwen and Mistral differ in multiple dimensions.
+Qwen and Mistral differ substantially on ownership and focal-agent effects, but not all direct interactions are significant. The mixed SELF--FOCAL Qwen-minus-Mistral interval spans zero. Because the checkpoints differ along many dimensions, we make no architectural causal claim.
 
-\textbf{What the results establish.}
-Within the tested post-training regime, in base Qwen the SELF--OTHER interaction decomposes descriptively into both focal-agent and SELF-specific components. Mixed SELF/OTHER/NEUTRAL training changes this decomposition: the SELF-over-FOCAL residual disappears ($+0.28 \to -0.05$) while FOCAL-over-OTHER sensitivity increases ($+0.43 \to +0.78$), leaving the total SELF--OTHER effect approximately unchanged ($+0.72 \to +0.73$). This is a methodological contribution: what appears as self-specific history weighting can be decomposed into focal-agent and self-specific components, and the decomposition itself reveals the mechanism.
-
-\textbf{What the null does not establish.}
-We do not claim that language models lack representations of self-reference, identity, or grammatical person. A model can encode self/other distinctions without assigning one a special decision-making role. We also do not make claims about subjective experience or consciousness. Our statistics are behavioral tests of privileged ownership under a specific training intervention, not assays for phenomenology.
-
-\textbf{Relation to persona results.}
-Our result does not contradict work showing that personas, values, or identity boundaries can change behavior~\citep{minder2026spp,douglas2026artificialself}. Those interventions alter semantic content, goals, or training distribution. We ask a stricter symmetry question: holding latent content and target fixed, is the model's own binding special relative to an equally familiar other binding? Under post-training at the tested scale, the answer is: in base Qwen, the self-specific component is positive ($+0.28$) but disappears after matched training ($-0.05$), while the focal-agent component is larger and grows ($+0.43 \to +0.78$). The pattern is checkpoint-specific: Mistral does not show focal-agent amplification.
+\textbf{What the results do not establish.}
+We do not claim that language models lack self-reference representations, that FOCAL and SELF are internally identical, or that the observed effects bear on subjective experience or consciousness. The experiments measure behavioral sensitivity under controlled prompt assignments and post-training interventions.
 
 \section{Limitations}
 
-First, our intervention is post-training only. SPP suggests that early persona shaping can have stronger effects than late intervention~\citep{minder2026spp}; a pretraining-scale autobiographical manipulation could therefore differ qualitatively from our adapters. Second, the models are 4B and 7B instruction-tuned decoders rather than frontier-scale systems. Third, the histories are synthetic and generated from structured decision families. Fourth, equal frequency of self and other bindings controls exposure count but cannot make the pretrained semantic priors of ``you'' and ``Agent A'' identical. Finally, our probability-based multiple-choice metric is intentionally narrow. Open-ended planning, social interaction, long-horizon agency, and mechanistic causal interventions remain important external-validity tests.
+First, FOCAL is an evaluation-only control rather than an exposure-matched training condition; SELF--FOCAL therefore combines semantic-ownership differences with generalization to an unseen binding. Second, the v0.7 aggregate is heterogeneous across task families, and evidence-quality contributes disproportionately to the total effect. Third, the counterfactual log-odds statistic is behavioral and can reflect calibration or confidence changes as well as evidence use; our controls constrain the simplest alternatives but do not identify a unique internal mechanism. Fourth, the tasks are synthetic explicit-policy decisions, so the target measures agreement with a stated policy rather than normative decision quality. Fifth, our intervention is post-training only and uses 4B/7B instruction-tuned checkpoints rather than frontier-scale systems. Finally, forced-choice scoring is intentionally narrow; open-ended planning, social interaction, long-horizon agency, and mechanistic causal interventions remain external-validity tests.
 
 \section{Conclusion}
 
-Assigned identity changes how language models use history, but not in the way we initially expected. In base Qwen, the SELF--OTHER interaction decomposes descriptively into both focal-agent and SELF-specific components: approximately 60\% focal-agent, 40\% self-specific. After existing SELF/OTHER/NEUTRAL mixed training, the SELF-over-FOCAL residual is no longer distinguishable from zero while FOCAL-over-OTHER sensitivity increases, leaving the total SELF--OTHER effect approximately unchanged. Matched history training changes the decomposition of identity-dependent sensitivity without increasing its total magnitude: the initially detectable SELF-over-FOCAL residual disappears, while sensitivity to the task-relevant focal agent grows. The evidence against the simplest global-confidence explanation is strong: history-irrelevant controls go in the opposite direction, though not every possible confidence mechanism has been eliminated. The evidence-quality family drives most of the aggregate, but a significant residual remains. The decomposition pattern is checkpoint-specific: Qwen shows focal-agent amplification; Mistral does not.
+Assigned identity can change how language models respond to counterfactual history, but a SELF--OTHER contrast does not by itself isolate self-specific privilege. In base Qwen, the interaction contains both SELF--FOCAL and FOCAL--OTHER components. After SELF/OTHER/NEUTRAL mixed training, total SELF--OTHER sensitivity remains nearly unchanged, while the aggregate SELF--FOCAL component decreases significantly and FOCAL--OTHER increases significantly. Under the hierarchical analysis, the mixed SELF--FOCAL estimate itself spans zero, and the family-level results are heterogeneous. Mistral shows a different checkpoint-level pattern.
 
-The main contribution is therefore not a claim about whether models ``have a self,'' but a methodological decomposition that separates focal-agent from self-specific components of identity-dependent history weighting---and that reveals the decomposition itself as the finding.
+The main contribution is therefore methodological: tests of model self-binding should separate self-specificity from task relevance/focality, discourse position, confidence, family composition, and training familiarity. Under those controls, the strongest conclusion is not that ``self is focality,'' but that much of the apparent SELF--OTHER effect can migrate into an unseen focal-agent control after matched history training.
 
 \subsection*{AI use statement}
 
@@ -411,40 +316,40 @@ v0.7 & Focal-agent confound (reviewer concern) & Add focal-agent control; decomp
 \section{Per-seed replication results}
 
 \begin{table}[h]
-\caption{Qwen 4B mixed-adapter replication. All seed-level intervals for $\Delta_{\mathrm{ownership}}$ are positive; the self-vs-focal contrast is heterogeneous across seeds.}
+\caption{Qwen 4B mixed-adapter v0.7 seed means. The aggregate SELF--FOCAL estimate is heterogeneous across seeds.}
 \small
 \begin{center}
 \begin{tabular}{lccc}
 \toprule
 Seed & $\Delta_{\mathrm{ownership}}$ & $\Delta_{\mathrm{self\text{-}focal}}$ & $\Delta_{\mathrm{focal\text{-}other}}$ \\
 \midrule
-31 & $+0.70$ & $-0.13$ & $+0.83$ \\
-42 & $+0.77$ & $-0.07$ & $+0.84$ \\
-73 & $+0.77$ & $+0.07$ & $+0.70$ \\
-128 & $+0.90$ & $-0.10$ & $+1.00$ \\
-256 & $+0.67$ & $-0.08$ & $+0.75$ \\
+31 & $+.700$ & $-.126$ & $+.826$ \\
+42 & $+.616$ & $-.054$ & $+.670$ \\
+73 & $+.766$ & $-.158$ & $+.925$ \\
+128 & $+.900$ & $-.223$ & $+1.123$ \\
+256 & $+.667$ & $+.320$ & $+.346$ \\
 \midrule
-Mean & $+0.73$ & $-0.05$ & $+0.78$ \\
+Mean & $+.730$ & $-.048$ & $+.778$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
 \begin{table}[h]
-\caption{Mistral 7B mixed-adapter checkpoint replication. Ownership collapses; self-vs-focal becomes negative.}
+\caption{Mistral 7B mixed-adapter v0.7 seed means.}
 \small
 \begin{center}
 \begin{tabular}{lccc}
 \toprule
 Seed & $\Delta_{\mathrm{ownership}}$ & $\Delta_{\mathrm{self\text{-}focal}}$ & $\Delta_{\mathrm{focal\text{-}other}}$ \\
 \midrule
-31 & $+0.11$ & $-0.17$ & $+0.29$ \\
-42 & $-0.03$ & $-0.15$ & $+0.12$ \\
-73 & $-0.14$ & $-0.25$ & $+0.11$ \\
-128 & $+0.03$ & $-0.06$ & $+0.09$ \\
-256 & $-0.01$ & $-0.16$ & $+0.15$ \\
+31 & $+.112$ & $-.174$ & $+.286$ \\
+42 & $-.028$ & $-.146$ & $+.118$ \\
+73 & $-.140$ & $-.249$ & $+.109$ \\
+128 & $+.027$ & $-.064$ & $+.091$ \\
+256 & $-.009$ & $-.161$ & $+.153$ \\
 \midrule
-Mean & $-0.01$ & $-0.16$ & $+0.15$ \\
+Mean & $-.008$ & $-.159$ & $+.151$ \\
 \bottomrule
 \end{tabular}
 \end{center}

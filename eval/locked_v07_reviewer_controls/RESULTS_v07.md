@@ -1,90 +1,47 @@
-# V0.7 Results: Reviewer Controls — Self-Focal Decomposition
+# V0.7 Results: Reviewer Controls — Hierarchical Final
 
-**Status:** Complete. All 12 jobs finished. Summary: `PASS`.
+**Status:** Complete. All 12 jobs finished. Primary inference below uses the preregistered crossed bootstrap over training seeds and latent items for mixed-adapter quantities.
 
-## Key Finding
-
-The apparent self-specific history weighting in Qwen decomposes into:
-- **Focal-agent component** (~60% of total): SELF > FOCAL > OTHER
-- **Self-specific residual** (~40% of total): SELF > FOCAL
-
-After mixed training, the self-specific residual **disappears** while the focal-agent component **grows**, leaving the total ownership effect unchanged.
-
-**Base Qwen:** SELF > FOCAL > OTHER  
-**Mixed Qwen:** SELF ≈ FOCAL > OTHER
-
-## Summary Statistics
-
-### Qwen (pooled across 5 seeds)
+## Qwen decomposition
 
 | Contrast | Base | Mixed | Mixed - Base |
-|----------|------|-------|--------------|
-| Δ_ownership (self - other) | +0.72 [+0.57, +0.86] *** | +0.73 [+0.60, +0.86] *** | +0.01 [-0.08, +0.11] |
-| Δ_self_focal (self - focal) | +0.28 [+0.17, +0.41] *** | -0.05 [-0.13, +0.03] | -0.33 [-0.48, -0.19] *** |
-| Δ_focal_other (focal - other) | +0.43 [+0.26, +0.61] *** | +0.78 [+0.62, +0.94] *** | +0.35 [+0.18, +0.51] *** |
+|---|---:|---:|---:|
+| ownership (SELF-OTHER) | +0.715 [+0.571,+0.861] | +0.730 [+0.576,+0.897] | +0.015 [-0.118,+0.149] |
+| SELF-FOCAL | +0.285 [+0.166,+0.406] | -0.048 [-0.214,+0.159] | -0.333 [-0.544,-0.098] |
+| FOCAL-OTHER | +0.431 [+0.250,+0.608] | +0.778 [+0.500,+1.057] | +0.347 [+0.049,+0.620] |
+| header-order interaction | +0.402 [+0.251,+0.560] | +0.704 [+0.498,+0.934] | +0.303 [+0.060,+0.565] |
 
-### Mistral (pooled across 5 seeds)
+Base Qwen therefore contains both a SELF-over-FOCAL and a FOCAL-over-OTHER component. After SELF/OTHER/NEUTRAL mixed training, total ownership is unchanged, while the aggregate SELF-FOCAL component decreases significantly and FOCAL-OTHER increases significantly. FOCAL is evaluation-only and was not exposure-matched during training, so this decomposition is a behavioral control, not a pure causal isolation of semantic selfhood.
+
+## Mistral
 
 | Contrast | Base | Mixed | Mixed - Base |
-|----------|------|-------|--------------|
-| Δ_ownership (self - other) | +0.13 [+0.05, +0.21] *** | -0.01 [-0.03, +0.01] | -0.14 [-0.21, -0.06] *** |
-| Δ_self_focal (self - focal) | +0.04 [-0.04, +0.12] | -0.16 [-0.20, -0.12] *** | -0.20 [-0.28, -0.12] *** |
-| Δ_focal_other (focal - other) | +0.08 [+0.01, +0.16] *** | +0.15 [+0.08, +0.24] *** | +0.07 [-0.02, +0.16] |
+|---|---:|---:|---:|
+| ownership | +0.128 [+0.046,+0.209] | -0.008 [-0.087,+0.065] | -0.135 [-0.242,-0.033] |
+| SELF-FOCAL | +0.044 [-0.035,+0.121] | -0.159 [-0.231,-0.084] | -0.203 [-0.301,-0.106] |
+| FOCAL-OTHER | +0.084 [+0.010,+0.160] | +0.151 [+0.077,+0.236] | +0.068 [-0.040,+0.180] |
 
-## Cross-Architecture Interactions (Qwen - Mistral)
+## Direct Qwen - Mistral interactions
 
-| Contrast | Base | Mixed (pooled) |
-|----------|------|----------------|
-| Δ_ownership | +0.59 [+0.47, +0.71] *** | +0.74 [+0.62, +0.85] *** |
-| Δ_self_focal | +0.24 [+0.08, +0.40] *** | +0.11 [+0.01, +0.21] *** |
-| Δ_focal_other | +0.35 [+0.17, +0.53] *** | +0.63 [+0.48, +0.78] *** |
-| Δ_order | +0.46 [+0.27, +0.66] *** | +0.98 [+0.81, +1.16] *** |
-| Δ_control_margin | -0.54 [-0.71, -0.37] *** | -0.09 [-0.16, -0.02] *** |
+| Contrast | Base | Mixed |
+|---|---:|---:|
+| ownership | +0.588 [+0.465,+0.708] | +0.737 [+0.583,+0.906] |
+| SELF-FOCAL | +0.240 [+0.076,+0.399] | +0.111 [-0.072,+0.335] |
+| FOCAL-OTHER | +0.347 [+0.174,+0.529] | +0.627 [+0.345,+0.920] |
+| header-order interaction | +0.458 [+0.264,+0.653] | +0.981 [+0.653,+1.352] |
 
-## Confidence Controls
+The mixed SELF-FOCAL checkpoint difference is not reliably different from zero. Qwen and Mistral differ along multiple dimensions, so these are checkpoint-family interactions rather than architectural causal effects.
 
-| Control | Qwen base | Mistral base |
-|---------|-----------|--------------|
-| Δ_ownership (relevant history) | +0.72 [+0.57, +0.86] *** | +0.13 [+0.05, +0.21] *** |
-| Δ_control_margin (history-irrelevant) | -0.39 [-0.54, -0.25] *** | +0.15 [+0.08, +0.22] *** |
-| Δ_irrelevant (irrelevant metadata) | -0.04 [-0.08, +0.00] | -0.01 [-0.04, +0.02] |
+## Controls and heterogeneity
 
-**Interpretation:** Qwen's ownership sensitivity is positive while control margin is negative (opposite directions). This rules out uniform self-induced logit sharpening.
+- Qwen base relevant-history ownership is positive (+0.715), while the history-irrelevant control margin is negative (-0.391 [-0.542,-0.246]); mixed control margin is near zero (-0.071 [-0.146,+0.003]). This is evidence against the simplest uniform SELF-induced confidence-sharpening account, not proof against every confidence mechanism.
+- Qwen irrelevant-metadata sensitivity is small: base -0.042 [-0.084,-0.000] and mixed -0.016 [-0.033,+0.001].
+- Excluding `evidence_quality`, Qwen ownership is +0.170 [+0.049,+0.295] in base but +0.117 [-0.001,+0.228] in mixed. Thus evidence-quality is a disproportionate driver and the mixed residual outside that family is inconclusive.
+- Qwen mixed SELF-FOCAL is heterogeneous by family: capacity +0.259 [+0.174,+0.367], evidence_quality -0.360 [-0.752,+0.106], horizon +0.159 [+0.038,+0.322], reliability -0.251 [-0.541,+0.073]. Aggregate near-zero SELF-FOCAL therefore does not imply every family is null.
 
-## Leave-One-Out (Without Evidence Quality)
+## Authoritative artifacts
 
-| Statistic | With all families | Without evidence_quality |
-|-----------|-------------------|--------------------------|
-| Δ_ownership base | +0.72 [+0.57, +0.86] *** | +0.17 [+0.05, +0.29] *** |
-| Δ_self_focal base | +0.28 [+0.17, +0.41] *** | +0.21 [+0.11, +0.31] *** |
-| Δ_ownership mixed | +0.73 [+0.60, +0.86] *** | +0.12 [+0.03, +0.20] *** |
-| Δ_self_focal mixed | -0.05 [-0.13, +0.03] | +0.06 [-0.04, +0.15] |
-
-**Interpretation:** Evidence-quality drives ~76% of aggregate Qwen effect. Residual without it is still significant.
-
-## Per-Family Ownership (Qwen base)
-
-| Family | Δ_ownership | Δ_self_focal | Δ_order |
-|--------|-------------|--------------|---------|
-| capacity | +0.04 [-0.08, +0.16] | +0.10 [-0.02, +0.20] | -0.01 [-0.20, +0.19] |
-| reliability | +0.10 [-0.19, +0.42] | +0.41 [+0.17, +0.64] *** | +1.11 [+0.73, +1.52] *** |
-| horizon | +0.37 [+0.20, +0.53] *** | +0.13 [-0.04, +0.28] | -0.37 [-0.62, -0.11] *** |
-| evidence_quality | +2.35 [+2.20, +2.50] *** | +0.51 [+0.13, +0.86] *** | +0.87 [+0.66, +1.06] *** |
-
-## Files
-
-- `eval/locked_v07_reviewer_controls/MANIFEST.json` — benchmark manifest
-- `eval/locked_v07_reviewer_controls/outputs/summary.json` — full summary
-- `eval/locked_v07_reviewer_controls/outputs/qwen/` — per-seed Qwen outputs
-- `eval/locked_v07_reviewer_controls/outputs/mistral/` — per-seed Mistral outputs
-- `eval/locked_v07_reviewer_controls/CONTRASTS.txt` — full contrast analysis
-- `scripts/v07_contrasts.py` — analysis script (no inference required)
-
-## Paper Implications
-
-The v0.7 decomposition changes the paper narrative from "no self advantage" to "self effects decompose into focal-agent and self-specific components, with the focal-agent component dominating."
-
-**Old narrative (v0.5/v0.6):** SELF > OTHER, but this is just familiarity  
-**New narrative (v0.7):** SELF > OTHER decomposes as (SELF ≈ FOCAL) > OTHER, where the focal-agent component is ~60% of the total and the self-specific component is ~40% but disappears after mixed training
-
-This is a stronger finding because it tells us *what generates* the apparent self-effect, not just that it exists or doesn't.
+- `outputs/summary.json`: preregistered hierarchical aggregate from the v0.7 evaluator.
+- `CONTRASTS_HIERARCHICAL.json`: corrected 10,000-draw hierarchical contrasts, including mixed-minus-base and leave-one-out analyses.
+- `CONTRASTS.txt`: human-readable rendering of the corrected hierarchical contrasts.
+- `scripts/v07_contrasts.py`: reproducible CPU-only analysis; no model inference.
