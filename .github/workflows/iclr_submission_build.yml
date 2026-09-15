@@ -76,7 +76,7 @@ jobs:
 
           The v0.7 preregistration specified 5,000 crossed hierarchical bootstrap draws. The final reported analysis uses 10,000 draws to reduce Monte Carlo error; the resampling scheme and estimands are unchanged. Both preregistered token-scoring conventions are stored in `eval/locked_v07_reviewer_controls/outputs/summary.json`.
 
-          No Git history, repository URL, author name, email address, or account identifier is included in this archive.
+          Package/project identifiers from the development repository are replaced with generic anonymous names in this archive. No Git history, repository URL, author name, email address, or account identifier is included.
           EOF
 
           cp docs/PREREGISTRATION_V05.md anonymous_supplement/docs/
@@ -105,17 +105,27 @@ jobs:
           cp -R src anonymous_supplement/
           cp pyproject.toml requirements-train.txt anonymous_supplement/
 
-          if find anonymous_supplement -type f -print | grep -Eqi 'khagendra|khatri'; then
-            echo 'Potential author identifier in supplement filename.' >&2
+          # Remove the public development-project identifier while keeping imports consistent.
+          if [ -d anonymous_supplement/src/arewethesame ]; then
+            mv anonymous_supplement/src/arewethesame anonymous_supplement/src/identity_history
+          fi
+          while IFS= read -r -d '' f; do
+            if grep -Iq . "$f" && grep -qi 'arewethesame' "$f"; then
+              sed -i 's/arewethesame/identity_history/g; s/AreWeTheSame/IdentityHistory/g' "$f"
+            fi
+          done < <(find anonymous_supplement -type f -print0)
+
+          if find anonymous_supplement -type f -print | grep -Eqi 'khagendra|khatri|arewethesame'; then
+            echo 'Potential identifying development-project string in supplement filename.' >&2
             exit 1
           fi
 
-          if grep -RIniE 'khagendra|khatri|khagendrakhatridev|github\.com/Khagendra01|@gmail\.com' anonymous_supplement; then
-            echo 'Potential author identifier found in supplement content.' >&2
+          if grep -RIniE 'khagendra|khatri|khagendrakhatridev|github\.com/Khagendra01|@gmail\.com|arewethesame' anonymous_supplement; then
+            echo 'Potential author or development-project identifier found in supplement content.' >&2
             exit 1
           fi
 
-          find anonymous_supplement -type f -print0 | sort -z | xargs -0 sha256sum > anonymous_supplement/SHA256SUMS.txt
+          find anonymous_supplement -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > anonymous_supplement/SHA256SUMS.txt
           zip -qr anonymous_supplement.zip anonymous_supplement
           unzip -l anonymous_supplement.zip | tee supplement_contents.txt
 
