@@ -1,0 +1,33 @@
+name: v07 hierarchical contrast audit
+
+on:
+  push:
+    branches:
+      - v07/reviewer-controls
+  pull_request:
+    paths:
+      - 'scripts/v07_contrasts.py'
+      - 'eval/locked_v07_reviewer_controls/outputs/**'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Run crossed hierarchical bootstrap
+        run: |
+          python scripts/v07_contrasts.py --bootstrap 10000
+          echo '--- CONTRASTS.txt ---'
+          cat eval/locked_v07_reviewer_controls/CONTRASTS.txt
+      - name: Upload corrected contrast artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: v07-hierarchical-contrasts
+          path: |
+            eval/locked_v07_reviewer_controls/CONTRASTS.txt
+            eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json
