@@ -24,11 +24,38 @@ on:
       - 'pyproject.toml'
       - 'requirements-train.txt'
 
+permissions:
+  contents: write
+
 jobs:
   build-submission:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Apply final title layout fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('paper/main.tex')
+          text = p.read_text()
+          old = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from \mbox{Focal-Agent Effects}}'
+          new = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from\\Focal-Agent Effects}'
+          if old in text:
+              p.write_text(text.replace(old, new, 1))
+              print('Applied title layout fix.')
+          elif new in text:
+              print('Title layout fix already present.')
+          else:
+              raise SystemExit('Expected title string not found; refusing an unsafe automatic edit.')
+          PY
+          if ! git diff --quiet -- paper/main.tex; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add paper/main.tex
+            git commit -m 'Polish submission title line breaks'
+            git push origin HEAD:paper/iclr2027-draft
+          fi
 
       - name: Install LaTeX and packaging tools
         run: |
@@ -40,6 +67,7 @@ jobs:
         run: |
           pdflatex -interaction=nonstopmode -halt-on-error main.tex
           bibtex main
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
           pdflatex -interaction=nonstopmode -halt-on-error main.tex
           pdflatex -interaction=nonstopmode -halt-on-error main.tex
           pdfinfo main.pdf | tee pdfinfo.txt
