@@ -1,0 +1,215 @@
+==========================================================================================
+V0.7 CONTRAST ANALYSIS — FROM EXISTING DATA (NO NEW INFERENCE)
+==========================================================================================
+
+==========================================================================================
+1. MIXED-BASE CONTRASTS (Δ_mixed - Δ_base)
+   Paired bootstrap over 320 shared items × 5 seeds
+==========================================================================================
+
+--- QWEN ---
+  delta_ownership_sensitivity                +0.0145  [-0.0835, +0.1120] 
+  delta_owner_first                          +0.1659  [+0.0324, +0.2931] ***
+  delta_owner_second                         -0.1370  [-0.2669, -0.0044] ***
+  ownership_by_order_interaction             +0.3028  [+0.1221, +0.4757] ***
+  delta_self_vs_focal_sensitivity            -0.3328  [-0.4774, -0.1913] ***
+  delta_focal_vs_other_sensitivity           +0.3473  [+0.1837, +0.5086] ***
+  delta_irrelevant_sensitivity               +0.0255  [-0.0173, +0.0692] 
+  delta_control_margin                       +0.3204  [+0.1821, +0.4573] ***
+  delta_control_entropy                      -0.0177  [-0.0293, -0.0064] ***
+  delta_policy_score                         +0.0059  [+0.0006, +0.0112] ***
+
+--- MISTRAL ---
+  delta_ownership_sensitivity                -0.1352  [-0.2098, -0.0605] ***
+  delta_owner_first                          -0.2456  [-0.3555, -0.1375] ***
+  delta_owner_second                         -0.0249  [-0.1107, +0.0635] 
+  ownership_by_order_interaction             -0.2207  [-0.3512, -0.0920] ***
+  delta_self_vs_focal_sensitivity            -0.2029  [-0.2845, -0.1238] ***
+  delta_focal_vs_other_sensitivity           +0.0677  [-0.0186, +0.1569] 
+  delta_irrelevant_sensitivity               +0.0078  [-0.0210, +0.0360] 
+  delta_control_margin                       -0.1339  [-0.2029, -0.0674] ***
+  delta_control_entropy                      -0.0197  [-0.0260, -0.0135] ***
+  delta_policy_score                         -0.0138  [-0.0219, -0.0064] ***
+
+==========================================================================================
+2. CROSS-ARCHITECTURE INTERACTIONS (Qwen - Mistral)
+   Paired on shared benchmark items
+==========================================================================================
+
+--- base ---
+  delta_ownership_sensitivity                +0.5875  [+0.4681, +0.7064] ***
+  delta_owner_first                          +0.8164  [+0.6419, +0.9969] ***
+  delta_owner_second                         +0.3587  [+0.2338, +0.4815] ***
+  ownership_by_order_interaction             +0.4577  [+0.2671, +0.6575] ***
+  delta_self_vs_focal_sensitivity            +0.2404  [+0.0783, +0.4028] ***
+  delta_focal_vs_other_sensitivity           +0.3471  [+0.1723, +0.5286] ***
+  delta_irrelevant_sensitivity               -0.0353  [-0.0838, +0.0124] 
+  delta_control_margin                       -0.5444  [-0.7136, -0.3715] ***
+  delta_control_entropy                      -0.0004  [-0.0125, +0.0114] 
+  delta_policy_score                         -0.0058  [-0.0157, +0.0039] 
+
+--- mixed (pooled) ---
+  delta_ownership_sensitivity                +0.7372  [+0.6208, +0.8538] ***
+  delta_owner_first                          +1.2278  [+1.0378, +1.4218] ***
+  delta_owner_second                         +0.2466  [+0.1680, +0.3262] ***
+  ownership_by_order_interaction             +0.9811  [+0.8078, +1.1582] ***
+  delta_self_vs_focal_sensitivity            +0.1105  [+0.0121, +0.2127] ***
+  delta_focal_vs_other_sensitivity           +0.6267  [+0.4775, +0.7778] ***
+  delta_irrelevant_sensitivity               -0.0175  [-0.0269, -0.0082] ***
+  delta_control_margin                       -0.0901  [-0.1586, -0.0221] ***
+  delta_control_entropy                      +0.0016  [-0.0038, +0.0068] 
+  delta_policy_score                         +0.0139  [+0.0098, +0.0183] ***
+
+==========================================================================================
+3. HEADER-ORDER INTERACTION & PER-FAMILY ESTIMATES
+==========================================================================================
+
+--- QWEN ---
+  Base header-order interaction: +0.4016  [+0.2461, +0.5512] ***
+    delta_owner_first:            +0.9160  [+0.7312, +1.1098] ***
+    delta_owner_second:           +0.5145  [+0.3769, +0.6551] ***
+
+  Per-family (base, mass scoring):
+    capacity             ownership=+0.0414  [-0.0750, +0.1586] 
+                         self_vs_focal=+0.0961  [-0.0180, +0.2016] 
+                         focal_vs_other=-0.0547  [-0.1727, +0.0633] 
+                         header_interaction=-0.0078  [-0.1969, +0.1906] 
+                         control_margin=-0.5539  [-0.8415, -0.2883] ***
+                         irrelevant=-0.0469  [-0.1266, +0.0305] 
+    reliability          ownership=+0.1008  [-0.1914, +0.4236] 
+                         self_vs_focal=+0.4109  [+0.1734, +0.6399] ***
+                         focal_vs_other=-0.3102  [-0.6641, +0.0383] 
+                         header_interaction=+1.1141  [+0.7280, +1.5203] ***
+                         control_margin=-0.7602  [-1.0500, -0.4804] ***
+                         irrelevant=-0.0438  [-0.1281, +0.0360] 
+    horizon              ownership=+0.3680  [+0.1984, +0.5313] ***
+                         self_vs_focal=+0.1258  [-0.0368, +0.2820] 
+                         focal_vs_other=+0.2422  [-0.0039, +0.5211] 
+                         header_interaction=-0.3672  [-0.6219, -0.1078] ***
+                         control_margin=-0.1281  [-0.4149, +0.1500] 
+                         irrelevant=-0.0195  [-0.0907, +0.0539] 
+    evidence_quality     ownership=+2.3508  [+2.1969, +2.5023] ***
+                         self_vs_focal=+0.5055  [+0.1305, +0.8641] ***
+                         focal_vs_other=+1.8453  [+1.4383, +2.2922] ***
+                         header_interaction=+0.8672  [+0.6625, +1.0625] ***
+                         control_margin=-0.1227  [-0.4321, +0.1781] 
+                         irrelevant=-0.0562  [-0.1578, +0.0399] 
+
+--- MISTRAL ---
+  Base header-order interaction: -0.0561  [-0.1747, +0.0517] 
+    delta_owner_first:            +0.0997  [+0.0017, +0.2052] ***
+    delta_owner_second:           +0.1558  [+0.0656, +0.2504] ***
+
+  Per-family (base, mass scoring):
+    capacity             ownership=-0.0084  [-0.0604, +0.0449] 
+                         self_vs_focal=+0.0086  [-0.0459, +0.0619] 
+                         focal_vs_other=-0.0170  [-0.0652, +0.0342] 
+                         header_interaction=+0.0090  [-0.0969, +0.1223] 
+                         control_margin=+0.1059  [-0.0391, +0.2508] 
+                         irrelevant=+0.0316  [-0.0107, +0.0742] 
+    reliability          ownership=-0.3218  [-0.4959, -0.1406] ***
+                         self_vs_focal=-0.2832  [-0.5023, -0.0763] ***
+                         focal_vs_other=-0.0386  [-0.2791, +0.2033] 
+                         header_interaction=-0.2154  [-0.6035, +0.1379] 
+                         control_margin=+0.2355  [+0.0652, +0.4102] ***
+                         irrelevant=+0.0137  [-0.0382, +0.0636] 
+    horizon              ownership=+0.0367  [-0.0883, +0.1664] 
+                         self_vs_focal=-0.0082  [-0.1031, +0.0900] 
+                         focal_vs_other=+0.0449  [-0.0319, +0.1242] 
+                         header_interaction=-0.2109  [-0.3797, -0.0535] ***
+                         control_margin=+0.2156  [+0.1058, +0.3266] ***
+                         irrelevant=-0.0508  [-0.1109, +0.0084] 
+    evidence_quality     ownership=+0.8043  [+0.6543, +0.9645] ***
+                         self_vs_focal=+0.4594  [+0.3098, +0.6273] ***
+                         focal_vs_other=+0.3449  [+0.2109, +0.4801] ***
+                         header_interaction=+0.1930  [+0.0414, +0.3484] ***
+                         control_margin=+0.0559  [-0.0707, +0.1820] 
+                         irrelevant=-0.0199  [-0.0855, +0.0445] 
+
+==========================================================================================
+4. LEAVE-ONE-OUT: AGGREGATE delta WITHOUT evidence_quality FAMILY
+==========================================================================================
+
+--- QWEN ---
+  base         delta_ownership_sensitivity                +0.1701  [+0.0458, +0.2940] ***
+  base         delta_self_vs_focal_sensitivity            +0.2109  [+0.1068, +0.3138] ***
+  base         delta_focal_vs_other_sensitivity           -0.0409  [-0.1932, +0.1110] 
+  base         delta_control_margin                       -0.4807  [-0.6438, -0.3182] ***
+  base         delta_irrelevant_sensitivity               -0.0367  [-0.0823, +0.0073] 
+  base         delta_policy_score                         +0.0102  [+0.0050, +0.0159] ***
+  mixed (pooled) delta_ownership_sensitivity                +0.1169  [+0.0290, +0.2040] ***
+  mixed (pooled) delta_self_vs_focal_sensitivity            +0.0557  [-0.0409, +0.1491] 
+  mixed (pooled) delta_focal_vs_other_sensitivity           +0.0612  [-0.0419, +0.1667] 
+  mixed (pooled) delta_control_margin                       -0.1541  [-0.2089, -0.0991] ***
+  mixed (pooled) delta_irrelevant_sensitivity               -0.0207  [-0.0298, -0.0118] ***
+  mixed (pooled) delta_policy_score                         +0.0129  [+0.0078, +0.0183] ***
+
+--- MISTRAL ---
+  base         delta_ownership_sensitivity                -0.0978  [-0.1746, -0.0227] ***
+  base         delta_self_vs_focal_sensitivity            -0.0943  [-0.1762, -0.0128] ***
+  base         delta_focal_vs_other_sensitivity           -0.0035  [-0.0910, +0.0838] 
+  base         delta_control_margin                       +0.1857  [+0.0999, +0.2714] ***
+  base         delta_irrelevant_sensitivity               -0.0018  [-0.0319, +0.0283] 
+  base         delta_policy_score                         -0.0036  [-0.0066, -0.0010] ***
+  mixed (pooled) delta_ownership_sensitivity                -0.0926  [-0.1130, -0.0722] ***
+  mixed (pooled) delta_self_vs_focal_sensitivity            -0.1997  [-0.2554, -0.1442] ***
+  mixed (pooled) delta_focal_vs_other_sensitivity           +0.1071  [+0.0431, +0.1705] ***
+  mixed (pooled) delta_control_margin                       +0.0116  [-0.0221, +0.0451] 
+  mixed (pooled) delta_irrelevant_sensitivity               +0.0021  [-0.0027, +0.0071] 
+  mixed (pooled) delta_policy_score                         -0.0022  [-0.0032, -0.0012] ***
+
+==========================================================================================
+5. SELF-FOCAL DECOMPOSITION (THE KEY RESULT)
+==========================================================================================
+
+--- QWEN ---
+  Base:
+    delta_ownership_sensitivity (S_self - S_other):  +0.7152  [+0.5703, +0.8600] ***
+    delta_self_vs_focal (S_self - S_focal):          +0.2846  [+0.1674, +0.4094] ***
+    delta_focal_vs_other (S_focal - S_other):        +0.4307  [+0.2572, +0.6098] ***
+  Mixed (pooled):
+    delta_ownership            +0.7297  [+0.5981, +0.8627] ***
+  Mixed (pooled):
+    delta_self_vs_focal        -0.0482  [-0.1280, +0.0310] 
+  Mixed (pooled):
+    delta_focal_vs_other       +0.7779  [+0.6209, +0.9374] ***
+
+  Decomposition check:
+    Base:   SELF > FOCAL > OTHER ? (ownership > self_focal > 0)
+    Mixed:  SELF ≈ FOCAL > OTHER ? (self_focal → 0, ownership stays positive)
+
+--- MISTRAL ---
+  Base:
+    delta_ownership_sensitivity (S_self - S_other):  +0.1277  [+0.0455, +0.2059] ***
+    delta_self_vs_focal (S_self - S_focal):          +0.0441  [-0.0357, +0.1188] 
+    delta_focal_vs_other (S_focal - S_other):        +0.0836  [+0.0089, +0.1615] ***
+  Mixed (pooled):
+    delta_ownership            -0.0075  [-0.0300, +0.0149] 
+  Mixed (pooled):
+    delta_self_vs_focal        -0.1588  [-0.2029, -0.1171] ***
+  Mixed (pooled):
+    delta_focal_vs_other       +0.1512  [+0.1039, +0.1998] ***
+
+  Decomposition check:
+    Base:   SELF > FOCAL > OTHER ? (ownership > self_focal > 0)
+    Mixed:  SELF ≈ FOCAL > OTHER ? (self_focal → 0, ownership stays positive)
+
+==========================================================================================
+6. CONFIDENCE OBJECTION: DIRECTION CHECK
+   Does SELF merely sharpen all logits, or is the effect specific?
+==========================================================================================
+
+--- QWEN ---
+  Relevant-history ownership sensitivity:  +0.7152  [+0.5703, +0.8600] ***
+  Current-facts-only control margin:        -0.3912  [-0.5385, -0.2586] ***
+  Irrelevant-evidence sensitivity:          -0.0416  [-0.0828, +0.0014] 
+  → Ownership positive, control margin negative: OPPOSITE directions
+    → Rules out uniform SELF-induced confidence increase
+  → Irrelevant sensitivity ≈ 0: SELF does not amplify arbitrary changes
+
+--- MISTRAL ---
+  Relevant-history ownership sensitivity:  +0.1277  [+0.0455, +0.2059] ***
+  Current-facts-only control margin:        +0.1532  [+0.0787, +0.2271] ***
+  Irrelevant-evidence sensitivity:          -0.0063  [-0.0351, +0.0223] 
+  → Both positive: confidence scaling remains plausible
+  → Irrelevant sensitivity ≈ 0: SELF does not amplify arbitrary changes
