@@ -105,13 +105,24 @@ jobs:
           cp -R src anonymous_supplement/
           cp pyproject.toml requirements-train.txt anonymous_supplement/
 
-          # Remove the public development-project identifier while keeping imports consistent.
+          # Remove public development-project and author identifiers while keeping code paths/imports consistent.
           if [ -d anonymous_supplement/src/arewethesame ]; then
             mv anonymous_supplement/src/arewethesame anonymous_supplement/src/identity_history
           fi
           while IFS= read -r -d '' f; do
-            if grep -Iq . "$f" && grep -qi 'arewethesame' "$f"; then
-              sed -i 's/arewethesame/identity_history/g; s/AreWeTheSame/IdentityHistory/g' "$f"
+            if grep -Iq . "$f"; then
+              sed -i \
+                -e 's/AREWETHESAME/IDENTITY_HISTORY/g' \
+                -e 's/AreWeTheSame/IdentityHistory/g' \
+                -e 's/arewethesame/identity_history/g' \
+                -e 's/Khagendra Khatri/Anonymous Author/g' \
+                -e 's/Khagendra01/Anonymous/g' \
+                -e 's/khagendra01/anonymous/g' \
+                -e 's/Khagendra/Anonymous/g' \
+                -e 's/khagendra/anonymous/g' \
+                -e 's/Khatri/Author/g' \
+                -e 's/khatri/author/g' \
+                "$f"
             fi
           done < <(find anonymous_supplement -type f -print0)
 
