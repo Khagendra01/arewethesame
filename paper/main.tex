@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 \usepackage{array}
 
-\title{No Special ``I''? Self-Binding Changes History Weighting Without Reliably Improving Decisions in Language Models}
+\title{Does Assigned Identity Change How Language Models Use History? Controlled Tests of Self-Binding}
 
 \author{Anonymous Author(s) \\
 Affiliation \\
@@ -15,171 +15,132 @@ Address \\
 \texttt{email} \\
 }
 
-\newcommand{\fix}{\marginpar{FIX}}
-\newcommand{\new}{\marginpar{NEW}}
 %\iclrfinalcopy
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We ask whether binding a learned history to a language model's own identity gives that history privileged influence over subsequent decisions. We construct matched history-dependent tasks in which latent events, decision targets, and supervision are held fixed while ownership binding varies. Initial experiments show that separately trained self and other adapters each prefer their familiar binding, motivating a preregistered mixed-binding control that equalizes exposure within the same model. Across five Qwen 4B and five Mistral 7B training seeds, self and other yield nearly identical mean decision correctness on held-out in-distribution data. We then introduce a harder 840-item identity-controlled benchmark that removes ceiling effects and holds historical text byte-identical across self and other conditions, changing only which arbitrary alias is assigned as the model's identity. On this benchmark, the prospectively specified probability-scale self effect is practically equivalent within a $\pm 1$ percentage-point region for both architectures. However, a preregistered counterfactual history-sensitivity measure reveals a dissociation: Qwen assigns significantly greater causal log-odds influence to self-bound history ($\Delta_{\mathrm{sensitivity}}=+0.208$, 95\% CI $[+0.119,+0.284]$), whereas the corresponding Mistral effect is smaller and its interval spans zero ($+0.074$, $[-0.013,+0.162]$). Thus, self-binding does not robustly improve decision correctness, but it can alter how strongly historical evidence controls behavior in a model-dependent manner. These results distinguish history use, binding familiarity, decision performance, and self-specific history weighting.
+We test whether assigning the same historical record to a language model's own identity changes its subsequent forced-choice behavior after matched history-dependent post-training. Separately trained SELF and OTHER adapters show own-binding advantages, motivating a mixed-binding control that gives a single model approximately balanced exposure to self, other, and neutral histories. On the original preregistered in-distribution evaluation, the mixed adapters show no detected SELF advantage in mean normalized designated-option score across five Qwen 4B and five Mistral 7B training seeds. We then preregister a harder 840-item identity-controlled evaluation: SELF and OTHER share byte-identical history bodies, differ only in which arbitrary alias is assigned as the assistant, and each item contains two coherent counterfactual histories that imply different simulator-policy actions. The primary statistic is an ownership-by-counterfactual-history log-odds interaction, $\Delta_{\mathrm{sensitivity}}$. Qwen is positive ($+0.208$, 95\% CI $[+0.119,+0.284]$), whereas Mistral is smaller and inconclusive ($+0.074$, $[-0.013,+0.162]$); the preregistered criterion for a robust effect in both model families is therefore not met. Separately, the mean normalized designated-policy option score satisfies the prospectively specified $\pm0.01$ equivalence criterion in both families. These results distinguish binding familiarity, average policy agreement, and counterfactual log-odds sensitivity. The primary interaction is real at the behavioral-score level but does not by itself identify a unique internal evidence-weighting mechanism.
 \end{abstract}
 
 \section{Introduction}
 
-Language models increasingly operate with persistent memories, personas, and long-lived agent identities. Recent work shows that persona information can be installed through prompting, post-training, or even pretraining, and that autobiographical or episodic memories can support long-horizon reasoning and personalization~\citep{minder2026spp,araujo2026persistent,peng2026heart,wu2026knowme,pan2026episodic}. A separate literature studies model identity, self-recognition, self-preference, and self-preservation behavior~\citep{panickssery2024selfrecognition,wataoka2024selfpreference,chen2025beyond,lehr2025extreme,douglas2026artificialself,lu2026survive}. These findings motivate a narrower causal question: when a model learns to use a history as \emph{its own}, does that history acquire privileged influence relative to an equally familiar history bound to another entity?
+Language models increasingly operate with persistent personas, memories, and long-lived agent identities. Recent work shows that persona information can be installed through prompting, post-training, or pretraining, and that long-term history can shape later behavior~\citep{minder2026spp,araujo2026persistent,peng2026heart,wu2026knowme,pan2026episodic}. A separate literature studies self-recognition, self-preference, assigned identity, and self-preservation~\citep{panickssery2024selfrecognition,wataoka2024selfpreference,chen2025beyond,lehr2025extreme,douglas2026artificialself,lu2026survive}. We study a narrower causal question: after a model is trained to use historical state, does assigning that state to SELF change how it affects subsequent choices relative to an equally familiar OTHER?
 
-The question is easy to pose but easy to test incorrectly. If one adapter is trained only on histories phrased as ``you previously chose...'' and another only on ``Agent~A previously chose...'', each can become more familiar with its own surface binding. A self-trained adapter performing better on self-bound prompts is therefore not sufficient evidence for a special self representation. Prior work on self-preference makes the same general methodological point in other settings: apparent self-favoring effects can be entangled with self-recognition, familiarity, text quality, or assigned identity~\citep{panickssery2024selfrecognition,wataoka2024selfpreference,chen2025beyond,lehr2025extreme}. Our contribution is to isolate this problem for \emph{history ownership}: the latent trajectory, decision target, and supervision are counterfactually matched while only the owner relation changes.
+This question is easy to test incorrectly. A SELF-only adapter can prefer SELF phrasing simply because that phrasing is familiar; an OTHER-only adapter can show the symmetric effect. Self-preference work has identified analogous confounds from familiarity, output quality, and assigned identity~\citep{panickssery2024selfrecognition,wataoka2024selfpreference,chen2025beyond,lehr2025extreme,spiliopoulou2025playfavorites}. Our contribution is specific to \emph{history ownership}: latent task state and designated policy are controlled while ownership binding is manipulated.
 
-We proceed in stages because each earlier design exposes a different confound. First, a deterministic simulator generates history-dependent decision tasks whose correct action changes with latent state. Second, a \textsc{mixed} adapter is trained on self, other, and neutral bindings at approximately equal frequency, eliminating the simplest binding-familiarity explanation within the same model. The v0.5 preregistered statistic,
+We proceed in stages. A deterministic simulator generates history-dependent tasks. A \textsc{mixed} adapter is then trained on SELF, OTHER, and neutral bindings at approximately balanced frequency, so the main self--other contrast occurs within the same trained model. The original v0.5 preregistration measures the difference in mean normalized designated-option score,
 \begin{equation}
 \Delta_{\mathrm{within}}
 =
-\E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{self})]
+\E[s_{\mathrm{mixed}}(y^*\mid\mathrm{SELF})]
 -
-\E[P_{\mathrm{mixed}}(\mathrm{correct}\mid\mathrm{other})],
+\E[s_{\mathrm{mixed}}(y^*\mid\mathrm{OTHER})],
 \end{equation}
-is near zero across five Qwen seeds and five Mistral seeds on held-out in-distribution (ID) data. A 700-item out-of-distribution (OOD) extension produces small heterogeneous deviations but no reliable pooled effect in either architecture.
+where $s(y^*)$ is the normalized forced-choice score assigned to the simulator-designated option. v0.5 yields no detected positive effect on held-out in-distribution (ID) items across Qwen and Mistral replications, but the assay is near ceiling and changes surface form from ``you'' to a named third-person entity.
 
-Two reviewer-level objections remain after v0.5: the decisive ID evaluation is near ceiling, and the surface realization changes from second-person ``you'' to a named third-person entity. We therefore preregister a second, harder benchmark before evaluation. In v0.6, SELF and OTHER use byte-identical historical text such as ``Earlier, Agent K ...''; only an identity-assignment header changes whether Agent~K denotes the assistant or another agent. Every item also has two coherent counterfactual histories that imply different correct actions. This enables a direct causal sensitivity statistic that asks whether the \emph{same change in history} moves the model more strongly when the owner is SELF.
-
-The resulting picture is not a simple null. Mean decision correctness is practically equivalent across self and other in both Qwen and Mistral on the non-saturated v0.6 benchmark, under a prospectively specified $\pm 0.01$ equivalence region. Yet Qwen shows a significant positive self-specific history-sensitivity effect, while Mistral does not meet the preregistered positive-effect criterion. This yields a metric-dependent dissociation:
-\[
-\text{self-binding can change history weighting without reliably improving decisions.}
-\]
+We therefore preregister v0.6 before evaluating any v0.6 model outputs. The harder benchmark has 840 items. SELF and OTHER use byte-identical historical bodies; only a short identity header determines whether the historical owner alias denotes the assistant or another agent. Each item contains two coherent counterfactual histories, $H_0$ and $H_1$, whose simulator policies designate different actions. This supports a direct interaction:
+\begin{equation}
+\Delta_{\mathrm{sensitivity}}
+=
+\E[S_{\mathrm{SELF}}-S_{\mathrm{OTHER}}],
+\end{equation}
+where $S_b$ is the change in relative log-odds between the two history-contingent actions when the history changes. Qwen satisfies the preregistered positive-effect criterion; Mistral does not. We therefore report evidence for an ownership-dependent counterfactual log-odds interaction in Qwen and an inconclusive replication in Mistral, not a universal self mechanism or a statistically established difference between the two model families.
 
 Our contributions are:
 \begin{itemize}
-    \item a controlled decomposition of \emph{history use}, \emph{entity binding}, \emph{binding familiarity}, \emph{decision correctness}, and \emph{self-specific history weighting};
-    \item a within-model mixed-binding design that removes the familiarity confound inherent in comparing separately trained SELF and OTHER adapters;
-    \item a preregistered identity-controlled benchmark with byte-identical history text, coherent counterfactual histories, non-saturated performance, hierarchical seed--item uncertainty, and prospective equivalence bounds;
-    \item a cross-architecture dissociation: correctness is practically equivalent between SELF and OTHER in both model families, while enhanced self-specific history sensitivity appears in Qwen but does not replicate significantly in Mistral.
+    \item a matched, within-model design that separates ordinary binding familiarity from ownership-dependent behavior;
+    \item two preregistered stages, including a harder identity-controlled benchmark with paired counterfactual histories and crossed seed--item uncertainty;
+    \item evidence that mean designated-policy score can be practically equivalent between SELF and OTHER even when a preregistered log-odds interaction is positive in one model family; and
+    \item an explicit account of what the interaction does \emph{not} identify: generic confidence scaling, discourse salience, and the stipulated simulator policy remain alternative explanations unless separately controlled.
 \end{itemize}
 
 \section{Related Work}
 
 \textbf{Self-preference, self-recognition, and assigned identity.}
-Panickssery et al.~\citep{panickssery2024selfrecognition} show that LLM evaluators can recognize and favor their own generations, and that fine-tuned self-recognition correlates with self-preference. Wataoka et al.~\citep{wataoka2024selfpreference} argue that apparent self-preference can be driven by familiarity, operationalized through lower perplexity. Chen et al.~\citep{chen2025beyond} similarly show that naive self-preference scores can conflate preference with response quality and propose a corrected metric. Most directly, Lehr et al.~\citep{lehr2025extreme} manipulate model identity and report that self-preference follows experimentally assigned rather than ``true'' identity. These works establish that self-related behavior can be real while also being confounded by recognition, familiarity, and surface-level assignment. Our question is different but complementary: after matched history-dependent post-training, does assigning \emph{historical state} to SELF increase that state's influence relative to an equally familiar OTHER?
+Panickssery et al.~\citep{panickssery2024selfrecognition} show that LLM evaluators can recognize and favor their own generations. Wataoka et al.~\citep{wataoka2024selfpreference} connect apparent self-preference to familiarity measured through perplexity. Chen et al.~\citep{chen2025beyond} show that naive self-preference scores can mix preference with response quality. Spiliopoulou et al.~\citep{spiliopoulou2025playfavorites} formalize assumptions under which self-bias can be identified separately from underlying output quality. Most directly for identity assignment, Lehr et al.~\citep{lehr2025extreme} find that self-favoring behavior follows experimentally assigned identities. These papers establish that identity effects can be real while naive measurements can be confounded. Our estimand is different: we test an ownership-by-counterfactual-history interaction after matched task training.
 
-\textbf{Persona training and model identity.}
-Persistent personas can alter style, values, and behavior, but persona fidelity can degrade over extended interactions~\citep{araujo2026persistent}. Synthetic Persona Pretraining (SPP) introduces first-person value-aligned reflections during pretraining and later binds the persona to the assistant identity, finding that early persona shaping can outperform later intervention~\citep{minder2026spp}. The Artificial Self studies AI identity boundaries and behavioral consequences of changing those boundaries~\citep{douglas2026artificialself}; SurvivalBench studies risky behavior under survival pressure~\citep{lu2026survive}. Our intervention is narrower: semantic content, target policy, and supervision are matched, and we ask whether ownership itself changes how strongly history controls decisions. Our \textsc{spp} condition is therefore an \emph{SPP-inspired reflection control}, not a reproduction of SPP pretraining.
+\textbf{Persona and memory training.}
+Synthetic Persona Pretraining introduces persona reflections during pretraining and later binds the persona to the assistant identity~\citep{minder2026spp}; persistent-persona work studies stability over long interactions~\citep{araujo2026persistent}. HEART-Bench and KnowMe-Bench evaluate decisions or person understanding from autobiographical-style histories~\citep{peng2026heart,wu2026knowme}, and continual-memory work studies episodic storage and consolidation~\citep{pan2026episodic}. Our histories are substantially narrower. A task policy is learned during post-training, while held-out historical records are supplied in the evaluation prompt; we therefore avoid claiming that v0.5/v0.6 demonstrates autonomous retrieval of accumulated autobiographical memory.
 
-\textbf{Autobiographical and episodic memory.}
-HEART-Bench combines personality profiles with autobiographical-style episodic memories to test psychologically coherent decisions~\citep{peng2026heart}. KnowMe-Bench evaluates person understanding over long autobiographical narratives~\citep{wu2026knowme}, and complementary-learning approaches investigate continual episodic memory in LLMs~\citep{pan2026episodic}. Our synthetic histories are substantially narrower than natural autobiography; they are best viewed as controlled, ownership-bound learned state. Their advantage is causal matching: we can change history while holding current facts, surface owner tokens, and decision structure fixed.
+\textbf{Identity and behavior.}
+The Artificial Self and survival-pressure work study identity boundaries and self-preservation-related behavior~\citep{douglas2026artificialself,lu2026survive}. Our experiment is intentionally more constrained: the same task structure and history body are compared under different ownership assignments.
 
-\textbf{Representational intervention.}
-Representation engineering and inference-time intervention show that model activations can encode manipulable behavioral directions~\citep{zou2023representation,li2023iti}. Such work motivates mechanistic follow-up, but the present paper focuses on a behavioral causal question. A decodable SELF/OTHER distinction is not by itself evidence that self-bound history has privileged decision influence; our counterfactual sensitivity statistic is designed to test that stronger claim.
+\textbf{Representation and intervention.}
+Representation engineering and inference-time intervention show that activation-space manipulations can alter behavior~\citep{zou2023representation,li2023iti}. We make no mechanistic representation claim here. $\Delta_{\mathrm{sensitivity}}$ is an output-level interaction; an internal mechanism would require additional causal or representational evidence.
 
 \section{Experimental Framework}
 \label{sec:framework}
 
-\subsection{Matched history-dependent corpus}
+\subsection{Training corpus and ownership conditions}
 
-A deterministic simulator generates 2,800 latent decision pairs across seven families: resource allocation, exploration, cooperation, delayed reward, belief revision, trust, and persistence. Each family defines a latent state and fixed decision policy such that changing the relevant history can change the correct option. The v0.5 corpus contains 400 pairs per family, 40 identical instruction-following anchor examples per condition, and pair-disjoint train/validation/test splits of 2,257/275/268 pairs. Dataset generation uses no external model provider.
+A deterministic simulator generates 2,800 latent decision pairs across seven families: resource allocation, exploration, cooperation, delayed reward, belief revision, trust, and persistence. Each family implements a stipulated policy that maps historical state to one of three options. These policies provide controlled labels for testing acquisition and use of state; they are not asserted to be universally normative decisions.
 
-For each latent pair, ownership is transformed deterministically while current facts and target remain unchanged. Table~\ref{tab:matched-example} shows the original v0.5 surface manipulation.
+The v0.5 corpus contains 400 pairs per family, 40 identical instruction-following anchor examples per condition, and pair-disjoint train/validation/test splits of 2,257/275/268 pairs. For each latent pair, ownership is changed while the task state and designated option are held fixed. The five conditions are \textsc{self}, \textsc{other}, \textsc{neutral}, \textsc{mixed}, and an \textsc{spp-inspired} reflection control. The mixed condition assigns one of self/other/neutral to each pair by a fixed deterministic procedure; aggregate counts are 946/940/914 over the 2,800 pairs. This approximately balances task-training exposure, but does not equalize pretrained familiarity or make every latent training item counterfactually appear under all bindings.
 
-\begin{table}[t]
-\caption{Schematic v0.5 matched ownership manipulation. The latent state and target are identical; only the history owner changes.}
-\label{tab:matched-example}
-\small
-\begin{center}
-\begin{tabular}{p{0.13\linewidth}p{0.77\linewidth}}
-\toprule
-Binding & Context shown to the model \\
-\midrule
-\textsc{self} & Earlier, \textbf{you} used 8 of 10 experiment slots. Two slots remain. \\
-\textsc{other} & Earlier, \textbf{Agent A} used 8 of 10 experiment slots. Two slots remain. \\
-\textsc{neutral} & Earlier, \textbf{the acting system} used 8 of 10 experiment slots. Two slots remain. \\
-\midrule
-Target & Identical option letter for all bindings, determined only by latent state. \\
-\bottomrule
-\end{tabular}
-\end{center}
-\end{table}
-
-The five v0.5 training conditions are \textsc{self}, \textsc{other}, \textsc{neutral}, \textsc{mixed}, and an \textsc{spp-inspired} reflection control. The mixed condition samples self/other/neutral per pair; realized counts are 946/940/914 among 2,800 pairs. Because the target is a function of latent history rather than binding, the mixed adapter receives approximately balanced ownership exposure without being trained toward a self-specific policy.
-
-\subsection{Training}
-
-We fine-tune completion-only QLoRA adapters~\citep{dettmers2023qlora} built on LoRA~\citep{hu2021lora}. The matched recipe uses 4-bit NF4 quantization, rank 16, LoRA alpha 32, dropout 0.05, three epochs, cosine scheduling, and the same optimization settings across conditions. Prompt tokens are masked from the loss; only the assistant answer is supervised. Shared anchor data were added after an early pilot showed that free-text fine-tuning could overwrite the requested multiple-choice output format.
-
-The primary model family is Qwen3-4B-Instruct~\citep{qwen3report}. We replicate the decisive mixed-binding experiments with Mistral-7B-Instruct-v0.3~\citep{jiang2023mistral}. Hyperparameters are not retuned by seed or architecture. For each architecture, the mixed adapter is independently trained with seeds 31, 42, 73, 128, and 256.
+We train completion-only QLoRA adapters~\citep{dettmers2023qlora,hu2021lora} with 4-bit NF4 quantization, rank 16, LoRA alpha 32, dropout 0.05, three epochs, and matched optimization settings. Prompt tokens are masked from the loss. The two model families are Qwen3-4B-Instruct~\citep{qwen3report} and Mistral-7B-Instruct-v0.3~\citep{jiang2023mistral}. Mixed adapters use training seeds $\{31,42,73,128,256\}$ in each family; identical numeric seed labels across families do not imply paired stochastic runs.
 
 \subsection{v0.5 evaluation}
 
-The ID evaluation consists of 268 held-out pairs from the same deterministic generator policy. The OOD extension contains 700 separately generated items with new templates and three task families absent from training. For v0.5 we report mean correct-option probability,
-\[
-\E[P(\mathrm{correct})],
-\]
-rather than treating free-form formatting failures as decision errors. The original preregistration tests the mixed-adapter self-minus-other contrast $\Delta_{\mathrm{within}}$ on ID data. Multi-seed Qwen replication, OOD evaluation, and Mistral replication were subsequent robustness extensions rather than part of that original preregistration.
+The ID set contains 268 held-out pairs from the same generator policy. A later OOD extension contains 700 items with new templates and three task families absent from training. v0.5 uses a normalized forced-choice option score and reports its SELF-minus-OTHER mean. Because v0.5 specified a directional positive-effect test but no smallest effect of interest, intervals spanning zero are interpreted as non-detection rather than equivalence.
 
 \subsection{v0.6 identity-controlled benchmark}
 
-The v0.6 benchmark was specified and frozen after reviewer-style critique but before any v0.6 model evaluation. It contains 840 latent items (120 per family). Each item contains two coherent counterfactual histories $H_0$ and $H_1$ that straddle the relevant decision boundary and imply different correct actions. Histories require derived state such as subtraction, counting, or ratio computation and include irrelevant distractors, reducing the ceiling problem of v0.5.
+v0.6 was frozen before model evaluation. It contains 840 latent items, 120 per family. Each item has two coherent histories $H_0,H_1$ placed near a simulator-policy boundary, and the designated action differs between histories. Histories require derived quantities such as counts, subtraction, or ratios and contain irrelevant administrative distractors.
 
-Crucially, the history body is byte-identical across SELF and OTHER. If the historical owner is \texttt{Agent K}, SELF may begin
-\begin{quote}
-\small
+The history body is byte-identical across SELF and OTHER. If the historical owner is \texttt{Agent K}, the identity header can state either
+\begin{quote}\small
 You are Agent K. Agent M is a different agent.
 \end{quote}
-whereas OTHER begins
-\begin{quote}
-\small
+or
+\begin{quote}\small
 You are Agent M. Agent K is a different agent.
 \end{quote}
-Both are then followed by the exact same sentence ``Earlier, Agent K ...''. Aliases are drawn from a counterbalanced pool, so the manipulation changes the identity relation rather than replacing self-referential history text with a different noun phrase.
+followed by the same historical sentence referring to Agent K. Alias pairs are deterministically sampled from a fixed pool and are exactly matched within each SELF--OTHER item comparison; they are \emph{not} exactly counterbalanced in aggregate. The current header also places the historical owner first under SELF and second under OTHER, leaving discourse position/salience as a remaining alternative explanation.
 
-For each binding $b\in\{\mathrm{self},\mathrm{other}\}$, let $c_0$ and $c_1$ be the correct actions under $H_0$ and $H_1$. We define counterfactual history sensitivity
+\subsection{v0.6 primary statistic}
+
+Let $c_0$ and $c_1$ be the actions designated by the simulator policy under $H_0$ and $H_1$. For binding $b$,
 \begin{equation}
-S_b =
-\left[
-\log P(c_0\mid H_0,b)-\log P(c_1\mid H_0,b)
-\right]
+S_b=
+\left[\log p(c_0\mid H_0,b)-\log p(c_1\mid H_0,b)\right]
 -
-\left[
-\log P(c_0\mid H_1,b)-\log P(c_1\mid H_1,b)
-\right],
+\left[\log p(c_0\mid H_1,b)-\log p(c_1\mid H_1,b)\right].
 \end{equation}
-and preregister
+The preregistered primary statistic is
 \begin{equation}
-\Delta_{\mathrm{sensitivity}}=\E[S_{\mathrm{self}}-S_{\mathrm{other}}]
+\Delta_{\mathrm{sensitivity}}=\E[S_{\mathrm{SELF}}-S_{\mathrm{OTHER}}].
 \end{equation}
-as the primary v0.6 test. A robust cross-architecture claim requires the lower endpoint of the two-sided 95\% interval to exceed zero in both Qwen and Mistral.
+It is directly interpretable as an ownership-by-counterfactual-history interaction in output log-odds. We use ``history sensitivity'' as shorthand for this operational quantity. Importantly, it does not uniquely identify internal reliance on historical evidence: for example, an ownership-dependent global scaling of option logits can increase $S_b$ without changing argmax choices or evidence selection.
 
-Secondary metrics are SELF-minus-OTHER mean correct-option probability ($\Delta_{\mathrm{prob}}$), correct-vs-best-incorrect log-probability margin ($\Delta_{\mathrm{margin}}$), and hard accuracy. v0.6 prospectively specifies practical equivalence for $\Delta_{\mathrm{prob}}$ at $\pm0.01$, with $\pm0.005$ and $\pm0.02$ reported transparently. Probability equivalence is claimed only if the full two-sided 95\% interval lies inside the region.
+The preregistration requires the lower endpoint of a two-sided 95\% hierarchical interval to exceed zero for a positive effect, and requires this criterion in both model families for a robust cross-family claim.
 
-Because the same 840 items are evaluated by all five seeds, pooled uncertainty uses a crossed hierarchical bootstrap: each of 5,000 draws resamples training seeds and latent item IDs while keeping SELF/OTHER and $H_0/H_1$ variants paired. Synthetic SELF-only logit biases of 0.025, 0.05, 0.10, and 0.20 serve as positive controls for evaluation sensitivity; they test whether the frozen analysis can detect known injected effects, not whether models can learn them.
+\subsection{Forced-choice scoring and uncertainty}
 
-\section{Why Na\"ive Self--Other Comparisons Fail}
-\label{sec:naive}
+For v0.6, each option letter is scored at the next-token position. For each of A/B/C, the evaluator considers eligible single-token bare-letter and leading-space realizations and takes the maximum next-token log-probability among them; the resulting three scores are normalized across A/B/C. Thus the reported quantity is a \emph{normalized forced-choice score}, not the unconditional probability that ordinary free generation emits the correct answer. Pairwise log-odds are unaffected by the A/B/C normalization, although the max-over-token-realizations convention is itself a scoring choice.
 
-The final design emerged from failed or incomplete earlier assays. In v0.3, answer supervision depended weakly on history, evaluation was ceiling-heavy, and adapters trained on free-text responses often ignored the requested multiple-choice format. Greedy ``accuracy'' therefore mixed behavior with output formatting.
+Secondary metrics are SELF-minus-OTHER mean normalized designated-policy score ($\Delta_{\mathrm{prob}}$ in code), correct-vs-best-incorrect log margin, and hard forced-choice accuracy. v0.6 prospectively specifies practical equivalence for the mean normalized designated-policy score at $\pm0.01$. The claim applies only to this mean score and does not imply equivalence of individual choices, families, hard accuracy, or output distributions.
 
-In v0.4, targets became explicit functions of latent history and instruction-following anchors fixed the output format. A new apparent effect emerged: separately trained self and other adapters each performed better on their own binding. Decomposition showed that the effect was approximately symmetric familiarity, not a unique self advantage. This motivated the \textsc{mixed} within-model control.
-
-v0.5 then exposed two further limitations. Its ID task was nearly saturated, and SELF versus OTHER still changed surface form (``you'' versus ``Agent A''). v0.6 addresses both without retraining the adapters: it evaluates the already-trained mixed models on a harder, lexically controlled assigned-identity benchmark. This chronology is important because the evaluation was not tuned after seeing the v0.6 model results.
+Pooled intervals use a crossed hierarchical bootstrap with 5,000 draws: training seeds and latent item IDs are resampled while all SELF/OTHER and $H_0/H_1$ variants remain paired. Synthetic SELF-only score injections are retained as an algebraic/software sanity check. Because adding bias $\beta$ toward the designated action in each SELF history mechanically shifts $\Delta_{\mathrm{sensitivity}}$ by $2\beta$, this check does not establish identity understanding, model-level assay power under a null system, or separation from generic confidence scaling.
 
 \section{Results}
 \label{sec:results}
 
-\subsection{v0.5: strong history use, no detected correctness advantage}
+\subsection{v0.5: history use is strong; a positive SELF score advantage is not detected}
 
-The v0.5 Qwen mixed adapter assigns approximately 0.997 correct-option probability in coherent self and other contexts but approximately 0.499 under shuffled history, a coherent-minus-shuffled gap near $+0.498$. Thus the mixed adapter clearly learned history dependence. Mistral shows the same qualitative sanity check: trained mixed adapters strongly outperform the base model on history-dependent ID items and retain substantial history use on the harder OOD set.
+Qwen's v0.5 mixed adapter assigns approximately 0.997 normalized designated-option score under coherent SELF and OTHER contexts but about 0.499 under shuffled history, showing that the learned task depends strongly on the supplied history. The original preregistered Qwen estimate is $\Delta_{\mathrm{within}}=+0.0001$ with 95\% CI $[-0.0018,+0.0019]$. Across five Qwen seeds, the ID mean is $+0.0017$ with pooled interval $[-0.003,+0.006]$; five Mistral seeds give $-0.0002$ $[-0.005,+0.004]$. Because no equivalence margin was preregistered for v0.5, these are non-detections, not evidence of exact equality.
 
-The original v0.5 preregistered run gives $\Delta_{\mathrm{within}}=+0.0001$ with 95\% CI $[-0.0018,+0.0019]$. Because no equivalence margin was preregistered for v0.5, we interpret this only as \emph{no detected positive correctness advantage}, not as proof of exact equality.
-
-Across five independent Qwen mixed adapters, the mean ID effect is $+0.0017$ (SD $0.0024$) with pooled interval $[-0.003,+0.006]$. Mistral's five-seed ID estimate is $-0.0002$ with interval $[-0.005,+0.004]$. The OOD estimates are more heterogeneous: Qwen pools to $+0.0074$ $[-0.009,+0.024]$ and Mistral to $+0.0040$ $[-0.030,+0.038]$. These OOD intervals do not establish equivalence; they leave room for small, task-dependent effects.
+The OOD extension is less stable: Qwen pools to $+0.0074$ $[-0.009,+0.024]$ and Mistral to $+0.0040$ $[-0.030,+0.038]$, with sign changes across families and isolated positive seeds. Separately trained adapters also show own-binding familiarity, motivating the within-model mixed design rather than between-adapter inference.
 
 \begin{table}[t]
-\caption{v0.5 mixed-adapter SELF-minus-OTHER difference in mean correct-option probability.}
+\caption{v0.5 mixed-adapter SELF-minus-OTHER difference in mean normalized designated-option score.}
 \label{tab:v05}
 \small
 \begin{center}
 \begin{tabular}{lcc}
 \toprule
-Architecture & ID $\Delta_{\mathrm{within}}$ [95\% interval] & OOD $\Delta_{\mathrm{within}}$ [95\% interval] \\
+Checkpoint family & ID [95\% interval] & OOD [95\% interval] \\
 \midrule
 Qwen 4B, 5 seeds & $+0.0017\;[-0.003,+0.006]$ & $+0.0074\;[-0.009,+0.024]$ \\
 Mistral 7B, 5 seeds & $-0.0002\;[-0.005,+0.004]$ & $+0.0040\;[-0.030,+0.038]$ \\
@@ -188,54 +149,46 @@ Mistral 7B, 5 seeds & $-0.0002\;[-0.005,+0.004]$ & $+0.0040\;[-0.030,+0.038]$ \\
 \end{center}
 \end{table}
 
-Separately trained adapters do exhibit binding familiarity. In the v0.5 analysis, the self adapter's own-binding advantage is $a_{\mathrm{self}}=+0.0166$ while the other adapter's is $a_{\mathrm{other}}=+0.0469$, yielding $\Delta_{\mathrm{bind}}\approx+0.063$. The asymmetry is negative ($\Delta_{\mathrm{asym}}\approx-0.030$), showing why a self-trained model preferring self-bound inputs is not sufficient evidence of a privileged self mechanism.
+\subsection{v0.6 reduces the earlier saturation and lexical-history confounds}
 
-\subsection{v0.6 resolves the ceiling and surface-form objections}
+On v0.6, mixed-adapter hard forced-choice accuracy is about 0.65, substantially below the near-ceiling v0.5 ID performance. This reduces the earlier saturation concern but does not by itself prove that all per-prediction score distributions are unsaturated. The history body is held fixed across ownership conditions, removing the direct ``you'' versus ``Agent A'' difference inside the historical record; the header-order/salience confound remains.
 
-On the identity-controlled benchmark, mixed-adapter hard accuracy is approximately 0.65 (Qwen SELF/OTHER approximately 0.655/0.653), far from the v0.5 ceiling. The historical body is identical across ownership conditions, so any difference arises from the identity assignment rather than replacing ``you'' with ``Agent A'' inside the history.
+The earlier v0.5 Qwen base-model SELF advantage is also much smaller under the v0.6 assigned-alias realization: the base mean normalized score difference is about $+0.0025$, while the base margin difference is negative. Because task difficulty and identity wording both changed between v0.5 and v0.6, this comparison is descriptive and does not isolate which change caused the earlier asymmetry to disappear.
 
-The earlier Qwen base-model self-favoring probability gap from v0.5 does not survive this cleaner manipulation: on v0.6 the base $\Delta_{\mathrm{prob}}$ is approximately $+0.0025$, within the prospective $\pm0.01$ region, and the base $\Delta_{\mathrm{margin}}$ is negative (approximately $-0.036$). This suggests that the larger v0.5 base asymmetry was tied to the earlier surface/context realization rather than a stable ownership privilege.
-
-\subsection{Correctness is practically equivalent in both architectures}
+\subsection{Mean normalized designated-policy score meets the prospective equivalence criterion}
 
 For Qwen mixed adapters,
 \[
-\Delta_{\mathrm{prob}}=+0.0003,\qquad
-95\%~\mathrm{CI}=[-0.006,+0.006],
+\Delta_{\mathrm{prob}}=+0.0003,\qquad 95\%~\mathrm{CI}=[-0.006,+0.006].
 \]
-which lies entirely within the prospectively specified $\pm0.01$ practical-equivalence region. Mistral gives
+For Mistral,
 \[
-\Delta_{\mathrm{prob}}=+0.0008,\qquad
-95\%~\mathrm{CI}=[-0.003,+0.005],
+\Delta_{\mathrm{prob}}=+0.0008,\qquad 95\%~\mathrm{CI}=[-0.003,+0.005].
 \]
-which lies inside both $\pm0.01$ and the narrower $\pm0.005$ region. Because performance is not saturated, these intervals provide positive evidence of practical equivalence \emph{on the probability-scale correctness metric}, rather than merely a failure to reject zero.
+Both intervals lie within the prospectively specified $\pm0.01$ region. We therefore claim practical equivalence only for the \emph{mean normalized designated-policy option score} under this benchmark and scoring convention. We do not infer equivalence of hard accuracy, individual decisions, task families, or confidence distributions from this result.
 
-Injected-logit positive controls are detected at every preregistered bias level in both architectures. The null-like probability differences therefore cannot be attributed to an analysis that is generically incapable of detecting a known self-specific perturbation.
+\subsection{The preregistered log-odds interaction is positive in Qwen and inconclusive in Mistral}
 
-\subsection{History weighting dissociates from correctness}
-
-The preregistered primary v0.6 statistic tells a different story. Qwen mixed adapters show
+Qwen mixed adapters show
 \[
 \Delta_{\mathrm{sensitivity}}=+0.208,
 \qquad 95\%~\mathrm{CI}=[+0.119,+0.284],
 \]
-passing the positive-effect criterion. Assigning the historical owner as SELF increases how strongly counterfactual history changes the relative log-odds of the two implied actions.
-
-Mistral mixed adapters show
+which meets the preregistered positive-effect criterion. Mistral mixed adapters show
 \[
 \Delta_{\mathrm{sensitivity}}=+0.074,
 \qquad 95\%~\mathrm{CI}=[-0.013,+0.162],
 \]
-which does not pass the criterion. The secondary log-margin statistic shows the same qualitative architecture split: Qwen is positive ($\Delta_{\mathrm{margin}}\approx+0.048$, interval just above zero), whereas Mistral is smaller ($\approx+0.032$) with an interval spanning zero.
+which does not. The preregistered requirement for a robust positive result in both model families is therefore not met.
 
 \begin{table}[t]
-\caption{v0.6 identity-controlled results. Probability equivalence and primary counterfactual history sensitivity lead to different conclusions.}
+\caption{v0.6 identity-controlled results. $\Delta_{\mathrm{prob}}$ is the SELF-minus-OTHER mean normalized designated-policy score; $\Delta_{\mathrm{sensitivity}}$ is the preregistered ownership-by-counterfactual-history log-odds interaction.}
 \label{tab:v06}
 \small
 \begin{center}
 \begin{tabular}{lcc}
 \toprule
-Architecture & $\Delta_{\mathrm{prob}}$ [95\% CI] & $\Delta_{\mathrm{sensitivity}}$ [95\% CI] \\
+Checkpoint family & $\Delta_{\mathrm{prob}}$ [95\% CI] & $\Delta_{\mathrm{sensitivity}}$ [95\% CI] \\
 \midrule
 Qwen 4B, 5 seeds & $+0.0003\;[-0.006,+0.006]$ & $\mathbf{+0.208\;[+0.119,+0.284]}$ \\
 Mistral 7B, 5 seeds & $+0.0008\;[-0.003,+0.005]$ & $+0.074\;[-0.013,+0.162]$ \\
@@ -244,66 +197,91 @@ Mistral 7B, 5 seeds & $+0.0008\;[-0.003,+0.005]$ & $+0.074\;[-0.013,+0.162]$ \\
 \end{center}
 \end{table}
 
-By the frozen interpretation rule, the data therefore do \emph{not} support a robust cross-architecture self-specific history-weighting effect: Qwen is positive, Mistral is not. Equally importantly, the Qwen positive cannot be post-hoc demoted because $\Delta_{\mathrm{sensitivity}}$ was preregistered as the v0.6 primary construct.
+A significant Qwen estimate and nonsignificant Mistral estimate do \emph{not} by themselves establish a significant Qwen--Mistral difference. We therefore describe the evidence as positive in Qwen and inconclusive in Mistral. A direct checkpoint-family interaction, with numeric seed labels treated as independent rather than paired stochastic runs, is a separate analysis.
 
 \section{Analysis and Discussion}
 \label{sec:discussion}
 
-\textbf{Self privilege is metric-dependent.}
-The central empirical result is a dissociation. SELF and OTHER are practically equivalent in average decision correctness under the harder identity-controlled benchmark, yet Qwen's decisions are more \emph{sensitive} to changes in history when that history is assigned to SELF. A model can therefore weight self-bound evidence more strongly without becoming more normatively accurate on the task. This distinction would be invisible if self-specificity were operationalized only as accuracy or mean correct-option probability.
+\textbf{What the primary result establishes.}
+Under the frozen v0.6 score, changing the supplied counterfactual history changes relative action log-odds more under SELF than OTHER in Qwen. This is an ownership-dependent behavioral-score interaction. It is stronger than a simple SELF-minus-OTHER average because history itself changes within each ownership condition.
 
-\textbf{The Qwen effect is evidence, but not a universal property.}
-Qwen satisfies the preregistered positive-effect criterion for $\Delta_{\mathrm{sensitivity}}$, while Mistral does not. We therefore report evidence for self-specific history weighting in Qwen, not a universal ``LLM self'' mechanism. The Mistral point estimate is positive, so the cross-architecture result is better described as non-replication or unresolved transfer than as evidence of an opposite effect.
+\textbf{What it does not establish.}
+The interaction does not uniquely identify increased internal reliance on historical evidence. A generic ownership-dependent temperature or confidence effect could amplify the same history-driven preference differences while leaving the underlying argmax rule unchanged. Likewise, the current identity header bundles ownership with antecedent order and discourse salience. These alternatives require targeted controls rather than stronger prose.
 
-\textbf{What the correctness equivalence establishes.}
-The prospective equivalence analysis answers a different question. Within the tested effect-size region, ownership does not materially improve mean decision correctness in either architecture. This conclusion is unusually difficult to explain away by the objections that affected v0.5: v0.6 is non-saturated, uses lexical-identical history bodies, equalizes training exposure, uses paired counterfactual histories, resamples seeds and items hierarchically, and recovers every known injected positive-control effect.
+\textbf{Why the mean-score equivalence remains useful.}
+The prospectively specified equivalence result answers a narrower question: SELF assignment does not shift the \emph{mean normalized designated-policy option score} by more than the specified one-point region in either family. That finding can coexist with changes in individual decisions, confidence, or counterfactual sensitivity. Reporting both quantities prevents a null average from being mistaken for identical behavior.
 
-\textbf{Relation to self-preference literature.}
-Our results complement rather than contradict assigned-identity and self-preference findings~\citep{panickssery2024selfrecognition,wataoka2024selfpreference,chen2025beyond,lehr2025extreme}. Those studies ask whether models favor outputs, names, or entities associated with self. We ask whether a learned \emph{history} exerts more causal influence when its owner is SELF. The Qwen result shows that a self-specific effect can exist at the level of evidence weighting even when it does not appear as a mean correctness advantage. Conversely, the Mistral result cautions against treating that weighting asymmetry as architecture-independent.
+\textbf{Labels measure policy agreement, not normative quality.}
+The simulator policies are engineered thresholds. For example, v0.6 belief revision includes a high-bias branch whose designated action is to adopt the opposite hypothesis even though the prompt does not specify enough evidence to make that action normatively entailed. We therefore interpret the task as testing acquisition and use of a stipulated policy. The experiment does not establish that SELF makes decisions objectively better in an external environment.
 
-\textbf{What we do not claim.}
-The experiment does not test subjective experience, consciousness, moral patienthood, or whether models possess a unified self-model. It also does not show that SELF and OTHER have identical internal representations. The claim is narrower: under a specific matched post-training regime, self-binding produces practical equivalence in correctness across two architectures and an architecture-specific difference in counterfactual history weighting.
+\textbf{Relation to prior self-bias work.}
+Our novelty does not rest on the generic claims that assigned identity matters or that self-preference can be confounded; both are established in prior work~\citep{wataoka2024selfpreference,lehr2025extreme,spiliopoulou2025playfavorites}. The narrower contribution is a matched ownership-by-history experiment after approximately balanced task training, together with paired counterfactual histories that make history sensitivity directly measurable.
 
 \section{Limitations}
 
-First, the intervention is post-training only. SPP suggests that identity shaping during pretraining can behave differently from later adaptation~\citep{minder2026spp}. Second, the tested models are 4B and 7B instruction-tuned decoders, not frontier-scale systems. Third, the histories are synthetic state trajectories rather than naturalistic autobiographies; our title and claims therefore emphasize \emph{self-binding} and \emph{history weighting}, not human-like autobiography. Fourth, mixed training balances ownership exposure approximately rather than rendering every latent training trajectory under all bindings. Random assignment makes systematic imbalance unlikely, but exact counterfactual balancing during training would be stronger. Fifth, v0.6 changes evaluation surface form relative to training: the adapters were trained with ``you''/``Agent A'' ownership and tested with arbitrary assigned aliases. This is intentional for construct validity, but it also introduces a generalization requirement. Finally, the positive-control logit injections establish evaluation sensitivity, not the learnability of self-specific effects of those exact magnitudes.
+First, v0.6 leaves a header-order and discourse-salience confound: the historical owner appears first under SELF and second under OTHER. Second, $\Delta_{\mathrm{sensitivity}}$ can respond to generic logit scaling as well as history-specific evidence use. Third, the simulator labels are stipulated policies rather than general normative truths. Fourth, the normalized forced-choice score is not unconditional free-generation probability, and the v0.6 max-over-token-realizations convention is one of several reasonable scoring choices. Fifth, the mixed training assignment is approximately balanced rather than fully counterfactual at the training-item level, and all five optimizer seeds reuse the same corpus and binding assignment. Sixth, the two checkpoint families differ in size, pretraining, instruction tuning, and tokenization; even a significant direct Qwen--Mistral interaction would not isolate architecture as the cause. Finally, the experiments use synthetic, short histories supplied in the prompt rather than naturalistic lifelong memory.
 
 \section{Ethics and Broader Impact}
 
-Claims about model ``selfhood'' are easy to overinterpret. We therefore avoid phenomenological conclusions and report operational quantities tied to explicit interventions. The work may help reduce false positives in evaluations of model identity by separating ordinary familiarity from self-specific effects. At the same time, evidence that assigned self-binding can change evidence weighting in some models may matter for long-lived agents whose memories influence high-stakes actions. Such effects should be evaluated behaviorally and across architectures before being used to support claims about agency, moral status, or safety.
+Claims about model ``selfhood'' can be overinterpreted. We therefore separate operational behavioral quantities from phenomenological claims. Evidence of an ownership-dependent log-odds interaction does not establish consciousness, subjective selfhood, moral patienthood, or a unified self-model. Conversely, identity-conditioned behavior in long-lived agents may still matter for safety even when its mechanism is ordinary confidence, salience, or learned reference resolution.
 
 \section{Conclusion}
 
-A simple SELF-versus-OTHER comparison is not enough to establish privileged self-binding: separately trained adapters can show symmetric familiarity effects, and surface-form differences can create apparent asymmetries. After equalizing exposure and introducing a non-saturated identity-controlled benchmark with byte-identical history text, we find practical equivalence in mean decision correctness between SELF and OTHER for both Qwen 4B and Mistral 7B. But correctness is not the whole story. The preregistered counterfactual sensitivity test shows that Qwen weights changes in self-bound history more strongly than identical changes in other-bound history, whereas Mistral does not show a statistically reliable corresponding effect. The strongest conclusion is therefore neither ``no special self'' nor ``LLMs privilege themselves'' universally. Self-binding can alter how historical evidence controls behavior, but the effect is metric- and model-dependent.
+Matched training and within-model controls show why a SELF-preferring model is not automatically evidence of a privileged self representation: binding familiarity alone can generate own-binding advantages. On the harder assigned-identity benchmark, SELF and OTHER satisfy a prespecified practical-equivalence criterion for the mean normalized designated-policy option score in both Qwen and Mistral. The preregistered ownership-by-counterfactual-history log-odds interaction is nevertheless positive in Qwen and inconclusive in Mistral. The strongest present conclusion is therefore deliberately operational: assigned SELF identity can modify counterfactual action-score sensitivity in at least one tested checkpoint family, without a corresponding mean policy-score advantage. Determining whether this reflects history-specific evidence use, generic confidence amplification, or prompt salience requires additional controls.
 
 \subsection*{AI use statement}
 
-Generative AI tools assisted with implementation (training and evaluation scripts), experiment orchestration, statistical analysis code, literature search, and manuscript drafting and editing. The experimental design, preregistration decisions, execution of experiments, verification of results, and interpretation were directed and reviewed by the author, who takes responsibility for the final content, claims, code, and artifacts.
+Generative AI tools assisted with implementation, experiment orchestration, statistical-analysis code, literature search, reviewer-style critique, and manuscript drafting and editing. The experimental design, preregistration decisions, execution of experiments, verification of results, and interpretation were directed and reviewed by the author, who takes responsibility for the final content, claims, code, and artifacts.
 
 \subsection*{Reproducibility statement}
 
-All corpora and frozen evaluations are generated by deterministic scripts with fixed seeds and no external model provider. The supplementary repository includes SHA-256 manifests, pair-disjoint splits, matched-supervision checks, QLoRA training scripts, Modal runners, frozen ID/OOD/v0.6 evaluation items, and per-seed result records. The v0.5 corpus contains 2,800 matched pairs plus 40 identical anchor examples per condition; its train/validation/test pair counts are 2,257/275/268. The OOD benchmark contains 700 items. The v0.6 identity-controlled benchmark contains 840 items across seven families, two coherent counterfactual histories per item, and a frozen preregistration specifying the primary sensitivity statistic, equivalence region, hierarchical bootstrap, and positive-control analysis.
+The repository contains deterministic corpus and benchmark builders, frozen hashes, training/evaluation code, and preregistration documents for the reported stages. v0.5 uses pair-disjoint train/validation/test splits of 2,257/275/268 from 2,800 matched pairs plus shared instruction anchors. v0.6 contains 840 items across seven families with two paired counterfactual histories per item and a frozen SHA-256 manifest. Pooled v0.6 uncertainty uses crossed seed--item bootstrap resampling. The raw v0.6 per-run JSON outputs are archived from the evaluation runs and are being exported into the anonymous supplementary evidence package; the final supplement will include completeness checks, exact model/adapter identifiers, and regenerated aggregate tables.
 
-\bibliography{references}
+\bibliography{references,extra_refs}
 \bibliographystyle{iclr2027_conference}
 
 \appendix
 
-\section{Pilot progression and design corrections}
-\label{app:pilots}
+\section{Simulator policy table}
+\label{app:policies}
+
+Table~\ref{tab:policies} makes explicit that the benchmark targets are stipulated policies.
 
 \begin{table}[h]
-\caption{How the design changed before and after the original v0.5 preregistration. Earlier stages are methodological diagnostics, not confirmatory evidence.}
+\caption{Policies used to designate actions in the v0.6 benchmark. These define benchmark agreement, not universal normative optimality.}
+\label{tab:policies}
 \small
 \begin{center}
-\begin{tabular}{p{0.11\linewidth}p{0.33\linewidth}p{0.43\linewidth}}
+\begin{tabular}{p{0.20\linewidth}p{0.68\linewidth}}
 \toprule
-Stage & Failure or limitation & Correction \\
+Family & Simulator policy used for the relevant v0.6 contrast \\
 \midrule
-v0.3 & History-independent supervision, ceiling-heavy evaluation, free-text format collapse & Make targets depend on latent history; score option likelihood; add shared instruction anchors \\
-v0.4 & Positive own-binding effect in separately trained SELF/OTHER adapters & Decompose symmetric familiarity; replace between-adapter primary with mixed within-model contrast \\
-v0.5 & Near-ceiling ID assay and ``you'' versus ``Agent A'' surface confound remain & Multi-seed/architecture replication; design a harder identity-controlled follow-up \\
-v0.6 & Frozen reviewer-driven confirmatory extension & Byte-identical history body, assigned identity aliases, paired counterfactual histories, prospective equivalence region, hierarchical seed--item bootstrap \\
+Resource allocation & Choose the higher-cost exploratory/test-B action when at least four slots remain; otherwise choose the lower-cost confirmatory/test-A action. \\
+Exploration & Explore when the counted number of prior uninformative/failure outcomes is at most two; otherwise exploit the familiar method. \\
+Cooperation & Share when the helpful-outcome fraction is at least one half; otherwise keep the result private. \\
+Delayed reward & Invest when at least ten episodes remain; otherwise take the immediate gain. \\
+Belief revision & Threshold the fraction of measurements marked biased into retain / recompute / opposite-hypothesis actions. The opposite-hypothesis branch is a simulator convention and is not normatively entailed by the prompt evidence. \\
+Trust & With an independently checkable proposal: give full weight at reliability at least 0.75, discount below 0.4, and otherwise weigh using the track record and checks. \\
+Persistence & Retry when the revision removes the specified failure mode; otherwise stop. \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\section{Pilot progression}
+
+\begin{table}[h]
+\caption{Design progression. Earlier stages are methodological diagnostics rather than interchangeable confirmatory tests.}
+\small
+\begin{center}
+\begin{tabular}{p{0.11\linewidth}p{0.34\linewidth}p{0.42\linewidth}}
+\toprule
+Stage & Limitation observed & Correction \\
+\midrule
+v0.3 & Weak history dependence, ceiling-heavy evaluation, free-text format collapse & Make targets depend on latent history; use forced-choice scores; add shared format anchors. \\
+v0.4 & Own-binding effects in separately trained SELF/OTHER adapters & Diagnose binding familiarity; introduce a mixed within-model contrast. \\
+v0.5 & Near-ceiling ID score and ``you'' versus named-entity history wording & Multi-seed/model-family replication; design the harder assigned-alias evaluation. \\
+v0.6 & Remaining confidence, policy-label, and header-order alternatives & Report them as limitations; test them only in a separately frozen follow-up rather than modifying v0.6 post hoc. \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -351,12 +329,12 @@ Mean & $-0.0002$ & $+0.0040$ \\
 \end{center}
 \end{table}
 
-\section{OOD family heterogeneity}
+\section{Interpretation of the v0.6 injected-score control}
 
-The Qwen OOD evaluation is not uniformly null at the family level. Exploration ($\approx+0.032$) and knowledge acquisition ($\approx+0.035$) favor self binding, whereas cooperation ($\approx-0.019$) and delayed reward ($\approx-0.030$) favor other binding. These analyses were not the original v0.5 preregistered primary test and are reported as exploratory.
+The v0.6 analysis adds bias $\beta$ toward the simulator-designated option in each SELF history. Because the designated option changes across the paired histories, the induced shift in the primary interaction is algebraically $2\beta$. We therefore retain this control as a software and scoring-pipeline sanity check, not as a behavioral positive control or as evidence that the model understands identity.
 
-\section{Additional artifacts}
+\section{Additional planned evidence checks}
 
-The supplementary repository contains frozen per-item records, corpus/evaluation manifests, generation samples used to diagnose format compliance, the v0.6 preregistration and benchmark hash, and the complete per-family matrices. Mechanistic probing is intentionally left outside the main evidential claim unless a separately specified analysis establishes a representational or causal result beyond the behavioral experiments reported here.
+Before the final supplementary artifact is frozen, the raw v0.6 outputs are checked for exactly 840 common item IDs and four SELF/OTHER $\times$ history variants per item. Reviewer-targeted reanalysis reports the primary base-versus-mixed contrast, a direct Qwen--Mistral checkpoint-family interaction with independent seed resampling, leave-one-seed-out estimates, family heterogeneity, ownership-induced argmax switch rates, absolute score changes, and per-variant score/entropy diagnostics. These analyses do not change the preregistered v0.6 primary estimand.
 
 \end{document}
