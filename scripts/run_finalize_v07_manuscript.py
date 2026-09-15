@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Run finalize_v07_manuscript with literal regex replacement strings for LaTeX."""
-import scripts.finalize_v07_manuscript as f
+import importlib.util
+from pathlib import Path
+
+path = Path(__file__).with_name("finalize_v07_manuscript.py")
+spec = importlib.util.spec_from_file_location("finalize_v07_manuscript", path)
+f = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(f)
 
 _orig_sub = f.re.sub
 
