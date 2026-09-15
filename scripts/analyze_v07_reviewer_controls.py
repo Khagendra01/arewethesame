@@ -1,4 +1,8 @@
-"""Aggregate v0.7 reviewer-control results across independent training seeds."""
+"""Aggregate v0.7 reviewer-control results across independent training seeds.
+
+Primary reporting uses eligible-token-mass scoring. Legacy max-over-token-realizations
+is aggregated as a scoring robustness analysis from the same inference outputs.
+"""
 from __future__ import annotations
 
 import argparse
@@ -22,6 +26,7 @@ METRICS = (
     "delta_control_entropy",
     "delta_policy_score",
 )
+CONVENTIONS = ("mass", "max")
 
 
 def load(path: Path) -> dict:
@@ -30,13 +35,19 @@ def load(path: Path) -> dict:
 
 def validate(payload: dict, label: str) -> list[str]:
     if payload["metadata"]["items"] != EXPECTED_ITEMS or len(payload["items"]) != EXPECTED_ITEMS:
-        raise ValueError(f"{label}: incomplete result set")
+        raise ValueError(f"{label}: incomplete")
+    for item_id, record in payload["items"].items():
+        if "metrics_mass" not in record or "metrics_max" not in record:
+            raise ValueError(f"{label}/{item_id}: missing scoring convention")
     return sorted(payload["items"])
 
 
-def matrix(payloads: list[dict], metric: str, ids: list[str]) -> np.ndarray:
+def matrix(payloads: list[dict], metric: str, ids: list[str], convention: str) -> np.ndarray:
     return np.array(
-        [[float(p["items"][i]["metrics"][metric]) for i in ids] for p in payloads],
+        [
+            [float(payload["items"][item_id][f"metrics_{convention}"][metric]) for item_id in ids]
+            for payload in payloads
+        ],
         dtype=float,
     )
 
@@ -45,9 +56,9 @@ def hierarchical_bootstrap(values: np.ndarray, n_boot: int, rng: np.random.Gener
     seeds, n = values.shape
     draws = np.empty(n_boot)
     for b in range(n_boot):
-        seed_idx = rng.integers(0, seeds, size=seeds)
-        item_idx = rng.integers(0, n, size=n)
-        draws[b] = values[seed_idx][:, item_idx].mean()
+        draws[b] = values[
+            rng.integers(0, seeds, size=seeds)
+        ][:, rng.integers(0, n, size=n)].mean()
     return {
         "mean": float(values.mean()),
         "ci95": [float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))],
@@ -55,8 +66,18 @@ def hierarchical_bootstrap(values: np.ndarray, n_boot: int, rng: np.random.Gener
     }
 
 
-def base_bootstrap(payload: dict, metric: str, ids: list[str], n_boot: int, rng: np.random.Generator) -> dict:
-    values = np.array([payload["items"][i]["metrics"][metric] for i in ids], dtype=float)
+def base_bootstrap(
+    payload: dict,
+    metric: str,
+    ids: list[str],
+    convention: str,
+    n_boot: int,
+    rng: np.random.Generator,
+) -> dict:
+    values = np.array(
+        [payload["items"][item_id][f"metrics_{convention}"][metric] for item_id in ids],
+        dtype=float,
+    )
     draws = np.empty(n_boot)
     for b in range(n_boot):
         draws[b] = values[rng.integers(0, len(values), size=len(values))].mean()
@@ -71,11 +92,12 @@ def architecture_interaction(
     mistral: list[dict],
     metric: str,
     ids: list[str],
+    convention: str,
     n_boot: int,
     rng: np.random.Generator,
 ) -> dict:
-    q = matrix(qwen, metric, ids)
-    m = matrix(mistral, metric, ids)
+    q = matrix(qwen, metric, ids, convention)
+    m = matrix(mistral, metric, ids, convention)
     q_seeds, n = q.shape
     m_seeds, _ = m.shape
     draws = np.empty(n_boot)
@@ -88,7 +110,7 @@ def architecture_interaction(
     return {
         "mean": float(q.mean() - m.mean()),
         "ci95": [float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))],
-        "note": "numeric seed labels are not paired; seed resampling is independent and item resampling is shared",
+        "note": "numeric seed labels are not paired; seeds are resampled independently and items are shared",
     }
 
 
@@ -112,49 +134,61 @@ def main() -> None:
         if common_ids is None:
             common_ids = ids
         elif ids != common_ids:
-            raise ValueError("Qwen and Mistral item-ID mismatch")
+            raise ValueError("architecture item-ID mismatch")
         data[arch] = (base, mixed, ids)
 
     result = {
         "benchmark": "locked_v07_reviewer_controls",
         "completeness": "PASS",
-        "architectures": {},
-        "qwen_minus_mistral": {},
+        "conventions": {},
     }
-    for arch, (base, mixed, ids) in data.items():
-        result["architectures"][arch] = {"base": {}, "mixed": {}, "per_family": {}}
+    for convention in CONVENTIONS:
+        block = {"architectures": {}, "qwen_minus_mistral": {}}
+        for arch, (base, mixed, ids) in data.items():
+            block["architectures"][arch] = {"base": {}, "mixed": {}, "per_family": {}}
+            for metric in METRICS:
+                block["architectures"][arch]["base"][metric] = base_bootstrap(
+                    base, metric, ids, convention, args.bootstrap, rng
+                )
+                block["architectures"][arch]["mixed"][metric] = hierarchical_bootstrap(
+                    matrix(mixed, metric, ids, convention), args.bootstrap, rng
+                )
+            families = sorted(set(mixed[0]["items"][i]["family"] for i in ids))
+            for family in families:
+                family_ids = [i for i in ids if mixed[0]["items"][i]["family"] == family]
+                block["architectures"][arch]["per_family"][family] = {
+                    metric: hierarchical_bootstrap(
+                        matrix(mixed, metric, family_ids, convention), args.bootstrap, rng
+                    )
+                    for metric in METRICS
+                }
         for metric in METRICS:
-            result["architectures"][arch]["base"][metric] = base_bootstrap(
-                base, metric, ids, args.bootstrap, rng
+            block["qwen_minus_mistral"][metric] = architecture_interaction(
+                data["qwen"][1],
+                data["mistral"][1],
+                metric,
+                common_ids,
+                convention,
+                args.bootstrap,
+                rng,
             )
-            result["architectures"][arch]["mixed"][metric] = hierarchical_bootstrap(
-                matrix(mixed, metric, ids), args.bootstrap, rng
-            )
-        families = sorted(set(mixed[0]["items"][i]["family"] for i in ids))
-        for family in families:
-            family_ids = [i for i in ids if mixed[0]["items"][i]["family"] == family]
-            result["architectures"][arch]["per_family"][family] = {
-                metric: hierarchical_bootstrap(matrix(mixed, metric, family_ids), args.bootstrap, rng)
-                for metric in METRICS
-            }
-
-    for metric in METRICS:
-        result["qwen_minus_mistral"][metric] = architecture_interaction(
-            data["qwen"][1], data["mistral"][1], metric, common_ids, args.bootstrap, rng
-        )
+        result["conventions"][convention] = block
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    primary = result["conventions"]["mass"]
     print(
         json.dumps(
             {
-                "qwen_primary": result["architectures"]["qwen"]["mixed"]["delta_ownership_sensitivity"],
-                "mistral_primary": result["architectures"]["mistral"]["mixed"]["delta_ownership_sensitivity"],
-                "qwen_vs_mistral": result["qwen_minus_mistral"]["delta_ownership_sensitivity"],
-                "qwen_order_interaction": result["architectures"]["qwen"]["mixed"]["ownership_by_order_interaction"],
-                "qwen_confidence_control": result["architectures"]["qwen"]["mixed"]["delta_control_margin"],
-                "qwen_irrelevant_control": result["architectures"]["qwen"]["mixed"]["delta_irrelevant_sensitivity"],
-                "qwen_self_vs_focal": result["architectures"]["qwen"]["mixed"]["delta_self_vs_focal_sensitivity"],
+                "primary_scoring": "eligible-token-mass",
+                "qwen_primary": primary["architectures"]["qwen"]["mixed"]["delta_ownership_sensitivity"],
+                "mistral_primary": primary["architectures"]["mistral"]["mixed"]["delta_ownership_sensitivity"],
+                "qwen_vs_mistral": primary["qwen_minus_mistral"]["delta_ownership_sensitivity"],
+                "qwen_order_interaction": primary["architectures"]["qwen"]["mixed"]["ownership_by_order_interaction"],
+                "qwen_confidence_control": primary["architectures"]["qwen"]["mixed"]["delta_control_margin"],
+                "qwen_irrelevant_control": primary["architectures"]["qwen"]["mixed"]["delta_irrelevant_sensitivity"],
+                "qwen_self_vs_focal": primary["architectures"]["qwen"]["mixed"]["delta_self_vs_focal_sensitivity"],
+                "legacy_max_primary_qwen": result["conventions"]["max"]["architectures"]["qwen"]["mixed"]["delta_ownership_sensitivity"],
             },
             indent=2,
         )
