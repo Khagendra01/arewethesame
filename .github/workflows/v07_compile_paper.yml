@@ -1,0 +1,37 @@
+name: v07 compile final paper
+
+on:
+  push:
+    branches:
+      - v07/reviewer-controls
+    paths:
+      - '.github/workflows/v07_compile_paper.yml'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v07/reviewer-controls
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-bibtex-extra
+      - name: Compile
+        working-directory: paper
+        run: |
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          bibtex main
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdfinfo main.pdf | tee pdfinfo.txt
+          grep -E 'Overfull|Underfull|LaTeX Warning|Citation.*undefined|Reference.*undefined' main.log > warnings.txt || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v07-final-paper
+          path: |
+            paper/main.pdf
+            paper/main.log
+            paper/pdfinfo.txt
+            paper/warnings.txt
