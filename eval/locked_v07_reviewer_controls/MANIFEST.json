@@ -1,0 +1,31 @@
+{
+  "benchmark": "locked_v07_reviewer_controls",
+  "seed": 70917,
+  "items": 320,
+  "per_family": 80,
+  "families": [
+    "capacity",
+    "reliability",
+    "horizon",
+    "evidence_quality"
+  ],
+  "sha256_items": "d4960832076326ba5ed31ff3664095dea8c916ea3fabf7e482bcde8207f5cc7a",
+  "provider_used": false,
+  "conditions": [
+    "self_first",
+    "self_second",
+    "other_first",
+    "other_second",
+    "focal_first",
+    "focal_second"
+  ],
+  "primary": "ownership effect on counterfactual log-odds sensitivity averaged across owner header order",
+  "controls": [
+    "owner header order",
+    "focal non-self agent",
+    "current-facts-only confidence",
+    "irrelevant metadata counterfactual"
+  ],
+  "primary_scoring": "eligible single-token option mass via log-sum-exp, normalized across A/B/C",
+  "robustness_scoring": "legacy max over eligible token realizations, normalized across A/B/C"
+}

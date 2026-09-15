@@ -1,0 +1,37 @@
+name: v07 finalize manuscript
+
+on:
+  push:
+    branches:
+      - v07/reviewer-controls
+    paths:
+      - 'scripts/finalize_v07_manuscript.py'
+      - 'scripts/run_finalize_v07_manuscript.py'
+      - '.github/workflows/v07_finalize_manuscript.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v07/reviewer-controls
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Synchronize manuscript to audited v0.7 results
+        run: python scripts/run_finalize_v07_manuscript.py
+      - name: Commit final manuscript sync
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add paper/main.tex paper/openreview_abstract.txt \
+                  eval/locked_v07_reviewer_controls/RESULTS_v07.md \
+                  docs/FINAL_STATISTICAL_AUDIT_V07.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Synchronize ICLR manuscript with audited v0.7 statistics'
+            git push origin HEAD:v07/reviewer-controls
+          fi
