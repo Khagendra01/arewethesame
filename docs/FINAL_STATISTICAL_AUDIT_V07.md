@@ -1,0 +1,58 @@
+# Final statistical audit — v0.7
+
+**Status:** blocking promotion of the v0.7 manuscript until the corrected CPU-only contrast analysis is run.
+
+The frozen inference outputs are intact. No model inference needs to be rerun.
+
+## Issue found
+
+The original `scripts/v07_contrasts.py` pooled the five mixed-adapter seeds at the item level and then bootstrapped only latent items. This understates uncertainty for quantities involving mixed adapters and conflicts with the v0.7 preregistration, which requires crossed resampling of both training seeds and latent items.
+
+The preregistered aggregator `scripts/analyze_v07_reviewer_controls.py` correctly resamples seeds and items. Its `summary.json` therefore takes precedence for pooled mixed and Qwen-minus-Mistral intervals already present there.
+
+Concrete example:
+
+- Qwen mixed `delta_self_vs_focal_sensitivity` point estimate: approximately `-0.048`.
+- Correct hierarchical interval in `outputs/summary.json`: approximately `[-0.213, +0.155]`.
+- The older item-only contrast report gave a narrower interval and must not be used for inferential claims.
+
+Likewise, the direct mixed Qwen-minus-Mistral `delta_self_vs_focal_sensitivity` interval in the hierarchical summary spans zero, so the manuscript must not claim that this checkpoint-family interaction is established.
+
+## Fix
+
+`v07_contrasts.py` has been replaced with a corrected analysis that:
+
+1. resamples the five mixed training seeds with replacement;
+2. resamples latent item IDs with replacement;
+3. preserves all identity/order/history variants for each sampled item;
+4. pairs the base checkpoint on the same sampled items for mixed-minus-base contrasts;
+5. resamples Qwen and Mistral seed sets independently for direct mixed checkpoint-family interactions;
+6. applies the same hierarchical rule to the leave-one-out and per-family mixed analyses.
+
+## Run
+
+From the repository root on `v07/reviewer-controls`:
+
+```bash
+python scripts/v07_contrasts.py
+```
+
+This overwrites:
+
+- `eval/locked_v07_reviewer_controls/CONTRASTS.txt`
+
+and creates:
+
+- `eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json`
+
+No GPU, model loading, or new inference is performed.
+
+## Manuscript rule
+
+Until the corrected output is committed:
+
+- use `outputs/summary.json` for pooled mixed and direct Qwen-minus-Mistral intervals;
+- do not use old `CONTRASTS.txt` CIs for mixed-minus-base, pooled leave-one-out, or mixed per-family significance;
+- base-checkpoint item-bootstrap intervals remain valid because there is only one base checkpoint realization per model family.
+
+After the corrected output is committed, synchronize every manuscript CI to `CONTRASTS_HIERARCHICAL.json` / `outputs/summary.json`, then promote the validated snapshot to `paper/iclr2027-draft`.
