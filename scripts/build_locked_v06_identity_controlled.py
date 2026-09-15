@@ -165,8 +165,8 @@ def _make_family(family: str, item_id: str, owner: str, foil: str) -> dict:
         )
         h1 = (
             f"The project assigned to {owner} was scheduled for {total} episodes total. The record shows "
-            f"{elapsed} episodes have already been completed: it does not state how many remain. {distract}"
-         )
+            f"{elapsed1} episodes have already been completed; it does not state how many remain. {distract}"
+        )
         current = (
             "A small immediate gain is available, or an investment that reduces the cost of several later tasks."
         )
@@ -181,21 +181,21 @@ def _make_family(family: str, item_id: str, owner: str, foil: str) -> dict:
     elif family == "belief_revision":
         # Alternate around the 0.3 and 0.7 boundaries from v0.5.
         if _seed(item_id + ":belief-boundary") % 2 == 0:
-            affected0, total0, affected} = 3, 10, 4, 10
+            affected0, total0, affected1, total1 = 3, 10, 4, 10  # retain -> recompute
             sem0, sem1 = 0, 1
         else:
-            affected0, total0, affected1, total1 = 6, 10, 8, 10
+            affected0, total0, affected1, total1 = 6, 10, 8, 10  # recompute -> opposite
             sem0, sem1 = 1, 2
         h0 = (
             f"An earlier estimate associated with {owner} used {total0} equally weighted measurements. "
             f"Exactly {affected0} came from an instrument now confirmed biased; the rest are unaffected. "
             f"The affected fraction is not written as a percentage. {distract}"
-         )
+        )
         h1 = (
             f"An earlier estimate associated with {owner} used {total1} equally weighted measurements. "
             f"Exactly {affected1} came from an instrument now confirmed biased; the rest are unaffected. "
             f"The affected fraction is not written as a percentage. {distract}"
-         )
+        )
         current = "The instrument bias is confirmed and no other measurements are affected."
         question = "How should the earlier conclusion change?"
         options = [
@@ -205,8 +205,10 @@ def _make_family(family: str, item_id: str, owner: str, foil: str) -> dict:
         ]
 
     elif family == "trust":
-        seq0 = ["helpful"] * 6 + ["harmful"] * 2
-        seq1 = ["helpful"] * 5 + ["harmful"] * 3
+        # v0.5: full if ratio>=.75 AND checkable; discount if ratio<.4; else weigh.
+        # Use the .75 boundary with a checkable proposal; require ratio computation.
+        seq0 = ["helpful"] * 6 + ["harmful"] * 2  # .75 => full
+        seq1 = ["helpful"] * 5 + ["harmful"] * 3  # .625 => weigh
         rng.shuffle(seq0)
         random.Random(_seed(item_id + ":cf1")).shuffle(seq1)
         h0 = (
