@@ -135,7 +135,7 @@ def main(arch: str = "all"):
     elif arch == "mistral":
         evaluate_arch.remote("mistral")
     elif arch == "analyze":
-        analye_results.remote()
+        analyze_results.remote()
     elif arch == "all":
         evaluate_arch.remote("qwen")
         evaluate_arch.remote("mistral")
