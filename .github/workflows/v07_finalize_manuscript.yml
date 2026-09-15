@@ -6,6 +6,7 @@ on:
       - v07/reviewer-controls
     paths:
       - 'scripts/finalize_v07_manuscript.py'
+      - 'scripts/run_finalize_v07_manuscript.py'
       - '.github/workflows/v07_finalize_manuscript.yml'
 
 permissions:
@@ -22,7 +23,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Synchronize manuscript to audited v0.7 results
-        run: python scripts/finalize_v07_manuscript.py
+        run: python scripts/run_finalize_v07_manuscript.py
       - name: Commit final manuscript sync
         run: |
           git config user.name 'github-actions[bot]'
