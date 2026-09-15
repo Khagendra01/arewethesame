@@ -33,34 +33,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Apply final title layout fix
+      - name: Apply final manuscript wording and title fixes
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('paper/main.tex')
           text = p.read_text()
-          old = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from \mbox{Focal-Agent Effects}}'
-          new = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from\\Focal-Agent Effects}'
-          if old in text:
-              p.write_text(text.replace(old, new, 1))
+
+          old_title = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from \mbox{Focal-Agent Effects}}'
+          new_title = r'\title{Does Assigned Identity Change How Language Models Use History?\\Separating Self-Binding from\\Focal-Agent Effects}'
+          if old_title in text:
+              text = text.replace(old_title, new_title, 1)
               print('Applied title layout fix.')
-          elif new in text:
+          elif new_title in text:
               print('Title layout fix already present.')
           else:
               raise SystemExit('Expected title string not found; refusing an unsafe automatic edit.')
+
+          old_wording = 'mixed training changes this decomposition without increasing the total effect;'
+          new_wording = 'mixed training changes this decomposition without a detectable increase in the total effect;'
+          if old_wording in text:
+              text = text.replace(old_wording, new_wording, 1)
+              print('Applied total-effect wording fix.')
+          elif new_wording in text:
+              print('Total-effect wording fix already present.')
+          else:
+              raise SystemExit('Expected contribution wording not found; refusing an unsafe automatic edit.')
+
+          p.write_text(text)
           PY
           if ! git diff --quiet -- paper/main.tex; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add paper/main.tex
-            git commit -m 'Polish submission title line breaks'
+            git commit -m 'Tighten final statistical wording'
             git push origin HEAD:paper/iclr2027-draft
           fi
 
-      - name: Install LaTeX and packaging tools
+      - name: Install LaTeX and analysis tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-bibtex-extra poppler-utils zip
+          sudo apt-get install -y -qq texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-bibtex-extra poppler-utils zip unzip
+          python3 -m pip install --quiet numpy
 
       - name: Compile paper
         working-directory: paper
@@ -100,9 +114,11 @@ jobs:
 
           These materials accompany the double-blind submission "Does Assigned Identity Change How Language Models Use History? Separating Self-Binding from Focal-Agent Effects."
 
-          Included are frozen preregistrations, deterministic benchmark-generation and evaluation code, the regenerated v0.7 benchmark with its frozen hash, aggregate and per-seed summaries, the hierarchical contrast analysis, and representative generation samples used for format-compliance diagnostics.
+          Included are frozen preregistrations, deterministic benchmark-generation and evaluation code, the regenerated v0.7 benchmark with its frozen hash, all 12 frozen per-item Qwen/Mistral result JSONs, aggregate and per-seed summaries, the hierarchical contrast analysis, and representative generation samples used for format-compliance diagnostics.
 
           The v0.7 preregistration specified 5,000 crossed hierarchical bootstrap draws. The final reported analysis uses 10,000 draws to reduce Monte Carlo error; the resampling scheme and estimands are unchanged. Both preregistered token-scoring conventions are stored in `eval/locked_v07_reviewer_controls/outputs/summary.json`.
+
+          To reproduce the reported crossed hierarchical contrasts without GPU inference, run `python3 scripts/v07_contrasts.py` from the root of this extracted archive. The packaging CI reruns this command from the extracted ZIP and requires its JSON and text outputs to match the frozen contrast files exactly.
 
           Package/project identifiers from the development repository are replaced with generic anonymous names in this archive. No Git history, repository URL, author name, email address, or account identifier is included.
           EOF
@@ -119,6 +135,9 @@ jobs:
           cp eval/locked_v07_reviewer_controls/CONTRASTS.txt anonymous_supplement/eval/locked_v07_reviewer_controls/
           cp eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json anonymous_supplement/eval/locked_v07_reviewer_controls/
           cp eval/locked_v07_reviewer_controls/outputs/summary.json anonymous_supplement/eval/locked_v07_reviewer_controls/outputs/
+          cp -R eval/locked_v07_reviewer_controls/outputs/qwen \
+                eval/locked_v07_reviewer_controls/outputs/mistral \
+                anonymous_supplement/eval/locked_v07_reviewer_controls/outputs/
           cp eval/locked_v04_contextual/results_v04/generation_samples.json anonymous_supplement/eval/locked_v04_contextual/results_v04/
 
           cp scripts/build_locked_v07_reviewer_controls.py anonymous_supplement/scripts/
@@ -138,7 +157,7 @@ jobs:
             mv anonymous_supplement/src/arewethesame anonymous_supplement/src/identity_history
           fi
           while IFS= read -r -d '' f; do
-            if grep -Iq . "$f"; then
+            if grep -Iq . "$f" && grep -Eqi 'AREWETHESAME|AreWeTheSame|arewethesame|Khagendra|khagendra|Khatri|khatri' "$f"; then
               sed -i \
                 -e 's/AREWETHESAME/IDENTITY_HISTORY/g' \
                 -e 's/AreWeTheSame/IdentityHistory/g' \
@@ -167,6 +186,30 @@ jobs:
           find anonymous_supplement -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > anonymous_supplement/SHA256SUMS.txt
           zip -qr anonymous_supplement.zip anonymous_supplement
           unzip -l anonymous_supplement.zip | tee supplement_contents.txt
+
+      - name: Reproduce frozen v0.7 contrasts from extracted supplement
+        run: |
+          rm -rf /tmp/v07_supp_repro
+          mkdir -p /tmp/v07_supp_repro
+          unzip -q anonymous_supplement.zip -d /tmp/v07_supp_repro
+          cd /tmp/v07_supp_repro/anonymous_supplement
+          cp eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json /tmp/v07_expected.json
+          cp eval/locked_v07_reviewer_controls/CONTRASTS.txt /tmp/v07_expected.txt
+          python3 scripts/v07_contrasts.py \
+            --root eval/locked_v07_reviewer_controls/outputs \
+            --json-output /tmp/v07_recomputed.json \
+            --text-output /tmp/v07_recomputed.txt \
+            --bootstrap 10000 \
+            --seed 70917
+          cmp /tmp/v07_expected.json /tmp/v07_recomputed.json
+          cmp /tmp/v07_expected.txt /tmp/v07_recomputed.txt
+          echo 'Packaged supplement reproduces frozen v0.7 contrast outputs exactly.'
+
+      - name: Enforce OpenReview supplement size limit
+        run: |
+          SIZE=$(stat -c%s anonymous_supplement.zip)
+          echo "anonymous_supplement.zip bytes: ${SIZE}"
+          test "${SIZE}" -lt 104857600
 
       - name: Upload submission artifacts
         uses: actions/upload-artifact@v4
