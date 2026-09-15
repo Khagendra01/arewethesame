@@ -81,6 +81,11 @@ def evaluate_arch(arch: str):
     if arch not in ARCH:
         raise ValueError(arch)
     build_and_verify()
+    _evaluate_arch_jobs(arch)
+    print(f"{arch} v0.7 complete", flush=True)
+
+
+def _evaluate_arch_jobs(arch: str) -> None:
     cfg = ARCH[arch]
     arch_out = f"{OUT_ROOT}/{arch}"
     jobs = [("base", None)] + [
@@ -103,11 +108,9 @@ def evaluate_arch(arch: str):
         print("+ " + " ".join(cmd), flush=True)
         subprocess.run(cmd, check=True, cwd=REPO_ROOT)
         out_vol.commit()
-    print(f"{arch} v0.7 complete", flush=True)
 
 
-@app.function(timeout=1800, volumes={"/outputs": out_vol})
-def analyze_results():
+def _analyze_results_local() -> None:
     cmd = [
         "python", "-u",
         f"{REPO_ROOT}/scripts/analyze_v07_reviewer_controls.py",
@@ -119,6 +122,28 @@ def analyze_results():
     subprocess.run(cmd, check=True, cwd=REPO_ROOT)
     out_vol.commit()
     print(f"summary: {OUT_ROOT}/summary.json", flush=True)
+
+
+@app.function(
+    gpu="L4",
+    timeout=21600,
+    volumes={"/outputs": out_vol, "/root/.cache/huggingface": hf_vol},
+)
+def run_all():
+    """Single durable job: qwen -> mistral -> analyze, per-stage commits."""
+    build_and_verify()
+    _evaluate_arch_jobs("qwen")
+    print("qwen v0.7 complete", flush=True)
+    _evaluate_arch_jobs("mistral")
+    print("mistral v0.7 complete", flush=True)
+    _analyze_results_local()
+    print("v0.7 run_all complete", flush=True)
+    return "done"
+
+
+@app.function(timeout=1800, volumes={"/outputs": out_vol})
+def analyze_results():
+    _analyze_results_local()
 
 
 @app.local_entrypoint()
