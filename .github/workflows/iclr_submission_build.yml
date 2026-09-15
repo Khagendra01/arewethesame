@@ -1,0 +1,132 @@
+name: ICLR submission build
+
+on:
+  push:
+    branches:
+      - paper/iclr2027-draft
+    paths:
+      - '.github/workflows/iclr_submission_build.yml'
+      - 'paper/**'
+      - 'docs/PREREGISTRATION_*.md'
+      - 'docs/FINAL_STATISTICAL_AUDIT_V07.md'
+      - 'eval/locked_v07_reviewer_controls/**'
+      - 'eval/locked_v04_contextual/results_v04/generation_samples.json'
+      - 'scripts/build_locked_v07_reviewer_controls.py'
+      - 'scripts/build_v05_corpus.py'
+      - 'scripts/eval_v07_reviewer_controls.py'
+      - 'scripts/analyze_v07_reviewer_controls.py'
+      - 'scripts/v07_contrasts.py'
+      - 'scripts/train_condition_lora.py'
+      - 'modal_train_v05.py'
+      - 'modal_train_mistral.py'
+      - 'modal_eval_v07.py'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'requirements-train.txt'
+
+jobs:
+  build-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LaTeX and packaging tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-bibtex-extra poppler-utils zip
+
+      - name: Compile paper
+        working-directory: paper
+        run: |
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          bibtex main
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdfinfo main.pdf | tee pdfinfo.txt
+          grep -E 'Overfull|Underfull|LaTeX Warning|Citation.*undefined|Reference.*undefined' main.log > warnings.txt || true
+          if grep -Eq 'Citation.*undefined|Reference.*undefined' warnings.txt; then
+            echo 'Undefined citation/reference detected.' >&2
+            cat warnings.txt >&2
+            exit 1
+          fi
+
+      - name: Build frozen v0.7 benchmark for supplement
+        run: |
+          rm -rf /tmp/v07_verify
+          python3 scripts/build_locked_v07_reviewer_controls.py --out /tmp/v07_verify --per-family 80
+          ACTUAL=$(sha256sum /tmp/v07_verify/items.jsonl | awk '{print $1}')
+          EXPECTED=d4960832076326ba5ed31ff3664095dea8c916ea3fabf7e482bcde8207f5cc7a
+          echo "items.jsonl sha256: ${ACTUAL}"
+          test "${ACTUAL}" = "${EXPECTED}"
+
+      - name: Assemble anonymous supplement
+        run: |
+          rm -rf anonymous_supplement anonymous_supplement.zip
+          mkdir -p anonymous_supplement/docs
+          mkdir -p anonymous_supplement/eval/locked_v07_reviewer_controls/outputs
+          mkdir -p anonymous_supplement/eval/locked_v04_contextual/results_v04
+          mkdir -p anonymous_supplement/scripts
+
+          cat > anonymous_supplement/README.md <<'EOF'
+          # Anonymous supplementary materials
+
+          These materials accompany the double-blind submission "Does Assigned Identity Change How Language Models Use History? Separating Self-Binding from Focal-Agent Effects."
+
+          Included are frozen preregistrations, deterministic benchmark-generation and evaluation code, the regenerated v0.7 benchmark with its frozen hash, aggregate and per-seed summaries, the hierarchical contrast analysis, and representative generation samples used for format-compliance diagnostics.
+
+          The v0.7 preregistration specified 5,000 crossed hierarchical bootstrap draws. The final reported analysis uses 10,000 draws to reduce Monte Carlo error; the resampling scheme and estimands are unchanged. Both preregistered token-scoring conventions are stored in `eval/locked_v07_reviewer_controls/outputs/summary.json`.
+
+          No Git history, repository URL, author name, email address, or account identifier is included in this archive.
+          EOF
+
+          cp docs/PREREGISTRATION_V05.md anonymous_supplement/docs/
+          cp docs/PREREGISTRATION_V06.md anonymous_supplement/docs/
+          cp docs/PREREGISTRATION_V07_REVIEWER_CONTROLS.md anonymous_supplement/docs/
+          cp docs/PREREGISTRATION_MISTRAL.md anonymous_supplement/docs/
+          cp docs/FINAL_STATISTICAL_AUDIT_V07.md anonymous_supplement/docs/
+
+          cp /tmp/v07_verify/items.jsonl anonymous_supplement/eval/locked_v07_reviewer_controls/
+          cp /tmp/v07_verify/MANIFEST.json anonymous_supplement/eval/locked_v07_reviewer_controls/
+          cp eval/locked_v07_reviewer_controls/RESULTS_v07.md anonymous_supplement/eval/locked_v07_reviewer_controls/
+          cp eval/locked_v07_reviewer_controls/CONTRASTS.txt anonymous_supplement/eval/locked_v07_reviewer_controls/
+          cp eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json anonymous_supplement/eval/locked_v07_reviewer_controls/
+          cp eval/locked_v07_reviewer_controls/outputs/summary.json anonymous_supplement/eval/locked_v07_reviewer_controls/outputs/
+          cp eval/locked_v04_contextual/results_v04/generation_samples.json anonymous_supplement/eval/locked_v04_contextual/results_v04/
+
+          cp scripts/build_locked_v07_reviewer_controls.py anonymous_supplement/scripts/
+          cp scripts/build_v05_corpus.py anonymous_supplement/scripts/
+          cp scripts/eval_v07_reviewer_controls.py anonymous_supplement/scripts/
+          cp scripts/analyze_v07_reviewer_controls.py anonymous_supplement/scripts/
+          cp scripts/v07_contrasts.py anonymous_supplement/scripts/
+          cp scripts/train_condition_lora.py anonymous_supplement/scripts/
+          cp modal_train_v05.py anonymous_supplement/
+          cp modal_train_mistral.py anonymous_supplement/
+          cp modal_eval_v07.py anonymous_supplement/
+          cp -R src anonymous_supplement/
+          cp pyproject.toml requirements-train.txt anonymous_supplement/
+
+          if find anonymous_supplement -type f -print | grep -Eqi 'khagendra|khatri'; then
+            echo 'Potential author identifier in supplement filename.' >&2
+            exit 1
+          fi
+
+          if grep -RIniE 'khagendra|khatri|khagendrakhatridev|github\.com/Khagendra01|@gmail\.com' anonymous_supplement; then
+            echo 'Potential author identifier found in supplement content.' >&2
+            exit 1
+          fi
+
+          find anonymous_supplement -type f -print0 | sort -z | xargs -0 sha256sum > anonymous_supplement/SHA256SUMS.txt
+          zip -qr anonymous_supplement.zip anonymous_supplement
+          unzip -l anonymous_supplement.zip | tee supplement_contents.txt
+
+      - name: Upload submission artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: iclr-submission-ready
+          path: |
+            paper/main.pdf
+            paper/main.log
+            paper/pdfinfo.txt
+            paper/warnings.txt
+            anonymous_supplement.zip
+            supplement_contents.txt
