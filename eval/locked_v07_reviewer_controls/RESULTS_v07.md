@@ -49,3 +49,8 @@ Per-family and leave-one-family-out analyses are exploratory, as preregistered.
 - `CONTRASTS_HIERARCHICAL.json`: corrected 10,000-draw hierarchical contrasts, including mixed-minus-base and leave-one-out analyses.
 - `CONTRASTS.txt`: human-readable rendering of the corrected hierarchical contrasts.
 - `scripts/v07_contrasts.py`: reproducible CPU-only analysis; no model inference.
+
+
+## 2026-09-17 submission revision
+
+The preregistered v0.7 primary estimates and frozen per-item outputs are unchanged. A post-hoc exploratory CPU-only diagnostics pass was added for submission clarity: absolute designated-option scores, hard policy agreement, absolute S sensitivity, matched SELF--OTHER/SELF--FOCAL decision-switch rates, scoring-convention token checks, and leave-one-training-seed-out point estimates. These diagnostics do not replace or redefine the preregistered analysis. The paper now explicitly treats SELF--FOCAL as an operational residual because FOCAL is evaluation-only and also changes the assistant to an outside-evaluator role.

@@ -46,3 +46,15 @@
 - [x] Confidence controls are described as evidence against the simplest uniform-sharpening account, not proof of a mechanism.
 - [x] No architectural causal claim is made from the Qwen–Mistral checkpoint comparison.
 - [x] No consciousness/phenomenology claim is made.
+
+
+## 2026-09-17 submission revision
+
+- [x] Preserve frozen v0.7 items, raw outputs, primary estimates, and preregistration.
+- [x] Define all four task families, option scoring, counterfactual statistic, current-facts margin, and irrelevant-metadata control precisely.
+- [x] Add role/exposure caveat for FOCAL and shared-recipe caveat for cross-checkpoint comparison.
+- [x] Add actual recoverable training/evaluation settings and disclose unavailable revision/version metadata.
+- [x] Add post-hoc CPU-only absolute-performance, matched-switch, and leave-one-training-seed-out diagnostics.
+- [x] Remove 95%-CI triple-star notation and label scoring conventions in result tables.
+- [ ] Final artifact hashes and extracted-ZIP verification: recorded in the CI-generated revision-and-verification report for the final commit.
+- [ ] OpenReview PDF/supplement upload and author attestations: author action only.
