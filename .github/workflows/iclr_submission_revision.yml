@@ -9,6 +9,7 @@ on:
       - 'paper/**'
       - 'scripts/apply_iclr2027_revision.py'
       - 'scripts/analyze_v07_submission_diagnostics.py'
+      - 'scripts/build_iclr2027_revision_release.py'
       - 'scripts/build_v04_corpus.py'
       - 'scripts/build_v05_corpus.py'
       - 'scripts/build_locked_v07_reviewer_controls.py'
@@ -30,7 +31,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   revised-submission:
@@ -40,15 +41,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Apply scoped manuscript revision
+      - name: Assert scoped revision is fully materialized
         run: |
           python3 scripts/apply_iclr2027_revision.py
-          if ! git diff --quiet -- paper/main.tex paper/references.bib paper/openreview_abstract.txt paper/SUBMISSION_CHECKLIST.md eval/locked_v07_reviewer_controls/RESULTS_v07.md; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add paper/main.tex paper/references.bib paper/openreview_abstract.txt paper/SUBMISSION_CHECKLIST.md eval/locked_v07_reviewer_controls/RESULTS_v07.md
-            git commit -m 'Revise ICLR methods clarity and bounded diagnostics'
-            git push origin HEAD:paper/iclr2027-draft
+          if ! git diff --quiet; then
+            echo 'Revision applicator changed tracked source; final commit is incomplete.' >&2
+            git diff --stat >&2
+            exit 1
           fi
 
       - name: Install CPU build dependencies
@@ -56,7 +55,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
             texlive-latex-base texlive-latex-recommended texlive-fonts-recommended \
-            texlive-bibtex-extra poppler-utils mupdf-tools zip unzip
+            texlive-bibtex-extra poppler-utils mupdf-tools binutils zip unzip
           python3 -m pip install --quiet 'numpy==2.3.5'
           python3 - <<'PY'
           import sys, numpy
@@ -64,23 +63,21 @@ jobs:
           print('numpy', numpy.__version__)
           PY
 
-      - name: Verify frozen source inputs
+      - name: Verify frozen v0.5 and v0.7 source inputs
         run: |
-          rm -rf /tmp/v07_verify
+          rm -rf /tmp/v07_verify /tmp/v05_verify
           python3 scripts/build_locked_v07_reviewer_controls.py --out /tmp/v07_verify --per-family 80 > /tmp/v07_build.json
           ACTUAL=$(sha256sum /tmp/v07_verify/items.jsonl | awk '{print $1}')
           EXPECTED=d4960832076326ba5ed31ff3664095dea8c916ea3fabf7e482bcde8207f5cc7a
           echo "v0.7 items sha256: ${ACTUAL}"
           test "${ACTUAL}" = "${EXPECTED}"
           test "$(wc -l < /tmp/v07_verify/items.jsonl)" -eq 320
-
-          rm -rf /tmp/v05_verify
           python3 scripts/build_v05_corpus.py --out /tmp/v05_verify --per-family 400 > /tmp/v05_build.json
           cmp experiments/assistant_v05_seed202/report.json /tmp/v05_verify/report.json
           cmp experiments/assistant_v05_seed202/sha256.json /tmp/v05_verify/sha256.json
           echo 'Frozen v0.5 report and sha256 manifest reproduced exactly.'
 
-      - name: Run post-hoc submission diagnostics on frozen outputs
+      - name: Run post-hoc CPU diagnostics on frozen outputs
         run: |
           rm -rf revision_diagnostics
           python3 scripts/analyze_v07_submission_diagnostics.py \
@@ -89,7 +86,7 @@ jobs:
             --bootstrap 10000 \
             --seed 20260917
           python3 - <<'PY'
-          import json, math
+          import json
           d=json.load(open('revision_diagnostics/submission_diagnostics.json'))
           checks={
             ('qwen','mixed','self','mean_designated_score'):0.6494,
@@ -112,12 +109,12 @@ jobs:
           print('Manuscript exploratory diagnostics verified against generated output.')
           PY
 
-      - name: Compile final ICLR paper
+      - name: Compile final anonymous ICLR PDF
         working-directory: paper
         env:
           SOURCE_DATE_EPOCH: '1790000000'
         run: |
-          rm -f main.aux main.bbl main.blg main.log main.out main.pdf
+          rm -f main.aux main.bbl main.blg main.log main.out main.pdf main.txt
           pdflatex -interaction=nonstopmode -halt-on-error main.tex
           bibtex main
           pdflatex -interaction=nonstopmode -halt-on-error main.tex
@@ -140,100 +137,42 @@ jobs:
             exit 1
           fi
 
-      - name: Assemble self-contained anonymous supplement
+      - name: Build and verify final release package
         run: |
-          rm -rf anonymous_supplement anonymous_supplement.zip
-          mkdir -p anonymous_supplement/{docs,scripts,experiments/assistant_v05_seed202,eval/locked_v07_reviewer_controls/outputs,eval/locked_v04_contextual/results_v04,src}
+          python3 scripts/build_iclr2027_revision_release.py \
+            --dist dist_iclr_revision \
+            --diagnostics revision_diagnostics \
+            --v07-rebuilt /tmp/v07_verify \
+            --commit "$GITHUB_SHA"
+          test -f dist_iclr_revision/arewethesame_iclr2027_submission_revised.pdf
+          test -f dist_iclr_revision/arewethesame_iclr2027_anonymous_supplement_revised.zip
+          test -f dist_iclr_revision/arewethesame_iclr2027_source_revised.zip
+          test -f dist_iclr_revision/iclr2027_openreview_fields_revised.txt
+          test -f dist_iclr_revision/iclr2027_revision_and_verification_report.md
+          sha256sum \
+            dist_iclr_revision/arewethesame_iclr2027_submission_revised.pdf \
+            dist_iclr_revision/arewethesame_iclr2027_anonymous_supplement_revised.zip \
+            dist_iclr_revision/arewethesame_iclr2027_source_revised.zip \
+            dist_iclr_revision/iclr2027_openreview_fields_revised.txt \
+            dist_iclr_revision/iclr2027_revision_and_verification_report.md | tee dist_iclr_revision/DELIVERABLE_SHA256SUMS.txt
 
-          cat > anonymous_supplement/README.md <<'EOF'
-          # Anonymous supplementary materials
-
-          These files accompany the anonymous ICLR 2027 submission "Does Assigned Identity Change How Language Models Use History? Separating Self-Binding from Focal-Agent Effects."
-
-          ## CPU-only reproduction
-
-          Python 3.11+ is sufficient for the stored-statistics checks. Install the pinned dependency:
-
-              python -m pip install -r requirements-cpu.txt
-
-          From the extracted `anonymous_supplement/` directory:
-
-              sha256sum -c SHA256SUMS.txt
-              python scripts/build_locked_v07_reviewer_controls.py --out /tmp/v07_rebuilt --per-family 80
-            sha256sum /tmp/v07_rebuilt/items.jsonl
-            python3 scripts/build_v05_corpus.py --out /tmp/v05_rebuilt --per-family 400
-            cmp experiments/assistant_v05_seed202/report.json /tmp/v05_rebuilt/report.json
-            cmp experiments/assistant_v05_seed202/sha256.json /tmp/v05_rebuilt/sha256.json
-            python3 scripts/v07_contrasts.py --root eval/locked_v07_reviewer_controls/outputs --json-output /tmp/contrasts.json --text-output /tmp/contrasts.txt --bootstrap 10000 --seed 70917
-            cmp eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json /tmp/contrasts.json
-            cmp eval/locked_v07_reviewer_controls/CONTRASTS.txt /tmp/contrasts.txt
-            python scripts/analyze_v07_submission_diagnostics.py --root eval/locked_v07_reviewer_controls/outputs --out-dir /tmp/submission_diag --bootstrap 10000 --seed 20260917
-            cmp eval/locked_v07_reviewer_controls/submission_diagnostics/submission_diagnostics.json /tmp/submission_diag/submission_diagnostics.json
-
-          The first v0.7 hash must be `d4960832076326ba5ed31ff3664095dea8c916ea3fabf7e482bcde8207f5cc7a`.
-
-          No GTU, model download, Modal account, API key, or paid provider is needed for these CPU-only checks. GTU training/evaluation runners are included only to document the original procedure.
-
-          ## Contents
-
-          The archive includes unchanged preregistrations; the deterministic v0.5 and v0.7 builders and dependency closure; v0.5 frozen report/hash manifest; all 12 frozen Qwen/Mistral per-item v0.7 output JSONs; authoritative summary/contrast files; the exploratory 2026-09-17 submission diagnostics and script; complete task examples; settings/environment notes; and package checksums.
-
-          The v0.7 preregistration specified 5,000 crossed bootstrap draws. The final primary analysis uses 10,000 draws with the same estimands/resampling structure to reduce Monte Carlo noise. The post-hoc submission diagnostics use 10,000 draws with RNG seed 20260917 and are labeled exploratory.
-          EOF
-
-          cat > anonymous_supplement/requirements-cpu.txt <<'EOF'
-          numpy==2.3.5
-          EOF
-
-          {
-            echo "Built by GitHub Actions on an Ubuntu runner"
-            python3 -V
-            python3 - <<'PY'
-          import numpy, platform
-          print('numpy', numpy.__version__)
-          print('platform', platform.platform())
-          PY
-          } > anonymous_supplement/BUILD_ENVIRONMENT.txt
-
-          cp docs/PREREGISTRATION_V05.md anonymous_supplement/docs/
-          cp docs/PREREGISTRATION_V06.md anonymous_supplement/docs/
-          cp docs/PREREGISTRATION_V07_REVIEWER_CONTROLS.md anonymous_supplement/docs/
-          cp docs/PREREGISTRATION_MISTRAL.md anonymous_supplement/docs/
-          cp docs/FINAL_STATISTICAL_AUDIT_V07.md anonymous_supplement/docs/
-
-          cp experiments/assistant_v05_seed202/report.json anonymous_supplement/experiments/assistant_v05_seed202/
-          cp experiments/assistant_v05_seed202/sha256.json anonymous_supplement/experiments/assistant_v05_seed202/
-          cp /tmp/v07_verify/items.jsonl anonymous_supplement/eval/locked_v07_reviewer_controls/
-          cp /tmp/v07_verify/MANIFEST.json anonymous_supplement/eval/locked_v07_reviewer_controls/
-          cp eval/locked_v07_reviewer_controls/RESULTS_v07.md anonymous_supplement/eval/locked_v07_reviewer_controls/
-          cp eval/locked_v07_reviewer_controls/CONTRASTS.txt anonymous_supplement/eval/locked_v07_reviewer_controls/
-          cp eval/locked_v07_reviewer_controls/CONTRASTS_HIERARCHICAL.json anonymous_supplement/eval/locked_v07_reviewer_controls/
-          cp eval/locked_v07_reviewer_controls/outputs/summary.json anonymous_supplement/eval/locked_v07_reviewer_controls/outputs/
-          cp -R eval/locked_v07_reviewer_controls/outputs/qwen eval/locked_v07_reviewer_controls/outputs/mistral anonymous_supplement/eval/locked_v07_reviewer_controls/outputs/
-
-          mkdir -p anonymous_supplement/eval/locked_v07_reviewer_controls/submission_diagnostics
-          cp revision_diagnostics/* anonymous_supplement/eval/locked_v07_reviewer_controls/submission_diagnostics/
-
-          cp eval/locked_v04_contextual/results_v04/generation_samples.json anonymous_supplement/eval/locked_v04_contextual/results_v04/
-
-          cp scripts/build_v04_corpus.py anonymous_supplement/scripts/
-          cp scripts/build_v05_corpus.py anonymous_supplement/scripts/
-          cp scripts/build_locked_v07_reviewer_controls.py anonymous_supplement/scripts/
-          cp scripts/eval_v07_reviewer_controls.py anonymous_supplement/scripts/
-          cp scripts/analyze_v07_reviewer_controls.py anonymous_supplement/scripts/
-          cp scripts/v07_contrasts.py anonymous_supplement/scripts/
-          cp scripts/analyze_v07_submission_diagnostics.py anonymous_supplement/scripts/
-          cp scripts/train_condition_lora.py anonymous_supplement/scripts/
-
-          cp modal_train_v05.py anonymous_supplement/
-          cp modal_replicate_seeds.py anonymous_supplement/
-          cp modal_train_mistral.py anonymous_supplement/
-          cp modal_eval_v07.py anonymous_supplement/
-          cp -R src/arewethesame anonymous_supplement/src/identity_history
-          cp pyproject.toml requirements-train.txt anonymous_supplement/
-
-          # Generate exact task examples from the frozen rebuild.
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          rows=[json.loads() for x in Path('/tmp/v07_verify/items.jsonl
+      - name: Upload exact revision deliverables
+        uses: actions/upload-artifact@v4
+        with:
+          name: iclr2027-revised-${{ github.sha }}
+          path: |
+            dist_iclr_revision/arewethesame_iclr2027_submission_revised.pdf
+            dist_iclr_revision/arewethesame_iclr2027_anonymous_supplement_revised.zip
+            dist_iclr_revision/arewethesame_iclr2027_source_revised.zip
+            dist_iclr_revision/iclr2027_openreview_fields_revised.txt
+            dist_iclr_revision/iclr2027_revision_and_verification_report.md
+            dist_iclr_revision/DELIVERABLE_SHA256SUMS.txt
+            dist_iclr_revision/page_structure.json
+            paper/main.log
+            paper/pdfinfo.txt
+            paper/warnings.txt
+            revision_diagnostics/submission_diagnostics.json
+            revision_diagnostics/absolute_performance.csv
+            revision_diagnostics/switch_rates.csv
+            revision_diagnostics/seed_sensitivity.csv
+            revision_diagnostics/SUBMISSION_DIAGNOSTICS.md
